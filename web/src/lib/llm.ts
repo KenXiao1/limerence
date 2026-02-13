@@ -1,4 +1,95 @@
-import type { Message, StreamEvent, Settings, ToolDef } from "./types";
+import type { Message, StreamEvent, Settings, ToolDef, ModelInfo } from "./types";
+
+/**
+ * Resolve the effective base URL, considering reverse proxy settings.
+ * Priority: reverseProxyUrl (if enabled) > baseUrl
+ */
+function resolveBaseUrl(settings: Settings): string {
+  if (settings.reverseProxyEnabled && settings.reverseProxyUrl) {
+    return settings.reverseProxyUrl.replace(/\/+$/, "");
+  }
+  return settings.baseUrl.replace(/\/+$/, "");
+}
+
+/**
+ * Build URL and headers for an API request based on settings.
+ */
+function buildRequest(settings: Settings, path: string): { url: string; headers: Record<string, string> } {
+  if (settings.proxyMode) {
+    return {
+      url: `/api${path}`,
+      headers: { "Content-Type": "application/json" },
+    };
+  }
+  return {
+    url: `${resolveBaseUrl(settings)}${path}`,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${settings.apiKey}`,
+    },
+  };
+}
+
+/**
+ * Test API connection. Returns { ok, message, latencyMs }.
+ */
+export async function testConnection(
+  settings: Settings,
+): Promise<{ ok: boolean; message: string; latencyMs: number }> {
+  const start = performance.now();
+  try {
+    const { url, headers } = buildRequest(settings, "/models");
+
+    const resp = settings.proxyMode
+      ? await fetch(url, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ base_url: resolveBaseUrl(settings) }),
+        })
+      : await fetch(url, { headers });
+
+    const latencyMs = Math.round(performance.now() - start);
+
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => "");
+      return { ok: false, message: `${resp.status}: ${text}`, latencyMs };
+    }
+
+    return { ok: true, message: "连接成功", latencyMs };
+  } catch (e: unknown) {
+    const latencyMs = Math.round(performance.now() - start);
+    const msg = e instanceof Error ? e.message : String(e);
+    return { ok: false, message: msg, latencyMs };
+  }
+}
+
+/**
+ * Fetch available models from the API.
+ */
+export async function fetchModels(settings: Settings): Promise<ModelInfo[]> {
+  const { url, headers } = buildRequest(settings, "/models");
+
+  const resp = settings.proxyMode
+    ? await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ base_url: resolveBaseUrl(settings) }),
+      })
+    : await fetch(url, { headers });
+
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => "");
+    throw new Error(`${resp.status}: ${text}`);
+  }
+
+  const json = await resp.json();
+  const data: unknown[] = json.data ?? json;
+
+  return data
+    .filter((m: any) => m.id)
+    .map((m: any) => ({ id: m.id, owned_by: m.owned_by }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+}
 
 /**
  * Stream chat completion from an OpenAI-compatible API.
@@ -7,6 +98,8 @@ import type { Message, StreamEvent, Settings, ToolDef } from "./types";
  * Supports two modes:
  * - Direct: browser → LLM API (user provides API key)
  * - Proxy: browser → Edge Function → LLM API
+ *
+ * When reverse proxy is enabled, all requests go through the reverse proxy URL.
  */
 export async function* streamChat(
   messages: Message[],
@@ -17,28 +110,14 @@ export async function* streamChat(
   const openaiMessages = messages.map(messageToOpenai);
   const openaiTools = tools.length > 0 ? tools.map(toolToOpenai) : undefined;
 
-  let url: string;
-  let headers: Record<string, string>;
-
-  if (settings.proxyMode) {
-    // Proxy mode: send to our Edge Function
-    url = "/api/chat";
-    headers = { "Content-Type": "application/json" };
-  } else {
-    // Direct mode: browser → LLM API
-    url = `${settings.baseUrl.replace(/\/+$/, "")}/chat/completions`;
-    headers = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${settings.apiKey}`,
-    };
-  }
+  const { url, headers } = buildRequest(settings, "/chat/completions");
 
   const body = JSON.stringify({
     model: settings.modelId,
     messages: openaiMessages,
     tools: openaiTools,
     stream: true,
-    ...(settings.proxyMode ? { base_url: settings.baseUrl } : {}),
+    ...(settings.proxyMode ? { base_url: resolveBaseUrl(settings) } : {}),
   });
 
   const resp = await fetch(url, { method: "POST", headers, body, signal });

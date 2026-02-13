@@ -10,3 +10,6 @@ SillyTavern/
 fast-tavern/
 pi-mono/
 *.epub
+
+# Local Netlify folder
+.netlify

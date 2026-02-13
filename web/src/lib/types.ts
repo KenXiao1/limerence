@@ -47,6 +47,8 @@ export interface Settings {
   baseUrl: string;
   modelId: string;
   proxyMode: boolean;
+  reverseProxyEnabled: boolean;
+  reverseProxyUrl: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -54,7 +56,16 @@ export const DEFAULT_SETTINGS: Settings = {
   baseUrl: "https://api.deepseek.com/v1",
   modelId: "deepseek-chat",
   proxyMode: false,
+  reverseProxyEnabled: false,
+  reverseProxyUrl: "",
 };
+
+// --- Model Info ---
+
+export interface ModelInfo {
+  id: string;
+  owned_by?: string;
+}
 
 // --- Character Card (SillyTavern V2) ---
 

@@ -223,6 +223,75 @@ impl LlmClient {
             Ok(Message::assistant_with_tools(content, tool_calls))
         }
     }
+
+    /// Test API connection by hitting the /models endpoint.
+    /// Returns Ok(()) on success, Err on failure.
+    pub async fn test_connection(&self, model: &Model) -> Result<(), LlmError> {
+        let api_key = model
+            .api_key()
+            .ok_or_else(|| LlmError::MissingApiKey(model.api_key_env.clone()))?;
+
+        let url = format!("{}/models", model.base_url.trim_end_matches('/'));
+
+        let resp = self
+            .http
+            .get(&url)
+            .header("Authorization", format!("Bearer {api_key}"))
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            let status = resp.status();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(LlmError::Api(format!("{status}: {body}")));
+        }
+
+        Ok(())
+    }
+
+    /// List available models from the API.
+    /// Returns a vec of (model_id, owned_by) tuples.
+    pub async fn list_models(
+        &self,
+        model: &Model,
+    ) -> Result<Vec<(String, String)>, LlmError> {
+        let api_key = model
+            .api_key()
+            .ok_or_else(|| LlmError::MissingApiKey(model.api_key_env.clone()))?;
+
+        let url = format!("{}/models", model.base_url.trim_end_matches('/'));
+
+        let resp = self
+            .http
+            .get(&url)
+            .header("Authorization", format!("Bearer {api_key}"))
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            let status = resp.status();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(LlmError::Api(format!("{status}: {body}")));
+        }
+
+        let json: serde_json::Value = resp.json().await?;
+        let data = json["data"].as_array();
+
+        let mut models: Vec<(String, String)> = data
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|m| {
+                        let id = m["id"].as_str()?.to_string();
+                        let owned_by = m["owned_by"].as_str().unwrap_or("").to_string();
+                        Some((id, owned_by))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        models.sort_by(|a, b| a.0.cmp(&b.0));
+        Ok(models)
+    }
 }
 
 impl Default for LlmClient {

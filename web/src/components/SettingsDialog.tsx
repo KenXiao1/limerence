@@ -1,5 +1,6 @@
 import { useState } from "react";
-import type { Settings, CharacterCard } from "../lib/types";
+import type { Settings, CharacterCard, ModelInfo } from "../lib/types";
+import { testConnection, fetchModels } from "../lib/llm";
 
 interface Props {
   open: boolean;
@@ -11,6 +12,8 @@ interface Props {
   characterName: string;
 }
 
+type ConnStatus = "idle" | "testing" | "ok" | "error";
+
 export default function SettingsDialog({
   open,
   onClose,
@@ -21,8 +24,45 @@ export default function SettingsDialog({
   characterName,
 }: Props) {
   const [tab, setTab] = useState<"api" | "character">("api");
+  const [connStatus, setConnStatus] = useState<ConnStatus>("idle");
+  const [connMessage, setConnMessage] = useState("");
+  const [connLatency, setConnLatency] = useState(0);
+  const [models, setModels] = useState<ModelInfo[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [modelsError, setModelsError] = useState("");
+  const [showModels, setShowModels] = useState(false);
 
   if (!open) return null;
+
+  const handleTestConnection = async () => {
+    setConnStatus("testing");
+    setConnMessage("");
+    const result = await testConnection(settings);
+    setConnStatus(result.ok ? "ok" : "error");
+    setConnMessage(result.message);
+    setConnLatency(result.latencyMs);
+  };
+
+  const handleFetchModels = async () => {
+    setModelsLoading(true);
+    setModelsError("");
+    setShowModels(true);
+    try {
+      const list = await fetchModels(settings);
+      setModels(list);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setModelsError(msg);
+      setModels([]);
+    } finally {
+      setModelsLoading(false);
+    }
+  };
+
+  const handleSelectModel = (id: string) => {
+    onUpdateSettings({ modelId: id });
+    setShowModels(false);
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -47,7 +87,7 @@ export default function SettingsDialog({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-lg border border-zinc-800 bg-zinc-900 p-6"
+        className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-lg border border-zinc-800 bg-zinc-900 p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -98,14 +138,87 @@ export default function SettingsDialog({
               />
             </Field>
 
+            {/* Reverse Proxy */}
+            <Field label="反向代理">
+              <label className="flex items-center gap-2 text-sm text-zinc-400">
+                <input
+                  type="checkbox"
+                  checked={settings.reverseProxyEnabled}
+                  onChange={(e) =>
+                    onUpdateSettings({ reverseProxyEnabled: e.target.checked })
+                  }
+                  className="accent-magenta"
+                />
+                使用反向代理 URL 转发所有 API 请求
+              </label>
+              {settings.reverseProxyEnabled && (
+                <input
+                  type="text"
+                  value={settings.reverseProxyUrl}
+                  onChange={(e) =>
+                    onUpdateSettings({ reverseProxyUrl: e.target.value })
+                  }
+                  placeholder="https://your-proxy.example.com/v1"
+                  className="mt-2 w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:border-magenta focus:outline-none"
+                />
+              )}
+            </Field>
+
+            {/* Model ID + fetch models */}
             <Field label="模型 ID">
-              <input
-                type="text"
-                value={settings.modelId}
-                onChange={(e) => onUpdateSettings({ modelId: e.target.value })}
-                placeholder="deepseek-chat"
-                className="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:border-magenta focus:outline-none"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={settings.modelId}
+                  onChange={(e) =>
+                    onUpdateSettings({ modelId: e.target.value })
+                  }
+                  placeholder="deepseek-chat"
+                  className="flex-1 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:border-magenta focus:outline-none"
+                />
+                <button
+                  onClick={handleFetchModels}
+                  disabled={modelsLoading}
+                  className="shrink-0 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-700 disabled:opacity-50"
+                  title="获取可用模型列表"
+                >
+                  {modelsLoading ? "..." : "获取模型"}
+                </button>
+              </div>
+
+              {/* Models dropdown */}
+              {showModels && (
+                <div className="mt-2 max-h-48 overflow-y-auto rounded border border-zinc-700 bg-zinc-800">
+                  {modelsError && (
+                    <p className="px-3 py-2 text-sm text-red-400">
+                      {modelsError}
+                    </p>
+                  )}
+                  {!modelsError && models.length === 0 && !modelsLoading && (
+                    <p className="px-3 py-2 text-sm text-zinc-500">
+                      无可用模型
+                    </p>
+                  )}
+                  {models.map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => handleSelectModel(m.id)}
+                      className={`w-full px-3 py-1.5 text-left text-sm hover:bg-zinc-700 ${
+                        m.id === settings.modelId
+                          ? "text-magenta"
+                          : "text-zinc-300"
+                      }`}
+                    >
+                      {m.id}
+                      {m.owned_by && (
+                        <span className="ml-2 text-xs text-zinc-600">
+                          {m.owned_by}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </Field>
 
             <Field label="代理模式">
@@ -121,6 +234,26 @@ export default function SettingsDialog({
                 通过服务端代理转发请求（API Key 存储在服务端）
               </label>
             </Field>
+
+            {/* Test Connection */}
+            <div className="border-t border-zinc-800 pt-4">
+              <button
+                onClick={handleTestConnection}
+                disabled={connStatus === "testing"}
+                className="rounded bg-zinc-800 px-4 py-2 text-sm text-zinc-200 hover:bg-zinc-700 disabled:opacity-50"
+              >
+                {connStatus === "testing" ? "测试中..." : "测试 API 连接"}
+              </button>
+
+              {connStatus === "ok" && (
+                <p className="mt-2 text-sm text-green-400">
+                  {connMessage}（{connLatency}ms）
+                </p>
+              )}
+              {connStatus === "error" && (
+                <p className="mt-2 text-sm text-red-400">{connMessage}</p>
+              )}
+            </div>
           </div>
         )}
 

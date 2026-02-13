@@ -1,15 +1,11 @@
 [build]
-  command = "cd web && npm install && npm run build"
-  publish = "web/dist"
   base = "."
+  publish = "dist"
+  command = "npm ci && npm run build"
 
 [[edge_functions]]
-  path = "/api/chat"
+  path = "/api/llm/v1/chat/completions"
   function = "chat-proxy"
-
-[[edge_functions]]
-  path = "/api/models"
-  function = "models-proxy"
 
 [[edge_functions]]
   path = "/api/web-search"
