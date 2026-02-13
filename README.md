@@ -7,17 +7,27 @@
 ## 架构
 
 ```
-crates/
-  limerence-ai     LLM 抽象层，只懂 OpenAI 协议
-  limerence-core   Agent 运行时，不懂终端
-  limerence-tui    ratatui 终端界面
-
-web/               React 前端（可部署到 Netlify）
-  src/lib/         从 Rust 移植的 TS 核心（agent loop / BM25 / tools）
-  netlify/         Edge Functions（LLM 代理 + 搜索代理）
+                    Rust (TUI)                          Web (浏览器)
+                    ──────────                          ───────────
+┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+│ limerence-ai │──→│limerence-core│──→│limerence-tui │
+│ LLM 抽象层   │   │ Agent 运行时  │   │ ratatui 终端  │
+│ OpenAI 协议   │   │ BM25·工具·会话│   │ 文件系统持久化 │
+└──────────────┘   └──────┬───────┘   └──────────────┘
+                          │
+                     TS 同构移植
+                          │
+                          ▼
+                   ┌──────────────┐   ┌──────────────┐
+                   │  Agent Loop  │──→│Edge Functions │
+                   │  (React+TS)  │   │ chat-proxy.ts │
+                   │  IndexedDB   │   │ web-search.ts │
+                   └──────────────┘   └──────────────┘
 ```
 
 层级规则：下层不知道上层存在。`limerence-ai` 不知道 agent，`limerence-core` 不知道终端。
+
+`web/src/lib/` 是 `limerence-core` 的 TypeScript 同构移植，算法逻辑（BM25、工具调用、会话管理）与 Rust 端保持一致。
 
 ## 快速开始
 

@@ -7,17 +7,28 @@ Minimal AI companion agent with memory. Rust TUI + Web, ready out of the box.
 ## Architecture
 
 ```
-crates/
-  limerence-ai     LLM abstraction layer, speaks only OpenAI protocol
-  limerence-core   Agent runtime, UI-agnostic
-  limerence-tui    ratatui terminal interface
-
-web/               React frontend (deployable to Netlify)
-  src/lib/         TS core ported from Rust (agent loop / BM25 / tools)
-  netlify/         Edge Functions (LLM proxy + search proxy)
+                     Rust (TUI)                           Web (Browser)
+                     ─────────                            ────────────
+┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+│ limerence-ai │──→│limerence-core│──→│limerence-tui │
+│ LLM abstract │   │ Agent runtime│   │ ratatui TUI  │
+│ OpenAI proto  │   │ BM25·tools·  │   │ filesystem   │
+│               │   │ session      │   │ persistence  │
+└──────────────┘   └──────┬───────┘   └──────────────┘
+                          │
+                   Isomorphic TS port
+                          │
+                          ▼
+                   ┌──────────────┐   ┌──────────────┐
+                   │  Agent Loop  │──→│Edge Functions │
+                   │  (React+TS)  │   │ chat-proxy.ts │
+                   │  IndexedDB   │   │ web-search.ts │
+                   └──────────────┘   └──────────────┘
 ```
 
 Layer rule: lower layers don't know upper layers exist. `limerence-ai` knows nothing about agents, `limerence-core` knows nothing about terminals.
+
+`web/src/lib/` is an isomorphic TypeScript port of `limerence-core`. The algorithms (BM25, tool dispatch, session management) are kept in sync with the Rust side.
 
 ## Quick Start
 
