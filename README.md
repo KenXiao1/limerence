@@ -1,18 +1,27 @@
 # Limerence
 
-极简 AI 记忆陪伴 agent。2500 行 Rust，3 个 crate，开箱即用。
+[English](./README_EN.md)
+
+极简 AI 记忆陪伴 agent。Rust TUI + Web 双端，开箱即用。
 
 ## 架构
 
 ```
-limerence-ai     LLM 抽象层，只懂 OpenAI 协议
-limerence-core   Agent 运行时，不懂终端
-limerence-tui    ratatui 终端界面，把它们连起来
+crates/
+  limerence-ai     LLM 抽象层，只懂 OpenAI 协议
+  limerence-core   Agent 运行时，不懂终端
+  limerence-tui    ratatui 终端界面
+
+web/               React 前端（可部署到 Netlify）
+  src/lib/         从 Rust 移植的 TS 核心（agent loop / BM25 / tools）
+  netlify/         Edge Functions（LLM 代理 + 搜索代理）
 ```
 
 层级规则：下层不知道上层存在。`limerence-ai` 不知道 agent，`limerence-core` 不知道终端。
 
 ## 快速开始
+
+### TUI（终端）
 
 ```bash
 # 设置 API key（默认 DeepSeek，可换任何 OpenAI 兼容 API）
@@ -24,7 +33,46 @@ cargo run --release
 
 首次启动会在 `~/.limerence/` 生成默认配置，默认角色「苏晚」（心理咨询师御姐）会打招呼。
 
-## 配置
+### Web
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+打开浏览器访问 `http://localhost:5173`，在设置中填入 API Key 即可开始对话。
+
+数据存储在浏览器 IndexedDB 中，API Key 不经过服务器。
+
+## 部署到 Netlify
+
+Web 版可以一键部署到 Netlify：
+
+1. Fork 本仓库
+2. 在 Netlify 创建新站点，关联仓库
+3. 构建配置已在 `web/netlify.toml` 中预设好
+4. （可选）在 Netlify 环境变量中设置 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL_ID` 以启用服务端代理模式
+
+Web 版架构：
+
+```
+浏览器（React）                    Netlify Edge Functions
+┌─────────────────────┐           ┌──────────────────┐
+│  Agent Loop (TS)    │           │  chat-proxy.ts   │
+│  ├─ LLM 流式客户端  │──stream──→│  (转发 LLM API)  │
+│  ├─ BM25 记忆搜索   │           │                  │
+│  ├─ 笔记系统        │           │  web-search.ts   │
+│  ├─ 会话管理        │──fetch───→│  (搜索代理)      │
+│  └─ IndexedDB 持久化│           └──────────────────┘
+└─────────────────────┘
+```
+
+两种 API Key 模式：
+- **用户自带 Key**（默认）：浏览器直连 LLM API，Key 不经过服务器
+- **服务端代理**：通过 Edge Function 转发，Key 存 Netlify 环境变量
+
+## 配置（TUI）
 
 `~/.limerence/config.toml`：
 

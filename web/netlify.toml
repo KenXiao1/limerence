@@ -1,0 +1,17 @@
+[build]
+  command = "cd web && npm install && npm run build"
+  publish = "web/dist"
+  base = "."
+
+[[edge_functions]]
+  path = "/api/chat"
+  function = "chat-proxy"
+
+[[edge_functions]]
+  path = "/api/web-search"
+  function = "web-search"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
