@@ -169,7 +169,3 @@ SillyTavern 会忽略 `extensions.limerence`，Limerence 会忽略 SillyTavern �
 ├── workspace/       # 沙箱文件系统
 └── characters/      # 角色卡
 ```
-
-## License
-
-MIT
