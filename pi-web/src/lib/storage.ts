@@ -82,6 +82,17 @@ export class LimerenceStorage {
     return `已写入文件：${path}`;
   }
 
+  async listWorkspaceFiles(): Promise<string[]> {
+    const keys = await this.backend.keys(FILES_STORE);
+    return [...new Set(keys)].sort((a, b) => a.localeCompare(b));
+  }
+
+  async readWorkspaceFile(path: string): Promise<string | null> {
+    const normalized = normalizePath(path);
+    if (!normalized) return null;
+    return this.backend.get<string>(FILES_STORE, normalized);
+  }
+
   private async listNotes(): Promise<string> {
     const keys = await this.backend.keys(NOTES_STORE, "note:");
     const notes = keys

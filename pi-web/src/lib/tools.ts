@@ -38,7 +38,29 @@ type NoteReadParams = Static<typeof noteReadSchema>;
 type FileReadParams = Static<typeof fileReadSchema>;
 type FileWriteParams = Static<typeof fileWriteSchema>;
 
-export function createLimerenceTools(memory: MemoryIndex, storage: LimerenceStorage): AgentTool<any>[] {
+export type FileOperation = {
+  action: "read" | "write";
+  path: string;
+  timestamp: string;
+  success: boolean;
+  summary: string;
+};
+
+type LimerenceToolHooks = {
+  onFileOperation?: (event: FileOperation) => void;
+};
+
+function summarizeText(text: string, maxLength = 120): string {
+  const compact = text.replace(/\s+/g, " ").trim();
+  if (compact.length <= maxLength) return compact;
+  return `${compact.slice(0, maxLength - 3)}...`;
+}
+
+export function createLimerenceTools(
+  memory: MemoryIndex,
+  storage: LimerenceStorage,
+  hooks: LimerenceToolHooks = {},
+): AgentTool<any>[] {
   const memorySearchTool: AgentTool<typeof memorySearchSchema, { query: string }> = {
     label: "记忆搜索",
     name: "memory_search",
@@ -176,6 +198,13 @@ export function createLimerenceTools(memory: MemoryIndex, storage: LimerenceStor
     async execute(_toolCallId, args: FileReadParams) {
       const path = String(args.path ?? "");
       const result = await storage.fileRead(path);
+      hooks.onFileOperation?.({
+        action: "read",
+        path: path || ".",
+        timestamp: new Date().toISOString(),
+        success: !result.startsWith("文件不存在"),
+        summary: summarizeText(result),
+      });
       return {
         content: [{ type: "text", text: result }],
         details: { path },
@@ -192,6 +221,13 @@ export function createLimerenceTools(memory: MemoryIndex, storage: LimerenceStor
       const path = String(args.path ?? "");
       const content = String(args.content ?? "");
       const result = await storage.fileWrite(path, content);
+      hooks.onFileOperation?.({
+        action: "write",
+        path: path || ".",
+        timestamp: new Date().toISOString(),
+        success: result.startsWith("已写入文件："),
+        summary: `写入 ${content.length} 字符`,
+      });
       return {
         content: [{ type: "text", text: result }],
         details: { path },

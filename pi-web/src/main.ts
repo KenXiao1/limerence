@@ -20,13 +20,13 @@ import {
   defaultConvertToLlm,
   setAppStorage,
 } from "@mariozechner/pi-web-ui";
-import { History, Plus, Settings, Server } from "lucide";
+import { FileText, History, RefreshCw, Save, Server, Settings, X, Plus } from "lucide";
 import { html, render } from "lit";
 import "./app.css";
 import { buildSystemPrompt, loadDefaultCharacter, type CharacterCard } from "./lib/character";
 import { MemoryIndex, type MemoryEntry } from "./lib/memory";
-import { getLimerenceStoreConfigs, LimerenceStorage } from "./lib/storage";
-import { createLimerenceTools } from "./lib/tools";
+import { getLimerenceStoreConfigs, LimerenceStorage, normalizePath } from "./lib/storage";
+import { createLimerenceTools, type FileOperation } from "./lib/tools";
 import { mountLegacyIntro, unmountLegacyIntro } from "./legacy-intro/mount";
 
 const DB_NAME = "limerence-pi-web";
@@ -36,6 +36,25 @@ const ROOT_PATH = "/";
 const CHAT_PATH = "/chat";
 
 type ViewMode = "intro" | "chat";
+type WorkspaceEventSource = "agent" | "user";
+type WorkspaceEvent = FileOperation & {
+  id: string;
+  source: WorkspaceEventSource;
+};
+type DiffLine = {
+  type: "added" | "removed";
+  text: string;
+};
+type DiffPreview = {
+  lines: DiffLine[];
+  added: number;
+  removed: number;
+  truncated: boolean;
+};
+
+const MAX_WORKSPACE_EVENTS = 80;
+const MAX_DIFF_MATRIX = 160_000;
+const MAX_DIFF_PREVIEW_LINES = 260;
 
 const settings = new SettingsStore();
 const providerKeys = new ProviderKeysStore();
@@ -82,6 +101,16 @@ let currentTitle = "";
 let isEditingTitle = false;
 let proxyModeEnabled = false;
 let switchingToChat = false;
+let workspacePanelOpen = false;
+let workspaceFiles: string[] = [];
+let workspaceSelectedPath = "";
+let workspaceDraftPath = "notes/daily.md";
+let workspaceEditorContent = "";
+let workspaceBaseContent = "";
+let workspaceEditorDirty = false;
+let workspaceLoadingFile = false;
+let workspaceMessage = "";
+let workspaceEvents: WorkspaceEvent[] = [];
 const LIT_PART_KEY = "_$litPart$";
 
 function resetLitContainer(container: HTMLElement) {
@@ -119,6 +148,255 @@ function applyTheme(theme: "light" | "dark") {
   document.documentElement.setAttribute("data-theme", theme);
   localStorage.setItem("theme", theme);
   localStorage.setItem("limerence-theme", theme);
+}
+
+function isMarkdownPath(path: string): boolean {
+  return path.toLowerCase().endsWith(".md");
+}
+
+function summarizeWorkspaceText(text: string, maxLength = 90): string {
+  const compact = text.replace(/\s+/g, " ").trim();
+  if (!compact) return "空内容";
+  if (compact.length <= maxLength) return compact;
+  return `${compact.slice(0, maxLength - 3)}...`;
+}
+
+function formatWorkspaceTime(timestamp: string): string {
+  try {
+    return new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  } catch {
+    return timestamp;
+  }
+}
+
+function splitLines(text: string): string[] {
+  return text.split(/\r?\n/);
+}
+
+function computeSimpleLineDiff(baseLines: string[], nextLines: string[]): DiffLine[] {
+  const lines: DiffLine[] = [];
+  const maxLen = Math.max(baseLines.length, nextLines.length);
+  for (let i = 0; i < maxLen; i += 1) {
+    const oldLine = baseLines[i];
+    const newLine = nextLines[i];
+    if (oldLine === newLine) continue;
+    if (oldLine !== undefined) {
+      lines.push({ type: "removed", text: oldLine });
+    }
+    if (newLine !== undefined) {
+      lines.push({ type: "added", text: newLine });
+    }
+  }
+  return lines;
+}
+
+function computeLcsDiff(baseLines: string[], nextLines: string[]): DiffLine[] {
+  const n = baseLines.length;
+  const m = nextLines.length;
+  const dp: number[][] = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0));
+
+  for (let i = n - 1; i >= 0; i -= 1) {
+    for (let j = m - 1; j >= 0; j -= 1) {
+      dp[i][j] =
+        baseLines[i] === nextLines[j]
+          ? dp[i + 1][j + 1] + 1
+          : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
+
+  const lines: DiffLine[] = [];
+  let i = 0;
+  let j = 0;
+  while (i < n && j < m) {
+    if (baseLines[i] === nextLines[j]) {
+      i += 1;
+      j += 1;
+      continue;
+    }
+
+    if (dp[i + 1][j] >= dp[i][j + 1]) {
+      lines.push({ type: "removed", text: baseLines[i] });
+      i += 1;
+    } else {
+      lines.push({ type: "added", text: nextLines[j] });
+      j += 1;
+    }
+  }
+
+  while (i < n) {
+    lines.push({ type: "removed", text: baseLines[i] });
+    i += 1;
+  }
+
+  while (j < m) {
+    lines.push({ type: "added", text: nextLines[j] });
+    j += 1;
+  }
+
+  return lines;
+}
+
+function createDiffPreview(baseText: string, nextText: string): DiffPreview {
+  if (baseText === nextText) {
+    return {
+      lines: [],
+      added: 0,
+      removed: 0,
+      truncated: false,
+    };
+  }
+
+  const baseLines = splitLines(baseText);
+  const nextLines = splitLines(nextText);
+
+  const rawLines =
+    baseLines.length * nextLines.length > MAX_DIFF_MATRIX
+      ? computeSimpleLineDiff(baseLines, nextLines)
+      : computeLcsDiff(baseLines, nextLines);
+
+  const added = rawLines.filter((line) => line.type === "added").length;
+  const removed = rawLines.length - added;
+  const truncated = rawLines.length > MAX_DIFF_PREVIEW_LINES;
+
+  return {
+    lines: rawLines.slice(0, MAX_DIFF_PREVIEW_LINES),
+    added,
+    removed,
+    truncated,
+  };
+}
+
+function pushWorkspaceEvent(event: Omit<WorkspaceEvent, "id">) {
+  workspaceEvents = [{ id: crypto.randomUUID(), ...event }, ...workspaceEvents].slice(0, MAX_WORKSPACE_EVENTS);
+}
+
+async function refreshWorkspaceFiles(autoSelect = false) {
+  workspaceFiles = await limerenceStorage.listWorkspaceFiles();
+  if (workspaceSelectedPath && !workspaceFiles.includes(workspaceSelectedPath)) {
+    workspaceSelectedPath = "";
+    workspaceEditorContent = "";
+    workspaceBaseContent = "";
+    workspaceEditorDirty = false;
+  }
+
+  if (autoSelect && !workspaceSelectedPath) {
+    const fallback = workspaceFiles.find((f) => isMarkdownPath(f)) ?? workspaceFiles[0];
+    if (fallback) {
+      await openWorkspaceFile(fallback, false);
+    }
+  }
+}
+
+async function openWorkspaceFile(path: string, addUserReadEvent = true) {
+  const normalized = normalizePath(path.trim());
+  if (!normalized) {
+    workspaceMessage = "文件路径无效。";
+    renderCurrentView();
+    return;
+  }
+
+  if (workspaceEditorDirty && workspaceSelectedPath && workspaceSelectedPath !== normalized) {
+    const confirmed = window.confirm("当前文件有未保存改动，确认切换并丢弃改动吗？");
+    if (!confirmed) return;
+  }
+
+  workspaceSelectedPath = normalized;
+  workspaceDraftPath = normalized;
+  workspaceLoadingFile = true;
+  workspaceMessage = "";
+  renderCurrentView();
+
+  const content = await limerenceStorage.readWorkspaceFile(normalized);
+  workspaceEditorContent = content ?? "";
+  workspaceBaseContent = content ?? "";
+  workspaceEditorDirty = false;
+  workspaceLoadingFile = false;
+
+  if (addUserReadEvent) {
+    pushWorkspaceEvent({
+      source: "user",
+      action: "read",
+      path: normalized,
+      timestamp: new Date().toISOString(),
+      success: content !== null,
+      summary: content === null ? "文件不存在" : summarizeWorkspaceText(content),
+    });
+  }
+
+  renderCurrentView();
+}
+
+async function saveWorkspaceFile(pathInput?: string) {
+  const basePath = pathInput ?? workspaceDraftPath ?? workspaceSelectedPath;
+  let normalized = normalizePath((basePath ?? "").trim());
+  if (!normalized) {
+    workspaceMessage = "请输入有效文件路径。";
+    renderCurrentView();
+    return;
+  }
+
+  if (!isMarkdownPath(normalized)) {
+    normalized = `${normalized}.md`;
+  }
+
+  const writeResult = await limerenceStorage.fileWrite(normalized, workspaceEditorContent);
+  workspaceSelectedPath = normalized;
+  workspaceDraftPath = normalized;
+  workspaceBaseContent = workspaceEditorContent;
+  workspaceEditorDirty = false;
+  workspaceMessage = writeResult;
+
+  pushWorkspaceEvent({
+    source: "user",
+    action: "write",
+    path: normalized,
+    timestamp: new Date().toISOString(),
+    success: true,
+    summary: summarizeWorkspaceText(workspaceEditorContent),
+  });
+
+  await refreshWorkspaceFiles(false);
+  renderCurrentView();
+}
+
+async function toggleWorkspacePanel() {
+  workspacePanelOpen = !workspacePanelOpen;
+  if (workspacePanelOpen) {
+    await refreshWorkspaceFiles(true);
+  }
+  renderCurrentView();
+}
+
+function handleAgentFileOperation(event: FileOperation) {
+  const normalizedPath = normalizePath(event.path);
+  pushWorkspaceEvent({
+    ...event,
+    path: normalizedPath || event.path,
+    source: "agent",
+  });
+
+  if (
+    event.action === "write" &&
+    normalizedPath &&
+    normalizedPath === workspaceSelectedPath &&
+    !workspaceEditorDirty
+  ) {
+    void limerenceStorage.readWorkspaceFile(normalizedPath).then((content) => {
+      if (content !== null) {
+        workspaceEditorContent = content;
+        workspaceBaseContent = content;
+      }
+      if (workspacePanelOpen) {
+        renderCurrentView();
+      }
+    });
+  }
+
+  void refreshWorkspaceFiles(false).then(() => {
+    if (workspacePanelOpen) {
+      renderCurrentView();
+    }
+  });
 }
 
 function defaultUsage(): Usage {
@@ -433,7 +711,12 @@ async function createAgent(initialState?: Partial<AgentState>) {
       }
       return ApiKeyPromptDialog.prompt(provider);
     },
-    toolsFactory: () => createLimerenceTools(memoryIndex, limerenceStorage),
+    toolsFactory: () =>
+      createLimerenceTools(memoryIndex, limerenceStorage, {
+        onFileOperation: (event) => {
+          handleAgentFileOperation(event);
+        },
+      }),
   });
 }
 
@@ -481,6 +764,171 @@ async function ensureChatRuntime() {
 
   chatPanel = new ChatPanel();
   chatRuntimeReady = true;
+}
+
+function renderWorkspacePanel() {
+  const markdownFiles = workspaceFiles.filter((path) => isMarkdownPath(path));
+  const diff = createDiffPreview(workspaceBaseContent, workspaceEditorContent);
+
+  return html`
+    <aside class="limerence-workspace-panel border-l border-border bg-background">
+      <div class="limerence-workspace-head">
+        <div>
+          <div class="limerence-workspace-title">Markdown 工作区</div>
+          <div class="limerence-workspace-subtitle">
+            ${markdownFiles.length} 个 .md 文件 · ${workspaceEvents.length} 条读写记录
+          </div>
+        </div>
+        <div class="limerence-workspace-head-actions">
+          <button
+            class="limerence-workspace-icon-button"
+            @click=${() => {
+              void refreshWorkspaceFiles(true).then(() => renderCurrentView());
+            }}
+            title="刷新文件列表"
+          >
+            ${icon(RefreshCw, "sm")}
+          </button>
+          <button
+            class="limerence-workspace-icon-button"
+            @click=${() => {
+              workspacePanelOpen = false;
+              renderCurrentView();
+            }}
+            title="关闭面板"
+          >
+            ${icon(X, "sm")}
+          </button>
+        </div>
+      </div>
+
+      <div class="limerence-workspace-content">
+        <section class="limerence-workspace-section">
+          <div class="limerence-workspace-section-title">路径</div>
+          <div class="limerence-workspace-row">
+            <input
+              class="limerence-workspace-input"
+              type="text"
+              .value=${workspaceDraftPath}
+              placeholder="notes/today.md"
+              @input=${(e: Event) => {
+                workspaceDraftPath = (e.target as HTMLInputElement).value;
+              }}
+            />
+            <button
+              class="limerence-workspace-action"
+              @click=${() => {
+                void saveWorkspaceFile(workspaceDraftPath);
+              }}
+              title="保存到该路径"
+            >
+              ${icon(Save, "sm")}<span>保存</span>
+            </button>
+          </div>
+          ${workspaceMessage
+            ? html`<div class="limerence-workspace-message">${workspaceMessage}</div>`
+            : html`<div class="limerence-workspace-message limerence-workspace-message-muted">
+                Agent 的 file_read / file_write 会在下方自动记录。
+              </div>`}
+        </section>
+
+        <section class="limerence-workspace-section">
+          <div class="limerence-workspace-section-title">Markdown 文件</div>
+          <div class="limerence-workspace-file-list">
+            ${markdownFiles.length === 0
+              ? html`<div class="limerence-workspace-empty">当前没有 .md 文件，输入路径后点击保存即可创建。</div>`
+              : markdownFiles.map(
+                  (path) => html`
+                    <button
+                      class="limerence-workspace-file ${path === workspaceSelectedPath ? "is-active" : ""}"
+                      title=${path}
+                      @click=${() => {
+                        void openWorkspaceFile(path);
+                      }}
+                    >
+                      <span class="limerence-workspace-file-icon">${icon(FileText, "sm")}</span>
+                      <span class="limerence-workspace-file-path">${path}</span>
+                    </button>
+                  `,
+                )}
+          </div>
+        </section>
+
+        <section class="limerence-workspace-section limerence-workspace-editor-section">
+          <div class="limerence-workspace-section-title">
+            <span>${workspaceSelectedPath || "未选择文件"}</span>
+            <span class="limerence-workspace-dirty ${workspaceEditorDirty ? "is-dirty" : ""}">
+              ${workspaceEditorDirty ? "未保存" : "已保存"}
+            </span>
+          </div>
+          ${workspaceLoadingFile
+            ? html`<div class="limerence-workspace-empty">正在加载文件...</div>`
+            : html`
+                <textarea
+                  class="limerence-workspace-editor"
+                  .value=${workspaceEditorContent}
+                  placeholder="在这里编辑 Markdown 内容..."
+                  @input=${(e: Event) => {
+                    workspaceEditorContent = (e.target as HTMLTextAreaElement).value;
+                    workspaceEditorDirty = true;
+                    workspaceMessage = "";
+                  }}
+                ></textarea>
+              `}
+        </section>
+
+        <section class="limerence-workspace-section limerence-workspace-diff-section">
+          <div class="limerence-workspace-section-title">
+            <span>变更预览</span>
+            <span class="limerence-workspace-diff-stats">
+              <span class="limerence-workspace-diff-badge is-added">+${diff.added}</span>
+              <span class="limerence-workspace-diff-badge is-removed">-${diff.removed}</span>
+            </span>
+          </div>
+          <div class="limerence-workspace-diff-list">
+            ${!workspaceSelectedPath
+              ? html`<div class="limerence-workspace-empty">先选择或创建一个 Markdown 文件。</div>`
+              : diff.lines.length === 0
+                ? html`<div class="limerence-workspace-empty">当前内容与已保存版本一致。</div>`
+                : diff.lines.map(
+                    (line) => html`
+                      <div class="limerence-workspace-diff-line ${line.type === "added" ? "is-added" : "is-removed"}">
+                        <span class="limerence-workspace-diff-sign">${line.type === "added" ? "+" : "-"}</span>
+                        <span class="limerence-workspace-diff-text">${line.text || " "}</span>
+                      </div>
+                    `,
+                  )}
+            ${diff.truncated
+              ? html`<div class="limerence-workspace-diff-truncated">
+                  仅展示前 ${MAX_DIFF_PREVIEW_LINES} 行变更。
+                </div>`
+              : null}
+          </div>
+        </section>
+
+        <section class="limerence-workspace-section limerence-workspace-events-section">
+          <div class="limerence-workspace-section-title">读写流程</div>
+          <div class="limerence-workspace-event-list">
+            ${workspaceEvents.length === 0
+              ? html`<div class="limerence-workspace-empty">暂无读写记录。</div>`
+              : workspaceEvents.map(
+                  (event) => html`
+                    <div class="limerence-workspace-event ${event.success ? "" : "is-error"}">
+                      <div class="limerence-workspace-event-meta">
+                        <span class="limerence-workspace-pill">${event.source === "agent" ? "Agent" : "User"}</span>
+                        <span class="limerence-workspace-pill">${event.action === "read" ? "READ" : "WRITE"}</span>
+                        <span class="limerence-workspace-time">${formatWorkspaceTime(event.timestamp)}</span>
+                      </div>
+                      <div class="limerence-workspace-event-path">${event.path}</div>
+                      <div class="limerence-workspace-event-summary">${event.summary}</div>
+                    </div>
+                  `,
+                )}
+          </div>
+        </section>
+      </div>
+    </aside>
+  `;
 }
 
 function renderChatView() {
@@ -582,6 +1030,16 @@ function renderChatView() {
             title: "切换 Netlify 代理模式",
           })}
 
+          ${Button({
+            variant: "ghost",
+            size: "sm",
+            children: html`<span class="inline-flex items-center gap-1">${icon(FileText, "sm")}<span class="text-xs">${workspacePanelOpen ? "工作区 ON" : "工作区"}</span></span>`,
+            onClick: () => {
+              void toggleWorkspacePanel();
+            },
+            title: "打开 Markdown 工作区",
+          })}
+
           <theme-toggle></theme-toggle>
 
           ${Button({
@@ -594,7 +1052,10 @@ function renderChatView() {
         </div>
       </div>
 
-      ${chatPanel}
+      <div class="limerence-chat-shell">
+        <div class="limerence-chat-main">${chatPanel}</div>
+        ${workspacePanelOpen ? renderWorkspacePanel() : null}
+      </div>
     </div>
   `;
 
