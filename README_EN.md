@@ -169,7 +169,3 @@ SillyTavern ignores `extensions.limerence`, Limerence ignores SillyTavern's extr
 ├── workspace/       # Sandboxed filesystem
 └── characters/      # Character cards
 ```
-
-## License
-
-MIT
