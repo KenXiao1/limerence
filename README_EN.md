@@ -28,7 +28,7 @@ Minimal AI companion agent with memory. Rust TUI + Web, ready out of the box.
 
 Layer rule: lower layers don't know upper layers exist. `limerence-ai` knows nothing about agents, `limerence-core` knows nothing about terminals.
 
-`web/src/lib/` is an isomorphic TypeScript port of `limerence-core`. The algorithms (BM25, tool dispatch, session management) are kept in sync with the Rust side.
+`pi-web/` is the current web mainline. `legacy-web/src/lib/` is the earlier isomorphic TypeScript port of `limerence-core` (BM25, tool dispatch, session management).
 
 ## Quick Start
 
@@ -47,7 +47,7 @@ On first launch, a default config is generated at `~/.limerence/`. The default c
 ### Web
 
 ```bash
-cd web
+cd pi-web
 npm install
 npm run dev
 ```
@@ -58,11 +58,11 @@ All data is stored in the browser's IndexedDB. Your API Key never touches the se
 
 ## Deploy to Netlify
 
-The web version can be deployed to Netlify in one click:
+The current web mainline (`pi-web`) can be deployed to Netlify:
 
 1. Fork this repository
 2. Create a new site on Netlify and link the repo
-3. Build config is preset in `web/netlify.toml`
+3. Use the repository root `netlify.toml` (already pointing to `pi-web`)
 4. (Optional) Set `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL_ID` in Netlify environment variables to enable server-side proxy mode
 
 Web architecture:

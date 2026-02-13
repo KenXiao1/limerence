@@ -5,7 +5,7 @@
 ## 仓库分工
 
 - `pi-web/`：当前主线实现（继续开发、部署、修复都在这里）
-- `web/`：legacy React 版本，保留为 Intro/UI 参考与对照，不再作为主部署目标
+- `legacy-web/`：legacy React 版本，保留为 Intro/UI 参考与对照，不再作为主部署目标
 
 ## 功能
 

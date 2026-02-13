@@ -27,7 +27,7 @@
 
 层级规则：下层不知道上层存在。`limerence-ai` 不知道 agent，`limerence-core` 不知道终端。
 
-`web/src/lib/` 是 `limerence-core` 的 TypeScript 同构移植，算法逻辑（BM25、工具调用、会话管理）与 Rust 端保持一致。
+`pi-web/` 是当前主线 Web。`legacy-web/src/lib/` 是早期 `limerence-core` 的 TypeScript 同构移植，算法逻辑（BM25、工具调用、会话管理）与 Rust 端保持一致。
 
 ## 快速开始
 
@@ -46,7 +46,7 @@ cargo run --release
 ### Web
 
 ```bash
-cd web
+cd pi-web
 npm install
 npm run dev
 ```
@@ -57,11 +57,11 @@ npm run dev
 
 ## 部署到 Netlify
 
-Web 版可以一键部署到 Netlify：
+当前主线 Web（`pi-web`）可直接部署到 Netlify：
 
 1. Fork 本仓库
 2. 在 Netlify 创建新站点，关联仓库
-3. 构建配置已在 `web/netlify.toml` 中预设好
+3. 使用仓库根目录 `netlify.toml`（已默认指向 `pi-web`）
 4. （可选）在 Netlify 环境变量中设置 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL_ID` 以启用服务端代理模式
 
 Web 版架构：

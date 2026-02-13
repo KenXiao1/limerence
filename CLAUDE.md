@@ -13,15 +13,23 @@ cargo run --release -- --resume ID   # resume a session
 cargo test                           # run tests
 ```
 
-### Web
+### Pi Web (Mainline)
 ```bash
-cd web && npm install                # install deps
-cd web && npm run dev                # vite dev server (localhost:5173, proxies /api → localhost:8888)
-cd web && npm run build              # tsc + vite build → web/dist/
+cd pi-web && npm install             # install deps
+cd pi-web && npm run dev             # vite dev server
+cd pi-web && npm run build           # tsc + vite build → pi-web/dist/
+```
+
+### Legacy Web
+```bash
+cd legacy-web && npm install         # legacy React app deps
+cd legacy-web && npm run dev         # legacy dev server
+cd legacy-web && npm run build       # legacy build → legacy-web/dist/
 ```
 
 ### Netlify
-Build is configured in `web/netlify.toml`. Edge Functions live in `web/netlify/edge-functions/` (Deno runtime).
+Main deployment is configured in repository root `netlify.toml` (base = `pi-web`).
+Legacy Edge Functions are in `legacy-web/netlify/edge-functions/` (Deno runtime).
 
 ## Architecture
 
@@ -29,7 +37,7 @@ Build is configured in `web/netlify.toml`. Edge Functions live in `web/netlify/e
 limerence-ai   →  limerence-core  →  limerence-tui
 (LLM client)      (agent runtime)    (ratatui binary)
                         ↑
-                   web/src/lib/       (TS port of core, runs in browser)
+                   legacy-web/src/lib/ (legacy TS port of core, runs in browser)
 ```
 
 **Layer rule:** lower layers never import upper layers. `limerence-ai` knows nothing about agents. `limerence-core` knows nothing about UI.
@@ -45,8 +53,8 @@ Modules: `agent` (orchestrator), `character` (SillyTavern V2 cards), `config` (T
 ### limerence-tui (crates/limerence-tui/)
 Binary crate. `clap` CLI args → Config → CharacterCard → Agent → ratatui event loop. The binary name is `limerence`.
 
-### web/ (React frontend)
-TypeScript port of `limerence-core` logic, running entirely in the browser. `web/src/lib/` mirrors the Rust modules:
+### legacy-web/ (React frontend, legacy)
+TypeScript port of `limerence-core` logic, running entirely in the browser. `legacy-web/src/lib/` mirrors the Rust modules:
 
 | TS file | Rust source | Notes |
 |---------|-------------|-------|
@@ -66,7 +74,7 @@ Two API key modes: direct (browser → LLM API) or proxy (browser → Edge Funct
 - **SSE parsing:** Both Rust (`stream.rs`) and TS (`llm.ts`) parse `data: ` lines from chunked SSE. The TS version uses `ReadableStream` + `TextDecoder`; Rust uses `bytes_stream()`.
 - **Memory:** BM25 scoring with CJK-aware single-character tokenization. The algorithm is identical in Rust and TS — changes to one should be mirrored.
 - **Persistence:** TUI uses filesystem (`~/.limerence/`). Web uses IndexedDB with key prefixes (`session:`, `note:`, `file:`, `memory:entries`).
-- **Character cards:** SillyTavern V2 JSON format. Default card is `config/default_character.json`, embedded in the Rust binary via `include_str!` and served as `public/default_character.json` for web.
+- **Character cards:** SillyTavern V2 JSON format. Default card is `config/default_character.json`, embedded in the Rust binary via `include_str!` and served as `pi-web/public/default_character.json` (mainline) and `legacy-web/public/default_character.json` (legacy).
 - **Error types:** Rust uses `thiserror` (`LlmError`). Web surfaces errors as `AgentEvent { type: "error" }`.
 
 ## Conventions
