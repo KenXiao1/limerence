@@ -476,3 +476,157 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ── Light mode refinements ────────────────────────────────────
+ * The base theme uses 0-chroma OKLch grays everywhere, making
+ * light mode look flat and washed out. These overrides add depth,
+ * subtle color accents, and better visual hierarchy.
+ * Only applies when .dark is NOT on <html>.
+ * ─────────────────────────────────────────────────────────────── */
+
+:root:not(.dark) .limerence-dialog {
+  background: #fff;
+  border-color: #e0e0e0;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+:root:not(.dark) .limerence-dialog-header {
+  background: #fafafa;
+  border-bottom-color: #e5e5e5;
+}
+
+:root:not(.dark) .limerence-dialog-footer {
+  background: #fafafa;
+  border-top-color: #e5e5e5;
+}
+
+/* Tabs — active tab gets a colored accent */
+:root:not(.dark) .limerence-settings-tab {
+  color: #71717a;
+}
+
+:root:not(.dark) .limerence-settings-tab:hover {
+  background: #f0f0f5;
+  color: #3f3f46;
+}
+
+:root:not(.dark) .limerence-settings-tab.active {
+  background: #eff1ff;
+  color: #4338ca;
+  font-weight: 600;
+}
+
+/* Inputs — subtle background instead of transparent */
+:root:not(.dark) .limerence-settings-input,
+:root:not(.dark) .limerence-settings-textarea,
+:root:not(.dark) .limerence-settings-select {
+  background: #f7f7f8;
+  border-color: #dcdce0;
+}
+
+:root:not(.dark) .limerence-settings-input:focus,
+:root:not(.dark) .limerence-settings-textarea:focus {
+  background: #fff;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+:root:not(.dark) .limerence-settings-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+/* Primary button — indigo instead of flat dark gray */
+:root:not(.dark) .limerence-btn-primary {
+  background: #4f46e5;
+  color: #fff;
+}
+
+:root:not(.dark) .limerence-btn-primary:hover {
+  background: #4338ca;
+  opacity: 1;
+}
+
+/* Ghost button */
+:root:not(.dark) .limerence-btn-ghost {
+  border-color: #dcdce0;
+  color: #3f3f46;
+}
+
+:root:not(.dark) .limerence-btn-ghost:hover {
+  background: #f0f0f5;
+  border-color: #c4c4cc;
+}
+
+/* Character items — better card feel */
+:root:not(.dark) .limerence-char-item {
+  border-color: #e5e5ea;
+  background: #fafafa;
+}
+
+:root:not(.dark) .limerence-char-item:hover {
+  background: #eff1ff;
+  border-color: #c7c8f5;
+}
+
+:root:not(.dark) .limerence-char-delete {
+  border-color: #e5e5ea;
+  background: #fafafa;
+}
+
+:root:not(.dark) .limerence-char-import-btn {
+  border-color: #dcdce0;
+}
+
+:root:not(.dark) .limerence-char-import-btn:hover {
+  background: #f0f0f5;
+}
+
+/* Lorebook / Regex / Group member entries — subtle card background */
+:root:not(.dark) .limerence-lorebook-entry,
+:root:not(.dark) .limerence-regex-entry {
+  background: #fafafa;
+  border-color: #e5e5ea;
+}
+
+:root:not(.dark) .limerence-lorebook-form,
+:root:not(.dark) .limerence-regex-form {
+  border-bottom-color: #e5e5ea;
+}
+
+/* Lorebook keywords — colored accent */
+:root:not(.dark) .limerence-lorebook-keywords {
+  color: #4f46e5;
+}
+
+/* Preset items — better active state */
+:root:not(.dark) .limerence-preset-item {
+  border-color: #e5e5ea;
+  background: #fafafa;
+}
+
+:root:not(.dark) .limerence-preset-item:hover {
+  background: #f0f0f5;
+  border-color: #d0d0d8;
+}
+
+:root:not(.dark) .limerence-preset-item.active {
+  border-color: #6366f1;
+  background: #eff1ff;
+}
+
+/* Regex scope badge */
+:root:not(.dark) .limerence-regex-scope {
+  background: #eff1ff;
+  color: #4f46e5;
+}
+
+/* Icon buttons */
+:root:not(.dark) .limerence-btn-icon:hover {
+  background: #f0f0f5;
+}
+
+/* Close button */
+:root:not(.dark) .limerence-dialog-close:hover {
+  background: #f0f0f5;
+}
