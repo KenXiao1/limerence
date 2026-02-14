@@ -125,9 +125,12 @@ const zh: Record<string, string> = {
   "char.title": "选择角色",
   "char.default": "默认角色",
   "char.delete": "删除角色",
-  "char.import": "导入角色卡 (JSON)",
+  "char.import": "导入角色卡 (JSON/PNG)",
+  "char.exportJson": "导出 JSON",
+  "char.exportPng": "导出 PNG",
+  "char.pngNoData": "PNG 文件中未找到角色卡数据",
   "char.defaultName": "默认角色",
-  "char.importFailed": "导入失败：无法解析 JSON 文件",
+  "char.importFailed": "导入失败：无法解析文件",
 
   // ── Tool labels (UI only, descriptions stay zh for LLM) ─
   "tool.memorySearch": "记忆搜索",

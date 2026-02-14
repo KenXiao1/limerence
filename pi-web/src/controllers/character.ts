@@ -39,6 +39,29 @@ export function validateCharacterCard(
     return { card: data as CharacterCard, error: null };
   }
 
+  // SillyTavern V3 format — normalize to V2 (V3 data is a superset of V2)
+  if (obj.spec === "chara_card_v3" && obj.data && typeof obj.data === "object") {
+    const d = obj.data as Record<string, unknown>;
+    if (typeof d.name !== "string" || !d.name.trim()) {
+      return { card: null, error: "角色卡缺少名字 (data.name)" };
+    }
+    const card: CharacterCard = {
+      spec: "chara_card_v2",
+      spec_version: "2.0",
+      data: {
+        name: String(d.name),
+        description: String(d.description ?? ""),
+        personality: String(d.personality ?? ""),
+        scenario: String(d.scenario ?? ""),
+        first_mes: String(d.first_mes ?? ""),
+        system_prompt: String(d.system_prompt ?? ""),
+        mes_example: String(d.mes_example ?? ""),
+        extensions: (d.extensions as Record<string, unknown>) ?? {},
+      },
+    };
+    return { card, error: null };
+  }
+
   // Simple format: just has name + description at top level
   if (typeof obj.name === "string" && obj.name.trim()) {
     const card: CharacterCard = {
@@ -58,7 +81,7 @@ export function validateCharacterCard(
     return { card, error: null };
   }
 
-  return { card: null, error: "无法识别的角色卡格式（需要 SillyTavern V2 或包含 name 字段）" };
+  return { card: null, error: "无法识别的角色卡格式（需要 SillyTavern V2/V3 或包含 name 字段）" };
 }
 
 /**

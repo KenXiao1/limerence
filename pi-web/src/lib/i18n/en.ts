@@ -125,9 +125,12 @@ const en: Record<string, string> = {
   "char.title": "Select Character",
   "char.default": "Default character",
   "char.delete": "Delete character",
-  "char.import": "Import character card (JSON)",
+  "char.import": "Import character card (JSON/PNG)",
+  "char.exportJson": "Export JSON",
+  "char.exportPng": "Export PNG",
+  "char.pngNoData": "No character card data found in PNG file",
   "char.defaultName": "Default character",
-  "char.importFailed": "Import failed: unable to parse JSON file",
+  "char.importFailed": "Import failed: unable to parse file",
 
   // ── Tool labels (UI only) ──────────────────────────────
   "tool.memorySearch": "Memory search",

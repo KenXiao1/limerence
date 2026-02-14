@@ -121,6 +121,26 @@
   white-space: nowrap;
 }
 
+.limerence-char-export {
+  width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+
+.limerence-char-export:hover {
+  background: hsl(var(--accent));
+  color: hsl(var(--foreground));
+}
+
 .limerence-char-delete {
   width: 32px;
   display: flex;
@@ -565,6 +585,16 @@
 }
 
 :root:not(.dark) .limerence-char-item:hover {
+  background: #eff1ff;
+  border-color: #c7c8f5;
+}
+
+:root:not(.dark) .limerence-char-export {
+  border-color: #e5e5ea;
+  background: #fafafa;
+}
+
+:root:not(.dark) .limerence-char-export:hover {
   background: #eff1ff;
   border-color: #c7c8f5;
 }

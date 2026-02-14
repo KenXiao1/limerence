@@ -19,6 +19,8 @@ export interface CharacterSelectorActions {
   onSelect: (entry: CharacterEntry | null) => void; // null = default
   onImport: (file: File) => void;
   onDelete: (id: string) => void;
+  onExportJson: (entry: CharacterEntry) => void;
+  onExportPng: (entry: CharacterEntry) => void;
   onClose: () => void;
 }
 
@@ -61,6 +63,16 @@ export function renderCharacterSelector(
                 <div class="limerence-char-desc">${characterPreview(entry.card)}</div>
               </button>
               <button
+                class="limerence-char-export"
+                @click=${() => actions.onExportJson(entry)}
+                title="${t("char.exportJson")}"
+              >J</button>
+              <button
+                class="limerence-char-export"
+                @click=${() => actions.onExportPng(entry)}
+                title="${t("char.exportPng")}"
+              >P</button>
+              <button
                 class="limerence-char-delete"
                 @click=${() => actions.onDelete(entry.id)}
                 title="${t("char.delete")}"
@@ -77,7 +89,7 @@ export function renderCharacterSelector(
           <label class="limerence-char-import-btn">
             <input
               type="file"
-              accept=".json"
+              accept=".json,.png"
               style="display:none"
               @change=${(e: Event) => {
                 const file = (e.target as HTMLInputElement).files?.[0];

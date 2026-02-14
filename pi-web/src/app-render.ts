@@ -236,6 +236,8 @@ function renderCharacterSelectorDialog() {
     onSelect: (entry) => { void handleCharacterSelect(entry); },
     onImport: (file) => { void handleCharacterImport(file); },
     onDelete: (id) => { void handleCharacterDelete(id); },
+    onExportJson: (entry) => { handleCharacterExportJson(entry); },
+    onExportPng: (entry) => { void handleCharacterExportPng(entry); },
     onClose: () => { state.characterSelectorOpen = false; state.characterImportError = ""; },
   };
 
@@ -259,8 +261,18 @@ async function handleCharacterSelect(entry: import("./controllers/character").Ch
 
 async function handleCharacterImport(file: File) {
   try {
-    const text = await file.text();
-    const json = JSON.parse(text);
+    let json: unknown;
+    if (file.name.toLowerCase().endsWith(".png")) {
+      const { readCharaFromPng } = await import("./controllers/character-png");
+      json = await readCharaFromPng(file);
+      if (json == null) {
+        state.characterImportError = t("char.pngNoData");
+        return;
+      }
+    } else {
+      const text = await file.text();
+      json = JSON.parse(text);
+    }
     const result = validateCharacterCard(json);
     if (!result.card) {
       state.characterImportError = result.error;
@@ -273,6 +285,22 @@ async function handleCharacterImport(file: File) {
   } catch {
     state.characterImportError = t("app.importFailed");
   }
+}
+
+function handleCharacterExportJson(entry: import("./controllers/character").CharacterEntry) {
+  downloadJson(entry.card, `${entry.name}.json`);
+}
+
+async function handleCharacterExportPng(entry: import("./controllers/character").CharacterEntry) {
+  const { writeCharaToPng, generatePlaceholderPng } = await import("./controllers/character-png");
+  const placeholder = await generatePlaceholderPng(entry.name);
+  const pngBlob = await writeCharaToPng(entry.card, placeholder);
+  const url = URL.createObjectURL(pngBlob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${entry.name}.png`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 async function handleCharacterDelete(id: string) {
