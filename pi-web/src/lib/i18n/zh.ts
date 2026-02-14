@@ -82,6 +82,26 @@ const zh: Record<string, string> = {
   "regex.enable": "启用",
   "regex.delete": "删除",
 
+  // ── Prompt presets ────────────────────────────────────────
+  "settings.prompt": "提示词",
+  "prompt.hint": "导入 SillyTavern 提示词预设，自定义系统提示词的组装方式。",
+  "prompt.import": "导入预设",
+  "prompt.export": "导出预设",
+  "prompt.clear": "清除预设",
+  "prompt.active": "当前预设",
+  "prompt.none": "无（使用默认提示词）",
+  "prompt.roleSystem": "系统",
+  "prompt.roleUser": "用户",
+  "prompt.roleAssistant": "助手",
+  "prompt.marker": "标记",
+  "prompt.segments": "提示词片段",
+  "prompt.importError": "导入失败",
+
+  // ── Regex IO ─────────────────────────────────────────────
+  "regex.export": "导出规则",
+  "regex.import": "导入规则",
+  "regex.importHint": "支持 Limerence 和 SillyTavern 格式",
+
   // ── Group chat ──────────────────────────────────────────
   "group.hint": "启用群聊后，多个角色会轮流回复你的消息。需要先在角色管理中导入角色。",
   "group.enabled": "群聊已开启",

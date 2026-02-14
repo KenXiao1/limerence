@@ -33,8 +33,17 @@ import { createLorebookEntry } from "./controllers/lorebook";
 import { createRegexRule, validateRegex } from "./controllers/regex-rules";
 import { REGEX_RULES_KEY } from "./controllers/regex-rules";
 import { ACTIVE_PRESET_KEY } from "./controllers/presets";
-import { loadDefaultCharacter, PERSONA_SETTINGS_KEY } from "./lib/character";
+import { loadDefaultCharacter, PERSONA_SETTINGS_KEY, buildSystemPrompt, buildSystemPromptFromPreset } from "./lib/character";
 import type { Persona } from "./lib/character";
+import {
+  importSTPreset,
+  exportPreset,
+  toggleSegment,
+  ACTIVE_PROMPT_PRESET_KEY,
+  PROMPT_PRESETS_KEY,
+} from "./controllers/prompt-presets";
+import { importRegexRules, exportRegexRules } from "./controllers/regex-io";
+import { downloadJson } from "./controllers/session-io";
 import {
   addMember,
   removeMember,
@@ -311,6 +320,9 @@ function renderLimerenceSettingsDialog() {
     regexDraftReplacement: state.regexDraftReplacement,
     regexDraftScope: state.regexDraftScope,
     regexError: state.regexError,
+    promptPresets: state.promptPresets,
+    activePromptPreset: state.activePromptPreset,
+    promptPresetImportError: state.promptPresetImportError,
     groupChat: state.groupChat,
     characterList: state.characterList,
   };
@@ -345,6 +357,14 @@ function renderLimerenceSettingsDialog() {
       else if (field === "replacement") state.regexDraftReplacement = value;
       else if (field === "scope") state.regexDraftScope = value as any;
     },
+    onRegexExport: () => { handleRegexExport(); },
+    onRegexImport: (file) => { void handleRegexImport(file); },
+
+    // Prompt presets
+    onPromptPresetImport: (file) => { void handlePromptPresetImport(file); },
+    onPromptPresetExport: () => { handlePromptPresetExport(); },
+    onPromptPresetClear: () => { void handlePromptPresetClear(); },
+    onPromptPresetToggleSegment: (segmentId) => { void handlePromptPresetToggleSegment(segmentId); },
 
     // Group chat
     onGroupToggle: () => { void handleGroupToggle(); },
@@ -420,6 +440,98 @@ async function handleRegexToggle(id: string) {
     r.id === id ? { ...r, enabled: !r.enabled } : r,
   );
   await storage.settings.set(REGEX_RULES_KEY, state.regexRules);
+}
+
+// ── Regex IO action handlers ────────────────────────────────
+
+function handleRegexExport() {
+  const data = exportRegexRules(state.regexRules);
+  downloadJson(data, `limerence-regex-${new Date().toISOString().slice(0, 10)}.json`);
+}
+
+async function handleRegexImport(file: File) {
+  try {
+    const text = await file.text();
+    const json = JSON.parse(text);
+    const result = importRegexRules(json);
+    if (result.error || !result.rules) {
+      state.regexError = result.error || "导入失败";
+      return;
+    }
+    // Merge: add imported rules, skip duplicates by name+pattern
+    const existing = new Set(state.regexRules.map((r) => `${r.name}::${r.pattern}`));
+    const newRules = result.rules.filter((r) => !existing.has(`${r.name}::${r.pattern}`));
+    state.regexRules = [...state.regexRules, ...newRules];
+    await storage.settings.set(REGEX_RULES_KEY, state.regexRules);
+    state.regexError = "";
+  } catch {
+    state.regexError = "导入失败：无法解析 JSON 文件";
+  }
+}
+
+// ── Prompt preset action handlers ───────────────────────────
+
+async function handlePromptPresetImport(file: File) {
+  try {
+    const text = await file.text();
+    const json = JSON.parse(text);
+    const result = importSTPreset(json);
+    if (result.error || !result.preset) {
+      state.promptPresetImportError = result.error || "导入失败";
+      return;
+    }
+    state.activePromptPreset = result.preset;
+    state.promptPresets = [...state.promptPresets, result.preset];
+    await storage.settings.set(ACTIVE_PROMPT_PRESET_KEY, result.preset);
+    await storage.settings.set(PROMPT_PRESETS_KEY, state.promptPresets);
+    state.promptPresetImportError = "";
+
+    // Rebuild system prompt with the new preset
+    rebuildSystemPrompt();
+  } catch {
+    state.promptPresetImportError = "导入失败：无法解析 JSON 文件";
+  }
+}
+
+function handlePromptPresetExport() {
+  if (!state.activePromptPreset) return;
+  const data = exportPreset(state.activePromptPreset);
+  downloadJson(data, `limerence-prompt-preset-${new Date().toISOString().slice(0, 10)}.json`);
+}
+
+async function handlePromptPresetClear() {
+  state.activePromptPreset = undefined;
+  await storage.settings.set(ACTIVE_PROMPT_PRESET_KEY, null);
+
+  // Restore default system prompt
+  rebuildSystemPrompt();
+}
+
+async function handlePromptPresetToggleSegment(segmentId: string) {
+  if (!state.activePromptPreset) return;
+  state.activePromptPreset = toggleSegment(state.activePromptPreset, segmentId);
+  await storage.settings.set(ACTIVE_PROMPT_PRESET_KEY, state.activePromptPreset);
+
+  // Update the presets list too
+  state.promptPresets = state.promptPresets.map((p) =>
+    p.id === state.activePromptPreset!.id ? state.activePromptPreset! : p,
+  );
+  await storage.settings.set(PROMPT_PRESETS_KEY, state.promptPresets);
+
+  rebuildSystemPrompt();
+}
+
+function rebuildSystemPrompt() {
+  if (!state.agent || !state.character) return;
+  if (state.activePromptPreset) {
+    state.agent.state.systemPrompt = buildSystemPromptFromPreset(
+      state.activePromptPreset,
+      state.character,
+      state.persona,
+    );
+  } else {
+    state.agent.state.systemPrompt = buildSystemPrompt(state.character, state.persona);
+  }
 }
 
 // ── Group chat action handlers ───────────────────────────────

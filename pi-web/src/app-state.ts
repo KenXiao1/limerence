@@ -5,6 +5,7 @@ import type { RegexRule } from "./controllers/regex-rules";
 import type { GenerationPreset } from "./controllers/presets";
 import type { CharacterEntry } from "./controllers/character";
 import type { SettingsTab } from "./views/settings-panels";
+import type { PromptPresetConfig } from "./controllers/prompt-presets";
 import type { GroupChatConfig } from "./controllers/group-chat";
 import { DEFAULT_GROUP_CONFIG } from "./controllers/group-chat";
 import {
@@ -183,6 +184,11 @@ const _rawState = {
   regexDraftReplacement: "",
   regexDraftScope: "output" as RegexRule["scope"],
   regexError: "",
+
+  // prompt presets
+  promptPresets: [] as PromptPresetConfig[],
+  activePromptPreset: undefined as PromptPresetConfig | undefined,
+  promptPresetImportError: "",
 
   // group chat
   groupChat: { ...DEFAULT_GROUP_CONFIG } as GroupChatConfig,

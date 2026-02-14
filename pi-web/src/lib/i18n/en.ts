@@ -82,6 +82,26 @@ const en: Record<string, string> = {
   "regex.enable": "Enable",
   "regex.delete": "Delete",
 
+  // ── Prompt presets ────────────────────────────────────────
+  "settings.prompt": "Prompts",
+  "prompt.hint": "Import SillyTavern prompt presets to customize system prompt assembly.",
+  "prompt.import": "Import Preset",
+  "prompt.export": "Export Preset",
+  "prompt.clear": "Clear Preset",
+  "prompt.active": "Active Preset",
+  "prompt.none": "None (using default prompt)",
+  "prompt.roleSystem": "System",
+  "prompt.roleUser": "User",
+  "prompt.roleAssistant": "Assistant",
+  "prompt.marker": "Marker",
+  "prompt.segments": "Prompt Segments",
+  "prompt.importError": "Import failed",
+
+  // ── Regex IO ─────────────────────────────────────────────
+  "regex.export": "Export Rules",
+  "regex.import": "Import Rules",
+  "regex.importHint": "Supports Limerence and SillyTavern formats",
+
   // ── Group chat ──────────────────────────────────────────
   "group.hint": "When group chat is enabled, multiple characters take turns replying. Import characters first in character management.",
   "group.enabled": "Group chat ON",

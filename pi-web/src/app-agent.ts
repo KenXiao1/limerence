@@ -14,7 +14,9 @@ import {
   PROXY_MODE_KEY,
   CHAT_PATH,
 } from "./app-state";
-import { buildSystemPrompt, loadDefaultCharacter, PERSONA_SETTINGS_KEY, type Persona } from "./lib/character";
+import { buildSystemPrompt, buildSystemPromptFromPreset, loadDefaultCharacter, PERSONA_SETTINGS_KEY, type Persona } from "./lib/character";
+import type { PromptPresetConfig } from "./controllers/prompt-presets";
+import { ACTIVE_PROMPT_PRESET_KEY, PROMPT_PRESETS_KEY } from "./controllers/prompt-presets";
 import { createLimerenceTools } from "./lib/tools";
 import { handleAgentFileOperation } from "./app-workspace";
 import { generateTitle, indexMessageIntoMemory, saveSession, newSession } from "./app-session";
@@ -190,8 +192,17 @@ async function injectLorebook(agent: Agent) {
 
   if (injection) {
     // Rebuild system prompt with lorebook injection appended
-    const basePrompt = buildSystemPrompt(state.character!, state.persona);
-    agent.state.systemPrompt = `${basePrompt}\n\n${injection}`;
+    if (state.activePromptPreset) {
+      agent.state.systemPrompt = buildSystemPromptFromPreset(
+        state.activePromptPreset,
+        state.character!,
+        state.persona,
+        injection,
+      );
+    } else {
+      const basePrompt = buildSystemPrompt(state.character!, state.persona);
+      agent.state.systemPrompt = `${basePrompt}\n\n${injection}`;
+    }
   }
 }
 
@@ -277,7 +288,9 @@ export async function createAgent(initialState?: Partial<AgentState>) {
 
   const agent = new Agent({
     initialState: {
-      systemPrompt: buildSystemPrompt(state.character!, state.persona),
+      systemPrompt: state.activePromptPreset
+        ? buildSystemPromptFromPreset(state.activePromptPreset, state.character!, state.persona)
+        : buildSystemPrompt(state.character!, state.persona),
       model,
       thinkingLevel: initialState?.thinkingLevel ?? "off",
       messages,
@@ -466,6 +479,22 @@ export async function ensureChatRuntime() {
   try {
     const rules = await storage.settings.get<RegexRule[]>(REGEX_RULES_KEY);
     if (Array.isArray(rules)) state.regexRules = rules;
+  } catch {
+    // ignore
+  }
+
+  // Load prompt presets
+  try {
+    const presets = await storage.settings.get<PromptPresetConfig[]>(PROMPT_PRESETS_KEY);
+    if (Array.isArray(presets)) state.promptPresets = presets;
+  } catch {
+    // ignore
+  }
+
+  // Load active prompt preset
+  try {
+    const activePreset = await storage.settings.get<PromptPresetConfig>(ACTIVE_PROMPT_PRESET_KEY);
+    if (activePreset?.id) state.activePromptPreset = activePreset;
   } catch {
     // ignore
   }

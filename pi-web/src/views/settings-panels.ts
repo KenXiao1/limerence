@@ -8,12 +8,13 @@ import { t } from "../lib/i18n";
 import type { LorebookEntry } from "../lib/storage";
 import type { GenerationPreset } from "../controllers/presets";
 import type { RegexRule } from "../controllers/regex-rules";
+import type { PromptPresetConfig } from "../controllers/prompt-presets";
 import type { GroupChatConfig, TurnStrategy } from "../controllers/group-chat";
 import type { CharacterEntry } from "../controllers/character";
 import type { Persona } from "../lib/character";
 import { BUILTIN_PRESETS } from "../controllers/presets";
 
-export type SettingsTab = "persona" | "lorebook" | "presets" | "regex" | "group";
+export type SettingsTab = "persona" | "lorebook" | "presets" | "regex" | "prompt" | "group";
 
 export interface LimerenceSettingsState {
   isOpen: boolean;
@@ -38,6 +39,11 @@ export interface LimerenceSettingsState {
   regexDraftReplacement: string;
   regexDraftScope: RegexRule["scope"];
   regexError: string;
+
+  // Prompt presets
+  promptPresets: PromptPresetConfig[];
+  activePromptPreset: PromptPresetConfig | undefined;
+  promptPresetImportError: string;
 
   // Group chat
   groupChat: GroupChatConfig;
@@ -66,6 +72,14 @@ export interface LimerenceSettingsActions {
   onRegexDelete: (id: string) => void;
   onRegexToggle: (id: string) => void;
   onRegexDraftChange: (field: "name" | "pattern" | "replacement" | "scope", value: string) => void;
+  onRegexExport: () => void;
+  onRegexImport: (file: File) => void;
+
+  // Prompt presets
+  onPromptPresetImport: (file: File) => void;
+  onPromptPresetExport: () => void;
+  onPromptPresetClear: () => void;
+  onPromptPresetToggleSegment: (segmentId: string) => void;
 
   // Group chat
   onGroupToggle: () => void;
@@ -87,6 +101,7 @@ export function renderLimerenceSettings(
     { id: "lorebook", label: t("settings.lorebook") },
     { id: "presets", label: t("settings.presets") },
     { id: "regex", label: t("settings.regex") },
+    { id: "prompt", label: t("settings.prompt") },
     { id: "group", label: t("settings.group") },
   ];
 
@@ -111,6 +126,7 @@ export function renderLimerenceSettings(
           ${s.activeTab === "lorebook" ? renderLorebookTab(s, a) : null}
           ${s.activeTab === "presets" ? renderPresetsTab(s, a) : null}
           ${s.activeTab === "regex" ? renderRegexTab(s, a) : null}
+          ${s.activeTab === "prompt" ? renderPromptTab(s, a) : null}
           ${s.activeTab === "group" ? renderGroupTab(s, a) : null}
         </div>
       </div>
@@ -237,6 +253,20 @@ function renderRegexTab(s: LimerenceSettingsState, a: LimerenceSettingsActions):
     <div class="limerence-settings-section">
       <p class="limerence-settings-hint">${t("regex.hint")}</p>
 
+      <!-- Import / Export -->
+      <div class="limerence-settings-actions" style="margin-bottom:8px">
+        <label class="limerence-btn-ghost" style="cursor:pointer">
+          ${t("regex.import")}
+          <input type="file" accept=".json" style="display:none" @change=${(e: Event) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
+            if (file) a.onRegexImport(file);
+            (e.target as HTMLInputElement).value = "";
+          }} />
+        </label>
+        <button class="limerence-btn-ghost" @click=${a.onRegexExport} ?disabled=${s.regexRules.length === 0}>${t("regex.export")}</button>
+        <span class="limerence-settings-hint" style="font-size:0.75rem;margin:0">${t("regex.importHint")}</span>
+      </div>
+
       <!-- Add new rule -->
       <div class="limerence-regex-form">
         <input
@@ -294,6 +324,66 @@ function renderRegexTab(s: LimerenceSettingsState, a: LimerenceSettingsActions):
           <div class="limerence-regex-pattern">/${rule.pattern}/${rule.flags} → ${rule.replacement || t("regex.emptyReplacement")}</div>
         </div>
       `)}
+    </div>
+  `;
+}
+
+// ── Prompt presets tab ────────────────────────────────────────
+
+function renderPromptTab(s: LimerenceSettingsState, a: LimerenceSettingsActions): TemplateResult {
+  const preset = s.activePromptPreset;
+  const roleLabel = (role: string) => {
+    if (role === "user") return t("prompt.roleUser");
+    if (role === "assistant") return t("prompt.roleAssistant");
+    return t("prompt.roleSystem");
+  };
+
+  return html`
+    <div class="limerence-settings-section">
+      <p class="limerence-settings-hint">${t("prompt.hint")}</p>
+
+      <!-- Import / Export / Clear -->
+      <div class="limerence-settings-actions" style="margin-bottom:8px">
+        <label class="limerence-btn-primary" style="cursor:pointer">
+          ${t("prompt.import")}
+          <input type="file" accept=".json" style="display:none" @change=${(e: Event) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
+            if (file) a.onPromptPresetImport(file);
+            (e.target as HTMLInputElement).value = "";
+          }} />
+        </label>
+        <button class="limerence-btn-ghost" @click=${a.onPromptPresetExport} ?disabled=${!preset}>${t("prompt.export")}</button>
+        <button class="limerence-btn-ghost" @click=${a.onPromptPresetClear} ?disabled=${!preset}>${t("prompt.clear")}</button>
+      </div>
+
+      ${s.promptPresetImportError ? html`<div class="limerence-char-error">${s.promptPresetImportError}</div>` : null}
+
+      <!-- Active preset info -->
+      <div style="margin-bottom:8px">
+        <span class="limerence-settings-label">${t("prompt.active")}：</span>
+        <span>${preset ? preset.name : t("prompt.none")}</span>
+      </div>
+
+      <!-- Segment list -->
+      ${preset ? html`
+        <label class="limerence-settings-label">${t("prompt.segments")}</label>
+        ${preset.segments.map((seg) => html`
+          <div class="limerence-regex-entry ${seg.enabled ? "" : "disabled"}">
+            <div class="limerence-regex-entry-header">
+              <span class="limerence-regex-name">${seg.name || seg.identifier}</span>
+              <span class="limerence-regex-scope">${seg.marker ? t("prompt.marker") : roleLabel(seg.role)}</span>
+              <div class="limerence-regex-entry-actions">
+                <button class="limerence-btn-icon" @click=${() => a.onPromptPresetToggleSegment(seg.identifier)} title="${seg.enabled ? t("regex.disable") : t("regex.enable")}">
+                  ${seg.enabled ? "●" : "○"}
+                </button>
+              </div>
+            </div>
+            ${!seg.marker && seg.content.trim() ? html`
+              <div class="limerence-regex-pattern">${seg.content.length > 100 ? seg.content.slice(0, 100) + "..." : seg.content}</div>
+            ` : null}
+          </div>
+        `)}
+      ` : null}
     </div>
   `;
 }
