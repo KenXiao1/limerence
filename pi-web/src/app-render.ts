@@ -43,6 +43,7 @@ import {
   GROUP_CHAT_KEY,
 } from "./controllers/group-chat";
 import type { TurnStrategy } from "./controllers/group-chat";
+import { t } from "./lib/i18n";
 
 // ── Lit render helpers ─────────────────────────────────────────
 
@@ -156,7 +157,7 @@ export function renderChatView() {
         <button
           class="limerence-focus-exit"
           @click=${() => { state.focusMode = false; }}
-          title="退出专注模式 (Esc)"
+          title="${t("app.exitFocus")}"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25" />
@@ -217,7 +218,7 @@ function renderMessageActionsBar() {
 function renderCharacterSelectorDialog() {
   const selectorState: CharacterSelectorState = {
     characters: state.characterList,
-    defaultCharacterName: state.character?.data.name ?? "默认角色",
+    defaultCharacterName: state.character?.data.name ?? t("char.defaultName"),
     isOpen: state.characterSelectorOpen,
     importError: state.characterImportError,
   };
@@ -261,7 +262,7 @@ async function handleCharacterImport(file: File) {
     state.characterList = await limerenceStorage.loadCharacters();
     state.characterImportError = "";
   } catch {
-    state.characterImportError = "导入失败：无法解析 JSON 文件";
+    state.characterImportError = t("app.importFailed");
   }
 }
 
@@ -285,7 +286,7 @@ async function handleSessionImport(file: File) {
     await newSession();
     if (state.agent && session.messages.length > 0) {
       state.agent.replaceMessages(session.messages);
-      state.currentTitle = session.title || "导入的会话";
+      state.currentTitle = session.title || t("app.importedSession");
     }
   } catch (e) {
     console.error("Session import failed:", e);

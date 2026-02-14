@@ -2,6 +2,7 @@ import type { AgentTool } from "@mariozechner/pi-agent-core";
 import { Type, type Static } from "@mariozechner/pi-ai";
 import { MemoryIndex } from "./memory";
 import { LimerenceStorage } from "./storage";
+import { t } from "./i18n";
 
 const memorySearchSchema = Type.Object({
   query: Type.String({ description: "搜索关键词" }),
@@ -69,7 +70,7 @@ export function createLimerenceTools(
   hooks: LimerenceToolHooks = {},
 ): AgentTool<any>[] {
   const memorySearchTool: AgentTool<typeof memorySearchSchema, { query: string }> = {
-    label: "记忆搜索",
+    label: t("tool.memorySearch"),
     name: "memory_search",
     description: "搜索与用户的历史对话记忆。用于回忆用户之前提到的事情。",
     parameters: memorySearchSchema,
@@ -109,7 +110,7 @@ export function createLimerenceTools(
   };
 
   const webSearchTool: AgentTool<typeof webSearchSchema, { query: string }> = {
-    label: "网络搜索",
+    label: t("tool.webSearch"),
     name: "web_search",
     description: "搜索互联网获取实时信息。用于回答时事、事实性问题等。",
     parameters: webSearchSchema,
@@ -166,7 +167,7 @@ export function createLimerenceTools(
   };
 
   const noteWriteTool: AgentTool<typeof noteWriteSchema, { title: string }> = {
-    label: "写笔记",
+    label: t("tool.noteWrite"),
     name: "note_write",
     description: "写入持久化笔记。用于记录用户的重要信息、偏好、经历等。",
     parameters: noteWriteSchema,
@@ -183,7 +184,7 @@ export function createLimerenceTools(
   };
 
   const noteReadTool: AgentTool<typeof noteReadSchema, { title: string }> = {
-    label: "读笔记",
+    label: t("tool.noteRead"),
     name: "note_read",
     description: "读取笔记。传入标题读取指定笔记，留空列出所有笔记。",
     parameters: noteReadSchema,
@@ -198,7 +199,7 @@ export function createLimerenceTools(
   };
 
   const fileReadTool: AgentTool<typeof fileReadSchema, { path: string }> = {
-    label: "读文件",
+    label: t("tool.fileRead"),
     name: "file_read",
     description: "读取工作区文件内容。可以读取文件或列出目录。路径相对于工作区根目录。",
     parameters: fileReadSchema,
@@ -220,7 +221,7 @@ export function createLimerenceTools(
   };
 
   const fileWriteTool: AgentTool<typeof fileWriteSchema, { path: string }> = {
-    label: "写文件",
+    label: t("tool.fileWrite"),
     name: "file_write",
     description: "在工作区创建或写入文件。路径相对于工作区根目录，自动创建子目录。",
     parameters: fileWriteSchema,

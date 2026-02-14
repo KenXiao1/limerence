@@ -4,6 +4,7 @@
  */
 
 import type { AgentMessage } from "@mariozechner/pi-agent-core";
+import { t } from "../lib/i18n";
 
 export interface ExportedSession {
   version: 1;
@@ -50,7 +51,7 @@ export function validateImportData(
   data: unknown,
 ): { session: ExportedSession["session"]; error: null } | { session: null; error: string } {
   if (!data || typeof data !== "object") {
-    return { session: null, error: "无效的 JSON 数据" };
+    return { session: null, error: t("data.invalidJson") };
   }
 
   const obj = data as Record<string, unknown>;
@@ -59,7 +60,7 @@ export function validateImportData(
   if (obj.version === 1 && obj.session && typeof obj.session === "object") {
     const s = obj.session as Record<string, unknown>;
     if (!Array.isArray(s.messages)) {
-      return { session: null, error: "会话数据缺少 messages 数组" };
+      return { session: null, error: t("data.missingMessages") };
     }
     return { session: s as ExportedSession["session"], error: null };
   }
@@ -69,7 +70,7 @@ export function validateImportData(
     return {
       session: {
         id: String(obj.id ?? crypto.randomUUID()),
-        title: String(obj.title ?? "导入的会话"),
+        title: String(obj.title ?? t("data.importedSession")),
         createdAt: String(obj.createdAt ?? new Date().toISOString()),
         model: obj.model ?? null,
         thinkingLevel: String(obj.thinkingLevel ?? "off"),
@@ -79,7 +80,7 @@ export function validateImportData(
     };
   }
 
-  return { session: null, error: "无法识别的会话格式" };
+  return { session: null, error: t("data.unknownFormat") };
 }
 
 /**

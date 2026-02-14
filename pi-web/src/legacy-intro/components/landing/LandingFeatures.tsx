@@ -1,26 +1,30 @@
 import FourierHeart from "../FourierHeart";
-import { LANDING_FEATURES } from "./landing-data";
+import { getLandingFeatures } from "./landing-data";
+import { useI18n } from "../../hooks/useI18n";
 
 interface LandingFeaturesProps {
   isDark: boolean;
 }
 
 export default function LandingFeatures({ isDark }: LandingFeaturesProps) {
+  const { t } = useI18n();
+  const features = getLandingFeatures();
+
   return (
     <section className="relative z-10 mx-auto max-w-6xl px-6 pb-24">
       <div className="mb-12 text-center">
         <h2
           className="font-serif text-2xl font-bold tracking-tight sm:text-3xl"
         >
-          核心能力
+          {t("landing.featuresTitle")}
         </h2>
-        <p className="mt-2 text-sm text-zinc-500">数学驱动的生命体，守护你的每一段记忆</p>
+        <p className="mt-2 text-sm text-zinc-500">{t("landing.featuresSubtitle")}</p>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
-        {LANDING_FEATURES.map((feature, index) => (
+        {features.map((feature, index) => (
           <div
-            key={feature.title}
+            key={index}
             className={`group relative overflow-hidden rounded-2xl border p-6 transition-all hover:scale-[1.01] ${
               isDark
                 ? "border-zinc-800/80 bg-zinc-900/40 backdrop-blur-sm hover:border-zinc-700"

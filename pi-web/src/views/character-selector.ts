@@ -4,6 +4,7 @@
  */
 
 import { html, type TemplateResult } from "lit";
+import { t } from "../lib/i18n";
 import type { CharacterEntry } from "../controllers/character";
 import { characterPreview } from "../controllers/character";
 
@@ -35,7 +36,7 @@ export function renderCharacterSelector(
     }}>
       <div class="limerence-dialog">
         <div class="limerence-dialog-header">
-          <span class="limerence-dialog-title">选择角色</span>
+          <span class="limerence-dialog-title">${t("char.title")}</span>
           <button class="limerence-dialog-close" @click=${actions.onClose}>✕</button>
         </div>
 
@@ -46,7 +47,7 @@ export function renderCharacterSelector(
             @click=${() => actions.onSelect(null)}
           >
             <div class="limerence-char-name">${s.defaultCharacterName}</div>
-            <div class="limerence-char-desc">默认角色</div>
+            <div class="limerence-char-desc">${t("char.default")}</div>
           </button>
 
           <!-- Custom characters -->
@@ -62,7 +63,7 @@ export function renderCharacterSelector(
               <button
                 class="limerence-char-delete"
                 @click=${() => actions.onDelete(entry.id)}
-                title="删除角色"
+                title="${t("char.delete")}"
               >✕</button>
             </div>
           `)}
@@ -84,7 +85,7 @@ export function renderCharacterSelector(
                 (e.target as HTMLInputElement).value = "";
               }}
             />
-            <span>导入角色卡 (JSON)</span>
+            <span>${t("char.import")}</span>
           </label>
         </div>
       </div>

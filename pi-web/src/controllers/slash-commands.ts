@@ -4,6 +4,7 @@
  */
 
 import type { AgentMessage } from "@mariozechner/pi-agent-core";
+import { t } from "../lib/i18n";
 
 export type SlashCommandResult =
   | { type: "handled" }
@@ -14,15 +15,6 @@ export type SlashCommandResult =
   | { type: "export" }
   | { type: "help"; text: string }
   | null;
-
-const HELP_TEXT = `可用命令：
-/help — 显示此帮助
-/stop — 停止当前生成
-/new — 新建会话
-/retry — 重新生成最后一条回复
-/clear — 清空当前会话消息
-/export — 导出当前会话为 JSON
-/model — 显示当前模型信息`;
 
 /**
  * Parse a slash command from user input.
@@ -51,7 +43,7 @@ export function parseSlashCommand(text: string): SlashCommandResult {
       return { type: "export" };
     case "/help":
     case "/?":
-      return { type: "help", text: HELP_TEXT };
+      return { type: "help", text: t("slash.help") };
     default:
       return null;
   }

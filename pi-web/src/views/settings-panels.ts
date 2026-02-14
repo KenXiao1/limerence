@@ -4,6 +4,7 @@
  */
 
 import { html, type TemplateResult } from "lit";
+import { t } from "../lib/i18n";
 import type { LorebookEntry } from "../lib/storage";
 import type { GenerationPreset } from "../controllers/presets";
 import type { RegexRule } from "../controllers/regex-rules";
@@ -82,11 +83,11 @@ export function renderLimerenceSettings(
   if (!s.isOpen) return null;
 
   const tabs: { id: SettingsTab; label: string }[] = [
-    { id: "persona", label: "人设" },
-    { id: "lorebook", label: "世界书" },
-    { id: "presets", label: "预设" },
-    { id: "regex", label: "正则" },
-    { id: "group", label: "群聊" },
+    { id: "persona", label: t("settings.persona") },
+    { id: "lorebook", label: t("settings.lorebook") },
+    { id: "presets", label: t("settings.presets") },
+    { id: "regex", label: t("settings.regex") },
+    { id: "group", label: t("settings.group") },
   ];
 
   return html`
@@ -96,11 +97,11 @@ export function renderLimerenceSettings(
       <div class="limerence-dialog limerence-settings-dialog">
         <div class="limerence-dialog-header">
           <div class="limerence-settings-tabs">
-            ${tabs.map((t) => html`
+            ${tabs.map((tab) => html`
               <button
-                class="limerence-settings-tab ${s.activeTab === t.id ? "active" : ""}"
-                @click=${() => a.onTabChange(t.id)}
-              >${t.label}</button>
+                class="limerence-settings-tab ${s.activeTab === tab.id ? "active" : ""}"
+                @click=${() => a.onTabChange(tab.id)}
+              >${tab.label}</button>
             `)}
           </div>
           <button class="limerence-dialog-close" @click=${a.onClose}>✕</button>
@@ -125,20 +126,20 @@ function renderPersonaTab(s: LimerenceSettingsState, a: LimerenceSettingsActions
 
   return html`
     <div class="limerence-settings-section">
-      <p class="limerence-settings-hint">设置你的角色名和描述，AI 会在对话中使用这些信息。支持 {{user}} 模板变量。</p>
-      <label class="limerence-settings-label">名字</label>
+      <p class="limerence-settings-hint">${t("persona.hint")}</p>
+      <label class="limerence-settings-label">${t("persona.nameLabel")}</label>
       <input
         class="limerence-settings-input"
         type="text"
         .value=${name}
-        placeholder="你的名字"
+        placeholder="${t("persona.namePlaceholder")}"
         id="persona-name"
       />
-      <label class="limerence-settings-label">描述</label>
+      <label class="limerence-settings-label">${t("persona.descLabel")}</label>
       <textarea
         class="limerence-settings-textarea"
         .value=${desc}
-        placeholder="关于你的描述（性格、外貌等）"
+        placeholder="${t("persona.descPlaceholder")}"
         rows="4"
         id="persona-desc"
       ></textarea>
@@ -147,8 +148,8 @@ function renderPersonaTab(s: LimerenceSettingsState, a: LimerenceSettingsActions
           const nameEl = document.getElementById("persona-name") as HTMLInputElement;
           const descEl = document.getElementById("persona-desc") as HTMLTextAreaElement;
           a.onPersonaSave({ name: nameEl?.value ?? "", description: descEl?.value ?? "" });
-        }}>保存</button>
-        <button class="limerence-btn-ghost" @click=${a.onPersonaClear}>清除</button>
+        }}>${t("persona.save")}</button>
+        <button class="limerence-btn-ghost" @click=${a.onPersonaClear}>${t("persona.clear")}</button>
       </div>
     </div>
   `;
@@ -159,7 +160,7 @@ function renderPersonaTab(s: LimerenceSettingsState, a: LimerenceSettingsActions
 function renderLorebookTab(s: LimerenceSettingsState, a: LimerenceSettingsActions): TemplateResult {
   return html`
     <div class="limerence-settings-section">
-      <p class="limerence-settings-hint">当对话中出现关键词时，自动注入对应的世界设定到系统提示中。</p>
+      <p class="limerence-settings-hint">${t("lorebook.hint")}</p>
 
       <!-- Add new entry -->
       <div class="limerence-lorebook-form">
@@ -167,13 +168,13 @@ function renderLorebookTab(s: LimerenceSettingsState, a: LimerenceSettingsAction
           class="limerence-settings-input"
           type="text"
           .value=${s.lorebookDraftKeywords}
-          placeholder="关键词（逗号分隔）"
+          placeholder="${t("lorebook.keywordsPlaceholder")}"
           @input=${(e: Event) => a.onLorebookDraftChange("keywords", (e.target as HTMLInputElement).value)}
         />
         <textarea
           class="limerence-settings-textarea"
           .value=${s.lorebookDraftContent}
-          placeholder="触发时注入的内容"
+          placeholder="${t("lorebook.contentPlaceholder")}"
           rows="3"
           @input=${(e: Event) => a.onLorebookDraftChange("content", (e.target as HTMLTextAreaElement).value)}
         ></textarea>
@@ -182,20 +183,20 @@ function renderLorebookTab(s: LimerenceSettingsState, a: LimerenceSettingsAction
           if (kws.length > 0 && s.lorebookDraftContent.trim()) {
             a.onLorebookAdd(kws, s.lorebookDraftContent.trim());
           }
-        }}>添加条目</button>
+        }}>${t("lorebook.add")}</button>
       </div>
 
       <!-- Existing entries -->
-      ${s.lorebookEntries.length === 0 ? html`<p class="limerence-settings-empty">暂无世界书条目</p>` : null}
+      ${s.lorebookEntries.length === 0 ? html`<p class="limerence-settings-empty">${t("lorebook.empty")}</p>` : null}
       ${s.lorebookEntries.map((entry) => html`
         <div class="limerence-lorebook-entry ${entry.enabled ? "" : "disabled"}">
           <div class="limerence-lorebook-entry-header">
             <span class="limerence-lorebook-keywords">${entry.keywords.join(", ")}</span>
             <div class="limerence-lorebook-entry-actions">
-              <button class="limerence-btn-icon" @click=${() => a.onLorebookToggle(entry.id)} title="${entry.enabled ? "禁用" : "启用"}">
+              <button class="limerence-btn-icon" @click=${() => a.onLorebookToggle(entry.id)} title="${entry.enabled ? t("lorebook.disable") : t("lorebook.enable")}">
                 ${entry.enabled ? "●" : "○"}
               </button>
-              <button class="limerence-btn-icon danger" @click=${() => a.onLorebookDelete(entry.id)} title="删除">✕</button>
+              <button class="limerence-btn-icon danger" @click=${() => a.onLorebookDelete(entry.id)} title="${t("lorebook.delete")}">✕</button>
             </div>
           </div>
           <div class="limerence-lorebook-content">${entry.content.length > 120 ? entry.content.slice(0, 120) + "..." : entry.content}</div>
@@ -213,7 +214,7 @@ function renderPresetsTab(s: LimerenceSettingsState, a: LimerenceSettingsActions
 
   return html`
     <div class="limerence-settings-section">
-      <p class="limerence-settings-hint">选择生成参数预设，影响 AI 回复的风格和长度。</p>
+      <p class="limerence-settings-hint">${t("presets.hint")}</p>
       ${allPresets.map((preset) => html`
         <button
           class="limerence-preset-item ${activeId === preset.id ? "active" : ""}"
@@ -234,7 +235,7 @@ function renderPresetsTab(s: LimerenceSettingsState, a: LimerenceSettingsActions
 function renderRegexTab(s: LimerenceSettingsState, a: LimerenceSettingsActions): TemplateResult {
   return html`
     <div class="limerence-settings-section">
-      <p class="limerence-settings-hint">正则规则可对 AI 输出或用户输入进行文本替换处理。</p>
+      <p class="limerence-settings-hint">${t("regex.hint")}</p>
 
       <!-- Add new rule -->
       <div class="limerence-regex-form">
@@ -242,21 +243,21 @@ function renderRegexTab(s: LimerenceSettingsState, a: LimerenceSettingsActions):
           class="limerence-settings-input"
           type="text"
           .value=${s.regexDraftName}
-          placeholder="规则名称"
+          placeholder="${t("regex.namePlaceholder")}"
           @input=${(e: Event) => a.onRegexDraftChange("name", (e.target as HTMLInputElement).value)}
         />
         <input
           class="limerence-settings-input"
           type="text"
           .value=${s.regexDraftPattern}
-          placeholder="正则表达式"
+          placeholder="${t("regex.patternPlaceholder")}"
           @input=${(e: Event) => a.onRegexDraftChange("pattern", (e.target as HTMLInputElement).value)}
         />
         <input
           class="limerence-settings-input"
           type="text"
           .value=${s.regexDraftReplacement}
-          placeholder="替换文本"
+          placeholder="${t("regex.replacementPlaceholder")}"
           @input=${(e: Event) => a.onRegexDraftChange("replacement", (e.target as HTMLInputElement).value)}
         />
         <select
@@ -264,33 +265,33 @@ function renderRegexTab(s: LimerenceSettingsState, a: LimerenceSettingsActions):
           .value=${s.regexDraftScope}
           @change=${(e: Event) => a.onRegexDraftChange("scope", (e.target as HTMLSelectElement).value)}
         >
-          <option value="output">仅 AI 输出</option>
-          <option value="input">仅用户输入</option>
-          <option value="both">双向</option>
+          <option value="output">${t("regex.scopeOutput")}</option>
+          <option value="input">${t("regex.scopeInput")}</option>
+          <option value="both">${t("regex.scopeBoth")}</option>
         </select>
         ${s.regexError ? html`<div class="limerence-char-error">${s.regexError}</div>` : null}
         <button class="limerence-btn-primary" @click=${() => {
           if (s.regexDraftName.trim() && s.regexDraftPattern.trim()) {
             a.onRegexAdd(s.regexDraftName.trim(), s.regexDraftPattern, s.regexDraftReplacement, s.regexDraftScope);
           }
-        }}>添加规则</button>
+        }}>${t("regex.add")}</button>
       </div>
 
       <!-- Existing rules -->
-      ${s.regexRules.length === 0 ? html`<p class="limerence-settings-empty">暂无正则规则</p>` : null}
+      ${s.regexRules.length === 0 ? html`<p class="limerence-settings-empty">${t("regex.empty")}</p>` : null}
       ${s.regexRules.map((rule) => html`
         <div class="limerence-regex-entry ${rule.enabled ? "" : "disabled"}">
           <div class="limerence-regex-entry-header">
             <span class="limerence-regex-name">${rule.name}</span>
-            <span class="limerence-regex-scope">${rule.scope === "output" ? "输出" : rule.scope === "input" ? "输入" : "双向"}</span>
+            <span class="limerence-regex-scope">${rule.scope === "output" ? t("regex.scopeOutputShort") : rule.scope === "input" ? t("regex.scopeInputShort") : t("regex.scopeBothShort")}</span>
             <div class="limerence-regex-entry-actions">
-              <button class="limerence-btn-icon" @click=${() => a.onRegexToggle(rule.id)} title="${rule.enabled ? "禁用" : "启用"}">
+              <button class="limerence-btn-icon" @click=${() => a.onRegexToggle(rule.id)} title="${rule.enabled ? t("regex.disable") : t("regex.enable")}">
                 ${rule.enabled ? "●" : "○"}
               </button>
-              <button class="limerence-btn-icon danger" @click=${() => a.onRegexDelete(rule.id)} title="删除">✕</button>
+              <button class="limerence-btn-icon danger" @click=${() => a.onRegexDelete(rule.id)} title="${t("regex.delete")}">✕</button>
             </div>
           </div>
-          <div class="limerence-regex-pattern">/${rule.pattern}/${rule.flags} → ${rule.replacement || "(删除)"}</div>
+          <div class="limerence-regex-pattern">/${rule.pattern}/${rule.flags} → ${rule.replacement || t("regex.emptyReplacement")}</div>
         </div>
       `)}
     </div>
@@ -306,26 +307,26 @@ function renderGroupTab(s: LimerenceSettingsState, a: LimerenceSettingsActions):
   const available = s.characterList.filter((c) => !memberIds.has(c.card.data.name));
 
   const strategyLabels: Record<TurnStrategy, string> = {
-    "round-robin": "轮流发言",
-    "random": "随机发言",
-    "natural": "自然平衡",
-    "manual": "手动选择",
+    "round-robin": t("group.roundRobin"),
+    "random": t("group.random"),
+    "natural": t("group.natural"),
+    "manual": t("group.manual"),
   };
 
   return html`
     <div class="limerence-settings-section">
-      <p class="limerence-settings-hint">启用群聊后，多个角色会轮流回复你的消息。需要先在角色管理中导入角色。</p>
+      <p class="limerence-settings-hint">${t("group.hint")}</p>
 
       <!-- Enable toggle -->
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
         <button
           class="limerence-btn-${gc.enabled ? "primary" : "ghost"}"
           @click=${a.onGroupToggle}
-        >${gc.enabled ? "群聊已开启" : "开启群聊"}</button>
+        >${gc.enabled ? t("group.enabled") : t("group.enable")}</button>
       </div>
 
       <!-- Strategy -->
-      <label class="limerence-settings-label">发言策略</label>
+      <label class="limerence-settings-label">${t("group.strategyLabel")}</label>
       <select
         class="limerence-settings-select"
         .value=${gc.strategy}
@@ -337,7 +338,7 @@ function renderGroupTab(s: LimerenceSettingsState, a: LimerenceSettingsActions):
       </select>
 
       <!-- Responses per turn -->
-      <label class="limerence-settings-label">每轮回复数</label>
+      <label class="limerence-settings-label">${t("group.responsesLabel")}</label>
       <select
         class="limerence-settings-select"
         .value=${String(gc.responsesPerTurn)}
@@ -350,7 +351,7 @@ function renderGroupTab(s: LimerenceSettingsState, a: LimerenceSettingsActions):
 
       <!-- Add member -->
       ${available.length > 0 ? html`
-        <label class="limerence-settings-label">添加角色</label>
+        <label class="limerence-settings-label">${t("group.addLabel")}</label>
         <div style="display:flex;flex-wrap:wrap;gap:4px">
           ${available.map((c) => html`
             <button
@@ -361,24 +362,24 @@ function renderGroupTab(s: LimerenceSettingsState, a: LimerenceSettingsActions):
           `)}
         </div>
       ` : s.characterList.length === 0 ? html`
-        <p class="limerence-settings-empty">请先在角色管理中导入角色</p>
+        <p class="limerence-settings-empty">${t("group.importFirst")}</p>
       ` : null}
 
       <!-- Current members -->
-      <label class="limerence-settings-label">群聊成员</label>
-      ${gc.members.length === 0 ? html`<p class="limerence-settings-empty">暂无成员</p>` : null}
+      <label class="limerence-settings-label">${t("group.membersLabel")}</label>
+      ${gc.members.length === 0 ? html`<p class="limerence-settings-empty">${t("group.noMembers")}</p>` : null}
       ${gc.members.map((m) => html`
         <div class="limerence-lorebook-entry ${m.enabled ? "" : "disabled"}">
           <div class="limerence-lorebook-entry-header">
             <span class="limerence-lorebook-keywords">${m.card.data.name}</span>
             <div class="limerence-lorebook-entry-actions">
-              <button class="limerence-btn-icon" @click=${() => a.onGroupToggleMember(m.id)} title="${m.enabled ? "禁用" : "启用"}">
+              <button class="limerence-btn-icon" @click=${() => a.onGroupToggleMember(m.id)} title="${m.enabled ? t("group.disable") : t("group.enable2")}">
                 ${m.enabled ? "●" : "○"}
               </button>
-              <button class="limerence-btn-icon danger" @click=${() => a.onGroupRemoveMember(m.id)} title="移除">✕</button>
+              <button class="limerence-btn-icon danger" @click=${() => a.onGroupRemoveMember(m.id)} title="${t("group.remove")}">✕</button>
             </div>
           </div>
-          <div class="limerence-lorebook-content">${m.card.data.description?.slice(0, 80) || m.card.data.personality?.slice(0, 80) || "无描述"}</div>
+          <div class="limerence-lorebook-content">${m.card.data.description?.slice(0, 80) || m.card.data.personality?.slice(0, 80) || t("group.noDesc")}</div>
         </div>
       `)}
     </div>

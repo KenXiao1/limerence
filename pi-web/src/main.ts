@@ -13,6 +13,14 @@ import {
 } from "./app-render";
 import { addGlobalListener, cleanupApp, createAppContainers } from "./app-lifecycle";
 import { regenerateLastResponse } from "./app-message-actions";
+import { getLocale, onLocaleChange } from "./lib/i18n";
+import { setTranslations, defaultEnglish } from "@mariozechner/mini-lit";
+import { miniLitChinese } from "./lib/mini-lit-zh";
+
+// ── Sync mini-lit i18n with our locale system ─────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+setTranslations({ en: defaultEnglish, zh: miniLitChinese } as any);
+try { localStorage.setItem("language", getLocale()); } catch { /* ignore */ }
 
 // ── Wire up the render callback ────────────────────────────────
 
@@ -82,6 +90,9 @@ async function initApp() {
     state.chatHost!,
   );
   introHost.style.display = "none";
+
+  // Re-render on locale change
+  onLocaleChange(() => doRenderCurrentView());
 
   // Popstate for routing
   addGlobalListener("popstate", () => {

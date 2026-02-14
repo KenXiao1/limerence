@@ -4,6 +4,7 @@
  */
 
 import { html, type TemplateResult } from "lit";
+import { t, tf } from "../lib/i18n";
 import type { SwipeState } from "../controllers/message-actions";
 
 export interface MessageActionsState {
@@ -71,14 +72,14 @@ function renderSwipeControls(
       <button
         class="limerence-msg-swipe-btn"
         @click=${actions.onSwipePrev}
-        title="上一个回复"
+        title="${t("msg.swipePrev")}"
         ?disabled=${s.isStreaming}
       >‹</button>
       <span class="limerence-msg-swipe-counter">${currentIndex + 1}/${total}</span>
       <button
         class="limerence-msg-swipe-btn"
         @click=${actions.onSwipeNext}
-        title="下一个回复"
+        title="${t("msg.swipeNext")}"
         ?disabled=${s.isStreaming}
       >›</button>
     </div>
@@ -94,35 +95,35 @@ function renderActionButtons(
       <button
         class="limerence-msg-btn"
         @click=${actions.onRegenerate}
-        title="重新生成回复 (Ctrl+Shift+R)"
+        title="${t("msg.regenerate")}"
         ?disabled=${s.isStreaming}
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
         </svg>
-        <span>重新生成</span>
+        <span>${t("msg.regenerateShort")}</span>
       </button>
       <button
         class="limerence-msg-btn"
         @click=${actions.onEditLast}
-        title="编辑消息"
+        title="${t("msg.editMsg")}"
         ?disabled=${s.isStreaming}
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
           <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
         </svg>
-        <span>编辑</span>
+        <span>${t("msg.edit")}</span>
       </button>
       <button
         class="limerence-msg-btn limerence-msg-btn-danger"
         @click=${actions.onDeleteLast}
-        title="删除最后一轮对话"
+        title="${t("msg.deleteLast")}"
         ?disabled=${s.isStreaming}
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
           <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
         </svg>
-        <span>删除</span>
+        <span>${t("msg.delete")}</span>
       </button>
     </div>
   `;
@@ -132,32 +133,32 @@ function renderEditMode(
   s: MessageActionsState,
   actions: MessageActionsCallbacks,
 ): TemplateResult {
-  const roleLabel = s.editRole === "user" || s.editRole === "user-with-attachments" ? "用户消息" : "AI 回复";
+  const roleLabel = s.editRole === "user" || s.editRole === "user-with-attachments" ? t("msg.userMsg") : t("msg.aiReply");
 
   return html`
     <div class="limerence-msg-edit">
       <div class="limerence-msg-edit-header">
-        <span class="limerence-msg-edit-label">编辑${roleLabel}</span>
+        <span class="limerence-msg-edit-label">${tf("msg.editLabel", roleLabel)}</span>
         <div class="limerence-msg-edit-actions">
-          <button class="limerence-msg-btn" @click=${actions.onEditSave} title="保存编辑">
+          <button class="limerence-msg-btn" @click=${actions.onEditSave} title="${t("msg.saveEdit")}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
               <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
             </svg>
-            <span>保存</span>
+            <span>${t("msg.save")}</span>
           </button>
           ${s.editRole === "user" || s.editRole === "user-with-attachments" ? html`
-            <button class="limerence-msg-btn" @click=${actions.onRegenerateFromEdit} title="保存并重新生成">
+            <button class="limerence-msg-btn" @click=${actions.onRegenerateFromEdit} title="${t("msg.saveAndRegen")}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
               </svg>
-              <span>保存并重新生成</span>
+              <span>${t("msg.saveAndRegen")}</span>
             </button>
           ` : null}
-          <button class="limerence-msg-btn" @click=${actions.onEditCancel} title="取消编辑">
+          <button class="limerence-msg-btn" @click=${actions.onEditCancel} title="${t("msg.cancelEdit")}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
             </svg>
-            <span>取消</span>
+            <span>${t("msg.cancel")}</span>
           </button>
         </div>
       </div>

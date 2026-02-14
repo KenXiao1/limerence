@@ -20,6 +20,7 @@ import {
   WS_MAX_WIDTH,
   WS_WIDTH_KEY,
 } from "./controllers/workspace";
+import { t, tf } from "./lib/i18n";
 
 // ── Re-exports from controller ──────────────────────────────────
 
@@ -53,12 +54,12 @@ export async function refreshWorkspaceFiles(autoSelect = false) {
 export async function openWorkspaceFile(path: string, addUserReadEvent = true) {
   const normalized = normalizePath(path.trim());
   if (!normalized) {
-    state.workspaceMessage = "文件路径无效。";
+    state.workspaceMessage = t("ws.invalidPath");
     return;
   }
 
   if (state.workspaceEditorDirty && state.workspaceSelectedPath && state.workspaceSelectedPath !== normalized) {
-    const confirmed = window.confirm("当前文件有未保存改动，确认切换并丢弃改动吗？");
+    const confirmed = window.confirm(t("ws.confirmSwitch"));
     if (!confirmed) return;
   }
 
@@ -80,7 +81,7 @@ export async function openWorkspaceFile(path: string, addUserReadEvent = true) {
       path: normalized,
       timestamp: new Date().toISOString(),
       success: content !== null,
-      summary: content === null ? "文件不存在" : summarizeText(content),
+      summary: content === null ? t("ws.fileNotFound") : summarizeText(content),
     });
   }
 }
@@ -89,7 +90,7 @@ export async function saveWorkspaceFile(pathInput?: string) {
   const basePath = pathInput ?? state.workspaceDraftPath ?? state.workspaceSelectedPath;
   let normalized = normalizePath((basePath ?? "").trim());
   if (!normalized) {
-    state.workspaceMessage = "请输入有效文件路径。";
+    state.workspaceMessage = t("ws.enterValidPath");
     return;
   }
 
@@ -188,9 +189,9 @@ export function renderWorkspacePanel() {
     <aside class="limerence-workspace-panel border-l border-border bg-background" style="width:${panelWidth}px;min-width:${WS_MIN_WIDTH}px;max-width:${WS_MAX_WIDTH}px">
       <div class="limerence-workspace-head">
         <div>
-          <div class="limerence-workspace-title">Markdown 工作区</div>
+          <div class="limerence-workspace-title">${t("ws.title")}</div>
           <div class="limerence-workspace-subtitle">
-            ${markdownFiles.length} 个 .md 文件 · ${state.workspaceEvents.length} 条读写记录
+            ${tf("ws.subtitle", String(markdownFiles.length), String(state.workspaceEvents.length))}
           </div>
         </div>
         <div class="limerence-workspace-head-actions">
@@ -199,7 +200,7 @@ export function renderWorkspacePanel() {
             @click=${() => {
               void refreshWorkspaceFiles(true);
             }}
-            title="刷新文件列表"
+            title="${t("ws.refresh")}"
           >
             ${icon(RefreshCw, "sm")}
           </button>
@@ -208,7 +209,7 @@ export function renderWorkspacePanel() {
             @click=${() => {
               state.workspacePanelOpen = false;
             }}
-            title="关闭面板"
+            title="${t("ws.close")}"
           >
             ${icon(X, "sm")}
           </button>
@@ -217,7 +218,7 @@ export function renderWorkspacePanel() {
 
       <div class="limerence-workspace-content">
         <section class="limerence-workspace-section">
-          <div class="limerence-workspace-section-title">路径</div>
+          <div class="limerence-workspace-section-title">${t("ws.pathLabel")}</div>
           <div class="limerence-workspace-row">
             <input
               class="limerence-workspace-input"
@@ -233,23 +234,23 @@ export function renderWorkspacePanel() {
               @click=${() => {
                 void saveWorkspaceFile(state.workspaceDraftPath);
               }}
-              title="保存到该路径"
+              title="${t("ws.saveToPath")}"
             >
-              ${icon(Save, "sm")}<span>保存</span>
+              ${icon(Save, "sm")}<span>${t("ws.save")}</span>
             </button>
           </div>
           ${state.workspaceMessage
             ? html`<div class="limerence-workspace-message">${state.workspaceMessage}</div>`
             : html`<div class="limerence-workspace-message limerence-workspace-message-muted">
-                Agent 的 file_read / file_write 会在下方自动记录。
+                ${t("ws.autoLog")}
               </div>`}
         </section>
 
         <section class="limerence-workspace-section">
-          <div class="limerence-workspace-section-title">Markdown 文件</div>
+          <div class="limerence-workspace-section-title">${t("ws.filesLabel")}</div>
           <div class="limerence-workspace-file-list">
             ${markdownFiles.length === 0
-              ? html`<div class="limerence-workspace-empty">当前没有 .md 文件，输入路径后点击保存即可创建。</div>`
+              ? html`<div class="limerence-workspace-empty">${t("ws.noFiles")}</div>`
               : markdownFiles.map(
                   (path) => html`
                     <button
@@ -269,18 +270,18 @@ export function renderWorkspacePanel() {
 
         <section class="limerence-workspace-section limerence-workspace-editor-section">
           <div class="limerence-workspace-section-title">
-            <span>${state.workspaceSelectedPath || "未选择文件"}</span>
+            <span>${state.workspaceSelectedPath || t("ws.noFileSelected")}</span>
             <span class="limerence-workspace-dirty ${state.workspaceEditorDirty ? "is-dirty" : ""}">
-              ${state.workspaceEditorDirty ? "未保存" : "已保存"}
+              ${state.workspaceEditorDirty ? t("ws.unsaved") : t("ws.saved")}
             </span>
           </div>
           ${state.workspaceLoadingFile
-            ? html`<div class="limerence-workspace-empty">正在加载文件...</div>`
+            ? html`<div class="limerence-workspace-empty">${t("ws.loading")}</div>`
             : html`
                 <textarea
                   class="limerence-workspace-editor"
                   .value=${state.workspaceEditorContent}
-                  placeholder="在这里编辑 Markdown 内容..."
+                  placeholder="${t("ws.editorPlaceholder")}"
                   @input=${(e: Event) => {
                     state.workspaceEditorContent = (e.target as HTMLTextAreaElement).value;
                     state.workspaceEditorDirty = true;
@@ -292,7 +293,7 @@ export function renderWorkspacePanel() {
 
         <section class="limerence-workspace-section limerence-workspace-diff-section">
           <div class="limerence-workspace-section-title">
-            <span>变更预览</span>
+            <span>${t("ws.diffTitle")}</span>
             <span class="limerence-workspace-diff-stats">
               <span class="limerence-workspace-diff-badge is-added">+${diff.added}</span>
               <span class="limerence-workspace-diff-badge is-removed">-${diff.removed}</span>
@@ -300,9 +301,9 @@ export function renderWorkspacePanel() {
           </div>
           <div class="limerence-workspace-diff-list">
             ${!state.workspaceSelectedPath
-              ? html`<div class="limerence-workspace-empty">先选择或创建一个 Markdown 文件。</div>`
+              ? html`<div class="limerence-workspace-empty">${t("ws.diffNoFile")}</div>`
               : diff.lines.length === 0
-                ? html`<div class="limerence-workspace-empty">当前内容与已保存版本一致。</div>`
+                ? html`<div class="limerence-workspace-empty">${t("ws.diffNoChange")}</div>`
                 : diff.lines.map(
                     (line) => html`
                       <div class="limerence-workspace-diff-line ${line.type === "added" ? "is-added" : "is-removed"}">
@@ -313,17 +314,17 @@ export function renderWorkspacePanel() {
                   )}
             ${diff.truncated
               ? html`<div class="limerence-workspace-diff-truncated">
-                  仅展示前 ${MAX_DIFF_PREVIEW_LINES} 行变更。
+                  ${tf("ws.diffTruncated", String(MAX_DIFF_PREVIEW_LINES))}
                 </div>`
               : null}
           </div>
         </section>
 
         <section class="limerence-workspace-section limerence-workspace-events-section">
-          <div class="limerence-workspace-section-title">读写流程</div>
+          <div class="limerence-workspace-section-title">${t("ws.eventsTitle")}</div>
           <div class="limerence-workspace-event-list">
             ${state.workspaceEvents.length === 0
-              ? html`<div class="limerence-workspace-empty">暂无读写记录。</div>`
+              ? html`<div class="limerence-workspace-empty">${t("ws.noEvents")}</div>`
               : state.workspaceEvents.map(
                   (event) => html`
                     <div class="limerence-workspace-event ${event.success ? "" : "is-error"}">

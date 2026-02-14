@@ -7,8 +7,9 @@ import { icon } from "@mariozechner/mini-lit";
 import { Button } from "@mariozechner/mini-lit/dist/Button.js";
 import { Input } from "@mariozechner/mini-lit/dist/Input.js";
 import { SessionListDialog } from "@mariozechner/pi-web-ui";
-import { FileText, History, Maximize2, Minimize2, Moon, Plus, Server, Settings, Sun, Download, Upload, Users, SlidersHorizontal } from "lucide";
+import { FileText, Globe, History, Maximize2, Minimize2, Moon, Plus, Server, Settings, Sun, Download, Upload, Users, SlidersHorizontal } from "lucide";
 import { html } from "lit";
+import { t, getLocale, setLocale } from "../lib/i18n";
 import { renderTokenUsage } from "./token-usage";
 import { renderToolCalls } from "./tool-calls";
 
@@ -55,7 +56,7 @@ export function renderHeader(s: HeaderState, actions: HeaderActions) {
           size: "sm",
           children: html`<span class="text-xs">Intro</span>`,
           onClick: actions.onShowIntro,
-          title: "返回首页",
+          title: t("header.intro"),
         })}
 
         ${Button({
@@ -68,7 +69,7 @@ export function renderHeader(s: HeaderState, actions: HeaderActions) {
               (deletedSessionId) => { actions.onDeleteSession(deletedSessionId); },
             );
           },
-          title: "会话列表",
+          title: t("header.sessions"),
         })}
 
         ${Button({
@@ -76,7 +77,7 @@ export function renderHeader(s: HeaderState, actions: HeaderActions) {
           size: "sm",
           children: icon(Plus, "sm"),
           onClick: actions.onNewSession,
-          title: "新会话",
+          title: t("header.new"),
         })}
 
         ${s.isEditingTitle
@@ -92,7 +93,7 @@ export function renderHeader(s: HeaderState, actions: HeaderActions) {
           : html`<button
               class="px-2 py-1 text-sm text-foreground hover:bg-secondary rounded transition-colors truncate max-w-[24rem]"
               @click=${actions.onStartEditTitle}
-              title="点击编辑标题"
+              title="${t("header.editTitle")}"
             >
               ${headerTitle}
             </button>`
@@ -108,7 +109,7 @@ export function renderHeader(s: HeaderState, actions: HeaderActions) {
           size: "sm",
           children: icon(Users, "sm"),
           onClick: actions.onOpenCharacterSelector,
-          title: "选择角色",
+          title: t("header.characters"),
         })}
 
         ${Button({
@@ -116,7 +117,7 @@ export function renderHeader(s: HeaderState, actions: HeaderActions) {
           size: "sm",
           children: icon(Download, "sm"),
           onClick: actions.onExportSession,
-          title: "导出会话",
+          title: t("header.export"),
         })}
 
         ${Button({
@@ -131,7 +132,7 @@ export function renderHeader(s: HeaderState, actions: HeaderActions) {
             }} />
           </label>`,
           onClick: () => {},
-          title: "导入会话",
+          title: t("header.import"),
         })}
 
         ${Button({
@@ -139,15 +140,15 @@ export function renderHeader(s: HeaderState, actions: HeaderActions) {
           size: "sm",
           children: html`<span class="inline-flex items-center gap-1">${icon(Server, "sm")}<span class="text-xs limerence-header-label">Proxy ${s.proxyModeEnabled ? "ON" : "OFF"}</span></span>`,
           onClick: actions.onToggleProxy,
-          title: "切换 Netlify 代理模式",
+          title: t("header.proxy"),
         })}
 
         ${Button({
           variant: "ghost",
           size: "sm",
-          children: html`<span class="inline-flex items-center gap-1">${icon(FileText, "sm")}<span class="text-xs limerence-header-label">${s.workspacePanelOpen ? "工作区 ON" : "工作区"}</span></span>`,
+          children: html`<span class="inline-flex items-center gap-1">${icon(FileText, "sm")}<span class="text-xs limerence-header-label">${s.workspacePanelOpen ? t("header.workspaceOn") : t("header.workspace")}</span></span>`,
           onClick: actions.onToggleWorkspace,
-          title: "打开 Markdown 工作区",
+          title: t("header.workspaceTooltip"),
         })}
 
         ${Button({
@@ -155,7 +156,15 @@ export function renderHeader(s: HeaderState, actions: HeaderActions) {
           size: "sm",
           children: icon(SlidersHorizontal, "sm"),
           onClick: actions.onOpenLimerenceSettings,
-          title: "Limerence 设置（人设/世界书/预设/正则）",
+          title: t("header.limerenceSettings"),
+        })}
+
+        ${Button({
+          variant: "ghost",
+          size: "sm",
+          children: html`<span class="text-xs font-medium">${t("lang.switch")}</span>`,
+          onClick: () => { setLocale(getLocale() === "zh" ? "en" : "zh"); },
+          title: t("lang.tooltip"),
         })}
 
         ${Button({
@@ -163,7 +172,7 @@ export function renderHeader(s: HeaderState, actions: HeaderActions) {
           size: "sm",
           children: icon(s.preferredTheme === "dark" ? Sun : Moon, "sm"),
           onClick: (e: Event) => actions.onToggleTheme(e as MouseEvent),
-          title: "切换主题",
+          title: t("header.theme"),
         })}
 
         ${Button({
@@ -171,7 +180,7 @@ export function renderHeader(s: HeaderState, actions: HeaderActions) {
           size: "sm",
           children: icon(s.focusMode ? Minimize2 : Maximize2, "sm"),
           onClick: actions.onToggleFocus,
-          title: "专注模式 (Ctrl+Shift+F)",
+          title: t("header.focus"),
         })}
 
         ${Button({
@@ -179,7 +188,7 @@ export function renderHeader(s: HeaderState, actions: HeaderActions) {
           size: "sm",
           children: icon(Settings, "sm"),
           onClick: actions.onOpenSettings,
-          title: "设置",
+          title: t("header.settings"),
         })}
       </div>
     </div>

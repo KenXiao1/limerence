@@ -1,3 +1,5 @@
+import { useI18n } from "../../hooks/useI18n";
+
 interface LandingNavProps {
   isDark: boolean;
   onToggleTheme: () => void;
@@ -5,6 +7,8 @@ interface LandingNavProps {
 }
 
 export default function LandingNav({ isDark, onToggleTheme, onStartChat }: LandingNavProps) {
+  const { t, toggle } = useI18n();
+
   return (
     <nav className="relative z-20 mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
       <span
@@ -31,13 +35,25 @@ export default function LandingNav({ isDark, onToggleTheme, onStartChat }: Landi
         </a>
 
         <button
+          onClick={toggle}
+          className={`rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors ${
+            isDark
+              ? "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+              : "text-zinc-500 hover:bg-zinc-200 hover:text-zinc-800"
+          }`}
+          aria-label={t("lang.tooltip")}
+        >
+          {t("lang.switch")}
+        </button>
+
+        <button
           onClick={onToggleTheme}
           className={`rounded-full p-2 transition-colors ${
             isDark
               ? "text-zinc-400 hover:bg-zinc-800 hover:text-amber-300"
               : "text-zinc-500 hover:bg-zinc-200 hover:text-indigo-600"
           }`}
-          aria-label={isDark ? "切换到亮色模式" : "切换到暗色模式"}
+          aria-label={isDark ? t("landing.themeLight") : t("landing.themeDark")}
         >
           {isDark ? (
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
@@ -58,7 +74,7 @@ export default function LandingNav({ isDark, onToggleTheme, onStartChat }: Landi
               : "bg-magenta-dark/10 text-magenta-dark hover:bg-magenta-dark/20"
           }`}
         >
-          开始聊天
+          {t("landing.startChatNav")}
         </button>
       </div>
     </nav>

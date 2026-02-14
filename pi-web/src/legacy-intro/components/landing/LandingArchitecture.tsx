@@ -1,19 +1,24 @@
-import { AGENT_MODULES, RUST_CRATES } from "./landing-data";
+import { getAgentModules, getRustCrates } from "./landing-data";
+import { useI18n } from "../../hooks/useI18n";
 
 interface LandingArchitectureProps {
   isDark: boolean;
 }
 
 export default function LandingArchitecture({ isDark }: LandingArchitectureProps) {
+  const { t } = useI18n();
+  const RUST_CRATES = getRustCrates();
+  const AGENT_MODULES = getAgentModules();
+
   return (
     <section className="relative z-10 mx-auto max-w-6xl px-6 pb-24">
       <div className="mb-12 text-center">
         <h2
           className="font-serif text-2xl font-bold tracking-tight sm:text-3xl"
         >
-          架构
+          {t("landing.archTitle")}
         </h2>
-        <p className="mt-2 text-sm text-zinc-500">Rust 分层架构，Web 同构移植，双端共享核心逻辑</p>
+        <p className="mt-2 text-sm text-zinc-500">{t("landing.archSubtitle")}</p>
       </div>
 
       <div
@@ -45,7 +50,7 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
                 </svg>
               </div>
               <div>
-                <span className={`text-xs font-semibold tracking-wide ${isDark ? "text-zinc-200" : "text-zinc-800"}`}>Rust 核心</span>
+                <span className={`text-xs font-semibold tracking-wide ${isDark ? "text-zinc-200" : "text-zinc-800"}`}>{t("landing.archRustCore")}</span>
                 <span className={`ml-2 font-mono text-[10px] ${isDark ? "text-zinc-600" : "text-zinc-400"}`}>Cargo Workspace</span>
               </div>
             </div>
@@ -84,13 +89,13 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
                   isDark ? "bg-zinc-800/60 text-zinc-400" : "bg-zinc-100/80 text-zinc-500"
                 }`}
               >
-                TS 同构移植
+                {t("landing.archTsPort")}
               </span>
               <div className={`h-6 border-l border-dashed ${isDark ? "border-zinc-600" : "border-zinc-300"}`} />
             </div>
             <div className="flex w-full items-center gap-3 sm:hidden">
               <div className={`h-px flex-1 ${isDark ? "bg-zinc-700" : "bg-zinc-300"}`} />
-              <span className={`font-mono text-[10px] font-medium ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>TS 同构移植</span>
+              <span className={`font-mono text-[10px] font-medium ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>{t("landing.archTsPort")}</span>
               <div className={`h-px flex-1 ${isDark ? "bg-zinc-700" : "bg-zinc-300"}`} />
             </div>
           </div>
@@ -108,7 +113,7 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
                   </svg>
                 </div>
                 <div>
-                  <span className={`text-xs font-semibold tracking-wide ${isDark ? "text-zinc-200" : "text-zinc-800"}`}>浏览器</span>
+                  <span className={`text-xs font-semibold tracking-wide ${isDark ? "text-zinc-200" : "text-zinc-800"}`}>{t("landing.archBrowser")}</span>
                   <span className={`ml-2 font-mono text-[10px] ${isDark ? "text-zinc-600" : "text-zinc-400"}`}>React + TypeScript</span>
                 </div>
               </div>
@@ -207,7 +212,7 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
                     />
                     <span className={`font-mono text-[11px] font-medium ${isDark ? "text-cyan-light" : "text-cyan-dark"}`}>chat-proxy.ts</span>
                   </div>
-                  <p className="mt-1 text-[10px] text-zinc-500">转发 LLM API，服务端注入密钥</p>
+                  <p className="mt-1 text-[10px] text-zinc-500">{t("landing.archProxy")}</p>
                 </div>
 
                 <div
@@ -222,7 +227,7 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
                     />
                     <span className={`font-mono text-[11px] font-medium ${isDark ? "text-cyan-light" : "text-cyan-dark"}`}>web-search.ts</span>
                   </div>
-                  <p className="mt-1 text-[10px] text-zinc-500">搜索代理，绕过浏览器 CORS</p>
+                  <p className="mt-1 text-[10px] text-zinc-500">{t("landing.archSearch")}</p>
                 </div>
 
                 <div className={`mt-1 flex items-center gap-2 rounded-lg px-3 py-2 ${isDark ? "bg-zinc-800/40" : "bg-zinc-100/60"}`}>
@@ -234,7 +239,7 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
                     />
                   </svg>
                   <span className={`font-mono text-[9px] ${isDark ? "text-zinc-600" : "text-zinc-400"}`}>
-                    数据不经过服务器 - 仅代理 API 请求
+                    {t("landing.archPrivacy")}
                   </span>
                 </div>
               </div>

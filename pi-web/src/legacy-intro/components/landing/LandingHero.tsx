@@ -1,5 +1,6 @@
 import type { Theme } from "../../hooks/useTheme";
 import ParticleLenia from "../ParticleLenia";
+import { useI18n } from "../../hooks/useI18n";
 
 interface LandingHeroProps {
   isDark: boolean;
@@ -8,6 +9,8 @@ interface LandingHeroProps {
 }
 
 export default function LandingHero({ isDark, theme, onStartChat }: LandingHeroProps) {
+  const { t } = useI18n();
+
   return (
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 z-0">
@@ -29,22 +32,21 @@ export default function LandingHero({ isDark, theme, onStartChat }: LandingHeroP
               isDark ? "text-magenta/70" : "text-magenta-dark/60"
             }`}
           >
-            Open Source AI Companion
+            {t("landing.tagline")}
           </p>
           <h1
             className="font-serif text-4xl font-bold leading-[1.15] tracking-tight sm:text-6xl"
           >
-            有记忆的
+            {t("landing.heroTitle1")}
             <br />
-            <span className={isDark ? "text-magenta" : "text-magenta-dark"}>AI 伙伴</span>
+            <span className={isDark ? "text-magenta" : "text-magenta-dark"}>{t("landing.heroTitle2")}</span>
           </h1>
           <p
             className={`mt-6 max-w-lg text-base leading-relaxed sm:text-lg ${
               isDark ? "text-zinc-400" : "text-zinc-600"
             }`}
           >
-            Limerence 是一个开源的 AI 对话框架，支持长期记忆、工具调用和自定义角色。
-            所有数据存储在你的浏览器中，由数学驱动的生命体守护。
+            {t("landing.heroDesc")}
           </p>
           <div className="mt-8 flex items-center gap-4">
             <button
@@ -55,7 +57,7 @@ export default function LandingHero({ isDark, theme, onStartChat }: LandingHeroP
                   : "bg-magenta-dark shadow-lg shadow-magenta-dark/20 hover:shadow-magenta-dark/30"
               }`}
             >
-              开始对话
+              {t("landing.startChat")}
             </button>
             <a
               href="https://github.com/KenXiao1/limerence"
