@@ -1,5 +1,5 @@
 import { Agent, type AgentState } from "@mariozechner/pi-agent-core";
-import { getModel, type AssistantMessage, type Model } from "@mariozechner/pi-ai";
+import type { Model } from "@mariozechner/pi-ai";
 import {
   ApiKeyPromptDialog,
   ChatPanel,
@@ -19,18 +19,19 @@ import { createLimerenceTools } from "./lib/tools";
 import { handleAgentFileOperation } from "./app-workspace";
 import { generateTitle, indexMessageIntoMemory, saveSession, newSession } from "./app-session";
 import { compactMessages, estimateMessagesTokens } from "./app-compaction";
+import {
+  parseChatCommand,
+  createProxyModel,
+  createDirectModel,
+  buildGreetingMessage,
+  getToolLabel,
+  buildRouteUrl,
+} from "./controllers/agent";
 
-// ── Routing helpers ────────────────────────────────────────────────
+// ── Routing helpers ────────────────────────────────────────────
 
 export function setRoute(pathname: string, sessionId?: string, replace = false) {
-  const url = new URL(window.location.href);
-  url.pathname = pathname;
-  if (sessionId) {
-    url.searchParams.set("session", sessionId);
-  } else {
-    url.searchParams.delete("session");
-  }
-
+  const url = buildRouteUrl(window.location.href, pathname, sessionId);
   if (replace) {
     window.history.replaceState({}, "", url);
   } else {
@@ -42,7 +43,7 @@ export function updateUrl(sessionId: string) {
   setRoute(CHAT_PATH, sessionId, true);
 }
 
-// ── Proxy mode ─────────────────────────────────────────────────────
+// ── Proxy mode ─────────────────────────────────────────────────
 
 export async function isProxyModeEnabled(): Promise<boolean> {
   return (await storage.settings.get<boolean>(PROXY_MODE_KEY)) ?? false;
@@ -52,85 +53,38 @@ export async function setProxyModeEnabled(enabled: boolean): Promise<void> {
   await storage.settings.set(PROXY_MODE_KEY, enabled);
 }
 
-// ── Model factories ────────────────────────────────────────────────
+// ── Model factories (delegate to controller) ───────────────────
 
-export function createProxyModel(): Model<"openai-completions"> {
-  return {
-    id: "deepseek-chat",
-    name: "deepseek-chat (Netlify Proxy)",
-    api: "openai-completions",
-    provider: "limerence-proxy",
-    baseUrl: "/api/llm/v1",
-    reasoning: false,
-    input: ["text"],
-    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-    contextWindow: 128000,
-    maxTokens: 8192,
-  };
-}
-
-export function createDirectModel(): Model<any> {
-  try {
-    return getModel("openai", "gpt-4o-mini");
-  } catch {
-    return getModel("openai", "gpt-4.1-mini");
-  }
-}
+export { createProxyModel, createDirectModel } from "./controllers/agent";
 
 export async function getDefaultModel(): Promise<Model<any>> {
   const proxyMode = await isProxyModeEnabled();
   return proxyMode ? createProxyModel() : createDirectModel();
 }
 
-// ── Initial messages ───────────────────────────────────────────────
-
-function buildGreetingMessage(model: Model<any>): AssistantMessage | null {
-  const text = state.character?.data.first_mes?.trim();
-  if (!text) return null;
-
-  return {
-    role: "assistant",
-    content: [{ type: "text", text }],
-    api: model.api,
-    provider: model.provider,
-    model: model.id,
-    usage: defaultUsage(),
-    stopReason: "stop",
-    timestamp: Date.now(),
-  };
-}
+// ── Initial messages ───────────────────────────────────────────
 
 function createInitialMessages(model: Model<any>) {
-  const greeting = buildGreetingMessage(model);
+  const greeting = buildGreetingMessage(state.character, model, defaultUsage());
   return greeting ? [greeting] : [];
 }
 
-// ── Chat commands ──────────────────────────────────────────────────
+// ── Chat commands ──────────────────────────────────────────────
 
-const STOP_COMMANDS = new Set(["/stop", "stop", "esc", "abort", "/abort"]);
-const NEW_COMMANDS = new Set(["/new", "/reset"]);
-
-/**
- * Check if text is a chat command. Returns true if handled (message should not be sent).
- */
 export function handleChatCommand(text: string): boolean {
-  const trimmed = text.trim().toLowerCase();
-  if (!trimmed) return false;
-
-  if (STOP_COMMANDS.has(trimmed)) {
+  const result = parseChatCommand(text);
+  if (result === "stop") {
     state.agent?.abort();
     return true;
   }
-
-  if (NEW_COMMANDS.has(trimmed)) {
+  if (result === "new") {
     void newSession();
     return true;
   }
-
   return false;
 }
 
-// ── Message queue ──────────────────────────────────────────────────
+// ── Message queue ──────────────────────────────────────────────
 
 function isAgentBusy(agent: Agent): boolean {
   return agent.state.isStreaming || agent.state.pendingToolCalls.size > 0;
@@ -146,7 +100,7 @@ function drainMessageQueue() {
   }
 }
 
-// ── Agent creation ─────────────────────────────────────────────────
+// ── Agent creation ─────────────────────────────────────────────
 
 export async function createAgent(initialState?: Partial<AgentState>) {
   if (state.agentUnsubscribe) {
@@ -191,7 +145,7 @@ export async function createAgent(initialState?: Partial<AgentState>) {
       agent.replaceMessages(compacted);
     }
 
-    // Save draft for recovery on failure (#13)
+    // Save draft for recovery on failure
     if (typeof message === "string") {
       try { sessionStorage.setItem(DRAFT_KEY, message); } catch {}
     }
@@ -202,7 +156,6 @@ export async function createAgent(initialState?: Partial<AgentState>) {
         return result;
       },
       (err: any) => {
-        // Restore draft to input on failure
         const draft = sessionStorage.getItem(DRAFT_KEY);
         if (draft && state.chatPanel?.agentInterface) {
           state.chatPanel.agentInterface.setInput(draft);
@@ -213,20 +166,11 @@ export async function createAgent(initialState?: Partial<AgentState>) {
     );
   }) as typeof agent.prompt;
 
-  const TOOL_LABELS: Record<string, string> = {
-    memory_search: "记忆搜索",
-    web_search: "网络搜索",
-    note_write: "写笔记",
-    note_read: "读笔记",
-    file_read: "读文件",
-    file_write: "写文件",
-  };
-
   state.agentUnsubscribe = agent.subscribe((event) => {
     if (event.type === "tool_execution_start") {
       state.activeToolCalls = [
         ...state.activeToolCalls,
-        { id: event.toolCallId, name: event.toolName, label: TOOL_LABELS[event.toolName] ?? event.toolName },
+        { id: event.toolCallId, name: event.toolName, label: getToolLabel(event.toolName) },
       ];
       return;
     }
@@ -280,14 +224,14 @@ export async function createAgent(initialState?: Partial<AgentState>) {
   }
 }
 
-// ── Runtime bootstrap ──────────────────────────────────────────────
+// ── Runtime bootstrap ──────────────────────────────────────────
 
 export async function ensureChatRuntime() {
   if (state.chatRuntimeReady) return;
 
   state.character = await loadDefaultCharacter();
 
-  // Settings validation (#11): ensure proxy mode is a boolean
+  // Settings validation: ensure proxy mode is a boolean
   try {
     const raw = await storage.settings.get<unknown>(PROXY_MODE_KEY);
     state.proxyModeEnabled = typeof raw === "boolean" ? raw : false;

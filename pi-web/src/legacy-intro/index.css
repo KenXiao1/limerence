@@ -7,8 +7,8 @@
   --color-cyan: #22d3ee;
   --color-cyan-light: #67e8f9;
   --color-cyan-dark: #0891b2;
-  --font-serif: 'Playfair Display', Georgia, serif;
-  --font-sans: 'Source Sans 3', system-ui, sans-serif;
+  --font-serif: "Playfair Display", Georgia, "Noto Serif CJK SC", serif;
+  --font-sans: "Source Sans 3", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
 }
 
 /* Theme-aware body */

@@ -1,0 +1,106 @@
+/* ── Mobile Responsive ────────────────────────────────────────────
+ * Breakpoints:
+ *   960px — workspace becomes full-screen overlay (existing)
+ *   768px — tablet: header compacts
+ *   480px — phone: stacked layout, touch-optimized
+ * ─────────────────────────────────────────────────────────────── */
+
+/* ── Tablet (≤960px) ─────────────────────────────────────────── */
+
+@media (max-width: 960px) {
+  .limerence-workspace-panel {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    z-index: 20;
+    border-left: none;
+  }
+
+  .limerence-resize-handle {
+    display: none;
+  }
+}
+
+/* ── Small tablet / large phone (≤768px) ─────────────────────── */
+
+@media (max-width: 768px) {
+  .limerence-header {
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px 8px;
+  }
+
+  .limerence-header > div {
+    flex-wrap: wrap;
+  }
+
+  /* Hide text labels in header buttons, keep icons */
+  .limerence-header-label {
+    display: none;
+  }
+
+  .limerence-workspace-icon-button {
+    min-width: var(--touch-min);
+    min-height: var(--touch-min);
+  }
+}
+
+/* ── Phone (≤480px) ──────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .limerence-header {
+    padding: 4px;
+  }
+
+  /* Stack header rows vertically */
+  .limerence-header > div:first-child {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .limerence-header > div:last-child {
+    width: 100%;
+    justify-content: flex-end;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Touch-friendly targets */
+  .limerence-workspace-file {
+    min-height: var(--touch-min);
+    padding: 8px 10px;
+  }
+
+  .limerence-workspace-action {
+    min-height: var(--touch-min);
+    padding: 0 14px;
+  }
+
+  .limerence-workspace-icon-button {
+    width: var(--touch-min);
+    height: var(--touch-min);
+  }
+
+  .limerence-workspace-input {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .limerence-workspace-editor {
+    font-size: 14px;
+    min-height: 180px;
+  }
+
+  /* Reduce workspace section padding on small screens */
+  .limerence-workspace-content {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .limerence-workspace-section {
+    padding: 8px;
+  }
+}

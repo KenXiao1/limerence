@@ -32,8 +32,7 @@ export default function LandingHero({ isDark, theme, onStartChat }: LandingHeroP
             Open Source AI Companion
           </p>
           <h1
-            className="text-4xl font-bold leading-[1.15] tracking-tight sm:text-6xl"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            className="font-serif text-4xl font-bold leading-[1.15] tracking-tight sm:text-6xl"
           >
             有记忆的
             <br />

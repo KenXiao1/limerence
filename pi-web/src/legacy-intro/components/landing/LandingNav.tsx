@@ -9,7 +9,6 @@ export default function LandingNav({ isDark, onToggleTheme, onStartChat }: Landi
     <nav className="relative z-20 mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
       <span
         className="font-serif text-xl tracking-wide"
-        style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
       >
         <span className={isDark ? "text-magenta-light" : "text-magenta-dark"}>Limerence</span>
       </span>

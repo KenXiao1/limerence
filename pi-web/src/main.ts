@@ -11,12 +11,13 @@ import {
   showIntro,
   setShowChatCallback,
 } from "./app-render";
+import { addGlobalListener, cleanupApp, createAppContainers } from "./app-lifecycle";
 
-// ── Wire up the render callback ────────────────────────────────────
+// ── Wire up the render callback ────────────────────────────────
 
 setRenderCallback(doRenderCurrentView);
 
-// ── Routing ────────────────────────────────────────────────────────
+// ── Routing ────────────────────────────────────────────────────
 
 function isChatRoute(): boolean {
   const url = new URL(window.location.href);
@@ -64,40 +65,12 @@ async function routeByLocation() {
   }
 }
 
-// ── Init ───────────────────────────────────────────────────────────
+// ── Init ───────────────────────────────────────────────────────
 
-// Track listeners for cleanup (#12)
-const _cleanupFns: Array<() => void> = [];
-
-function addGlobalListener<K extends keyof WindowEventMap>(
-  type: K,
-  handler: (ev: WindowEventMap[K]) => void,
-) {
-  window.addEventListener(type, handler);
-  _cleanupFns.push(() => window.removeEventListener(type, handler));
-}
-
-export function cleanupApp() {
-  for (const fn of _cleanupFns) fn();
-  _cleanupFns.length = 0;
-  if (state.agentUnsubscribe) {
-    state.agentUnsubscribe();
-    state.agentUnsubscribe = undefined;
-  }
-}
+export { cleanupApp };
 
 async function initApp() {
-  state.appRoot = document.getElementById("app");
-  if (!state.appRoot) throw new Error("App container not found");
-  state.appRoot.innerHTML = "";
-
-  state.chatHost = document.createElement("div");
-  state.introHost = document.createElement("div");
-  state.chatHost.style.width = "100%";
-  state.chatHost.style.height = "100%";
-  state.introHost.style.width = "100%";
-  state.introHost.style.height = "100%";
-  state.appRoot.append(state.chatHost, state.introHost);
+  const { introHost } = createAppContainers();
 
   applyTheme(getPreferredTheme());
 
@@ -105,20 +78,22 @@ async function initApp() {
     html`<div class="w-full h-screen flex items-center justify-center bg-background text-foreground">
       <div class="text-muted-foreground">Loading...</div>
     </div>`,
-    state.chatHost,
+    state.chatHost!,
   );
-  state.introHost.style.display = "none";
+  introHost.style.display = "none";
 
   // Popstate for routing
   addGlobalListener("popstate", () => {
     void routeByLocation();
   });
 
-  // Focus mode shortcut: Ctrl+Shift+F
+  // Focus mode shortcut: Ctrl+Shift+F to toggle, Escape to exit
   addGlobalListener("keydown", (e) => {
     if (e.ctrlKey && e.shiftKey && e.key === "F") {
       e.preventDefault();
       state.focusMode = !state.focusMode;
+    } else if (e.key === "Escape" && state.focusMode) {
+      state.focusMode = false;
     }
   });
 

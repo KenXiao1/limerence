@@ -1,13 +1,8 @@
-import { icon } from "@mariozechner/mini-lit";
-import { Button } from "@mariozechner/mini-lit/dist/Button.js";
-import { Input } from "@mariozechner/mini-lit/dist/Input.js";
 import {
   ProvidersModelsTab,
   ProxyTab,
-  SessionListDialog,
   SettingsDialog,
 } from "@mariozechner/pi-web-ui";
-import { FileText, History, Maximize2, Minimize2, Moon, Plus, Server, Settings, Sun } from "lucide";
 import { html, render } from "lit";
 import { state, storage } from "./app-state";
 import { getDefaultModel, setProxyModeEnabled, setRoute } from "./app-agent";
@@ -15,10 +10,10 @@ import { ROOT_PATH } from "./app-state";
 import { loadSession, newSession } from "./app-session";
 import { renderWorkspacePanel, toggleWorkspacePanel } from "./app-workspace";
 import { mountLegacyIntro, unmountLegacyIntro } from "./legacy-intro/mount";
-import { formatTokenCount, tokenUsagePercent } from "./app-compaction";
 import { startThemeTransition } from "./theme-transition";
+import { renderHeader, type HeaderState, type HeaderActions } from "./views/header";
 
-// ── Lit render helpers ─────────────────────────────────────────────
+// ── Lit render helpers ─────────────────────────────────────────
 
 const LIT_PART_KEY = "_$litPart$";
 
@@ -45,7 +40,7 @@ export function renderWithRecovery(view: unknown, container: HTMLElement) {
   render(view, container);
 }
 
-// ── Theme ──────────────────────────────────────────────────────────
+// ── Theme ──────────────────────────────────────────────────────
 
 export function getPreferredTheme(): "light" | "dark" {
   const savedTheme = localStorage.getItem("theme");
@@ -60,7 +55,7 @@ export function applyTheme(theme: "light" | "dark") {
   localStorage.setItem("limerence-theme", theme);
 }
 
-// ── Chat view ──────────────────────────────────────────────────────
+// ── Chat view ──────────────────────────────────────────────────
 
 export function renderChatView() {
   if (!state.chatHost || !state.introHost || !state.chatPanel) return;
@@ -68,151 +63,71 @@ export function renderChatView() {
   state.introHost.style.display = "none";
   state.chatHost.style.display = "block";
 
-  const headerTitle = state.currentTitle || state.character?.data.name || "Limerence Pi Web";
+  const headerState: HeaderState = {
+    currentTitle: state.currentTitle,
+    characterName: state.character?.data.name ?? "",
+    isEditingTitle: state.isEditingTitle,
+    focusMode: state.focusMode,
+    proxyModeEnabled: state.proxyModeEnabled,
+    workspacePanelOpen: state.workspacePanelOpen,
+    estimatedTokens: state.estimatedTokens,
+    contextWindow: state.contextWindow,
+    activeToolCalls: state.activeToolCalls,
+    currentSessionId: state.currentSessionId,
+    preferredTheme: getPreferredTheme(),
+  };
+
+  const headerActions: HeaderActions = {
+    onShowIntro: () => showIntro(true),
+    onLoadSession: async (sessionId) => { await loadSession(sessionId); },
+    onDeleteSession: (deletedSessionId) => {
+      if (deletedSessionId === state.currentSessionId) {
+        void newSession();
+      }
+    },
+    onNewSession: () => { void newSession(); },
+    onTitleChange: async (title) => {
+      state.currentTitle = title;
+      if (state.currentSessionId) {
+        await storage.sessions.updateTitle(state.currentSessionId, title);
+      }
+      state.isEditingTitle = false;
+    },
+    onStartEditTitle: () => { state.isEditingTitle = true; },
+    onToggleProxy: async () => {
+      state.proxyModeEnabled = !state.proxyModeEnabled;
+      await setProxyModeEnabled(state.proxyModeEnabled);
+      if (state.proxyModeEnabled) {
+        await storage.providerKeys.set("limerence-proxy", "__PROXY__");
+      }
+      state.agent!.setModel(await getDefaultModel());
+    },
+    onToggleWorkspace: () => { void toggleWorkspacePanel(); },
+    onToggleTheme: (e) => {
+      startThemeTransition(e, () => {
+        const next = getPreferredTheme() === "dark" ? "light" : "dark";
+        applyTheme(next);
+        doRenderCurrentView();
+      });
+    },
+    onToggleFocus: () => { state.focusMode = !state.focusMode; },
+    onOpenSettings: () => SettingsDialog.open([new ProvidersModelsTab(), new ProxyTab()]),
+  };
 
   const appHtml = html`
     <div class="w-full h-screen flex flex-col bg-background text-foreground overflow-hidden ${state.focusMode ? "limerence-focus-mode" : ""}">
-      <div class="limerence-header flex items-center justify-between border-b border-border shrink-0">
-        <div class="flex items-center gap-2 px-4 py-2 min-w-0">
-          ${Button({
-            variant: "ghost",
-            size: "sm",
-            children: html`<span class="text-xs">Intro</span>`,
-            onClick: () => {
-              showIntro(true);
-            },
-            title: "返回首页",
-          })}
-
-          ${Button({
-            variant: "ghost",
-            size: "sm",
-            children: icon(History, "sm"),
-            onClick: () => {
-              SessionListDialog.open(
-                async (sessionId) => {
-                  await loadSession(sessionId);
-                },
-                (deletedSessionId) => {
-                  if (deletedSessionId === state.currentSessionId) {
-                    void newSession();
-                  }
-                },
-              );
-            },
-            title: "会话列表",
-          })}
-
-          ${Button({
-            variant: "ghost",
-            size: "sm",
-            children: icon(Plus, "sm"),
-            onClick: () => {
-              void newSession();
-            },
-            title: "新会话",
-          })}
-
-          ${
-            state.isEditingTitle
-              ? Input({
-                  type: "text",
-                  value: headerTitle,
-                  className: "text-sm w-64",
-                  onChange: async (e: Event) => {
-                    const next = (e.target as HTMLInputElement).value.trim();
-                    if (next) {
-                      state.currentTitle = next;
-                      if (state.currentSessionId) {
-                        await storage.sessions.updateTitle(state.currentSessionId, next);
-                      }
-                    }
-                    state.isEditingTitle = false;
-                  },
-                })
-              : html`<button
-                  class="px-2 py-1 text-sm text-foreground hover:bg-secondary rounded transition-colors truncate max-w-[24rem]"
-                  @click=${() => {
-                    state.isEditingTitle = true;
-                  }}
-                  title="点击编辑标题"
-                >
-                  ${headerTitle}
-                </button>`
-          }
-        </div>
-
-        <div class="flex items-center gap-1 px-2">
-          ${state.activeToolCalls.length > 0 ? html`
-            <span class="text-xs px-2 py-1 rounded text-blue-500 animate-pulse" title="工具执行中">
-              ⚙ ${state.activeToolCalls.map((t) => t.label).join(", ")}
-            </span>
-          ` : null}
-
-          ${state.estimatedTokens > 0 ? html`
-            <span class="text-xs px-2 py-1 rounded ${tokenUsagePercent(state.estimatedTokens, state.contextWindow) > 80 ? 'text-red-500' : tokenUsagePercent(state.estimatedTokens, state.contextWindow) > 60 ? 'text-yellow-500' : 'text-muted-foreground'}" title="估算 token 用量 / 上下文窗口">
-              ${formatTokenCount(state.estimatedTokens)}/${formatTokenCount(state.contextWindow)} (${tokenUsagePercent(state.estimatedTokens, state.contextWindow)}%)
-            </span>
-          ` : null}
-
-          ${Button({
-            variant: "ghost",
-            size: "sm",
-            children: html`<span class="inline-flex items-center gap-1">${icon(Server, "sm")}<span class="text-xs">Proxy ${state.proxyModeEnabled ? "ON" : "OFF"}</span></span>`,
-            onClick: async () => {
-              state.proxyModeEnabled = !state.proxyModeEnabled;
-              await setProxyModeEnabled(state.proxyModeEnabled);
-              if (state.proxyModeEnabled) {
-                await storage.providerKeys.set("limerence-proxy", "__PROXY__");
-              }
-              state.agent!.setModel(await getDefaultModel());
-            },
-            title: "切换 Netlify 代理模式",
-          })}
-
-          ${Button({
-            variant: "ghost",
-            size: "sm",
-            children: html`<span class="inline-flex items-center gap-1">${icon(FileText, "sm")}<span class="text-xs">${state.workspacePanelOpen ? "工作区 ON" : "工作区"}</span></span>`,
-            onClick: () => {
-              void toggleWorkspacePanel();
-            },
-            title: "打开 Markdown 工作区",
-          })}
-
-          ${Button({
-            variant: "ghost",
-            size: "sm",
-            children: icon(getPreferredTheme() === "dark" ? Sun : Moon, "sm"),
-            onClick: (e: Event) => {
-              startThemeTransition(e as MouseEvent, () => {
-                const next = getPreferredTheme() === "dark" ? "light" : "dark";
-                applyTheme(next);
-              });
-            },
-            title: "切换主题",
-          })}
-
-          ${Button({
-            variant: "ghost",
-            size: "sm",
-            children: icon(state.focusMode ? Minimize2 : Maximize2, "sm"),
-            onClick: () => {
-              state.focusMode = !state.focusMode;
-            },
-            title: "专注模式 (Ctrl+Shift+F)",
-          })}
-
-          ${Button({
-            variant: "ghost",
-            size: "sm",
-            children: icon(Settings, "sm"),
-            onClick: () => SettingsDialog.open([new ProvidersModelsTab(), new ProxyTab()]),
-            title: "设置",
-          })}
-        </div>
-      </div>
-
+      ${renderHeader(headerState, headerActions)}
+      ${state.focusMode ? html`
+        <button
+          class="limerence-focus-exit"
+          @click=${() => { state.focusMode = false; }}
+          title="退出专注模式 (Esc)"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25" />
+          </svg>
+        </button>
+      ` : null}
       <div class="limerence-chat-shell">
         <div class="limerence-chat-main">${state.chatPanel}</div>
         ${state.workspacePanelOpen ? renderWorkspacePanel() : null}
@@ -223,7 +138,7 @@ export function renderChatView() {
   renderWithRecovery(appHtml, state.chatHost);
 }
 
-// ── View dispatcher ────────────────────────────────────────────────
+// ── View dispatcher ────────────────────────────────────────────
 
 export function doRenderCurrentView() {
   if (!state.chatHost || !state.introHost) return;
@@ -233,7 +148,6 @@ export function doRenderCurrentView() {
     state.chatHost.style.display = "none";
     state.introHost.style.display = "block";
     mountLegacyIntro(state.introHost, () => {
-      // showChat is imported from main.ts via the callback set during init
       void _showChatCallback(true);
     });
     return;

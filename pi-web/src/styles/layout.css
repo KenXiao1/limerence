@@ -1,0 +1,70 @@
+/* ── Layout ───────────────────────────────────────────────────────
+ * Core layout containers: chat shell, main area, view transitions.
+ * ─────────────────────────────────────────────────────────────── */
+
+/* ── View Transition (theme toggle animation) ──────────────────── */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
+/* ── Chat shell ────────────────────────────────────────────────── */
+
+.limerence-chat-shell {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  font-family: var(--font-sans);
+}
+
+.limerence-chat-main {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.limerence-chat-main > * {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Focus mode ────────────────────────────────────────────────── */
+
+.limerence-focus-mode .limerence-header {
+  display: none;
+}
+
+.limerence-focus-exit {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-secondary, hsl(var(--secondary)));
+  color: var(--text-muted, hsl(var(--muted-foreground)));
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.limerence-focus-exit:hover {
+  background: var(--bg-hover, hsl(var(--accent)));
+  color: var(--text-strong, hsl(var(--foreground)));
+}

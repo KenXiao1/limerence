@@ -7,144 +7,31 @@ import {
   MAX_WORKSPACE_EVENTS,
   MAX_DIFF_MATRIX,
   MAX_DIFF_PREVIEW_LINES,
-  type WorkspaceEvent,
-  type DiffLine,
-  type DiffPreview,
 } from "./app-state";
 import { normalizePath } from "./lib/storage";
 import type { FileOperation } from "./lib/tools";
+import {
+  isMarkdownPath,
+  summarizeText,
+  formatTime,
+  createDiffPreview,
+  pushEvent,
+  WS_MIN_WIDTH,
+  WS_MAX_WIDTH,
+  WS_WIDTH_KEY,
+} from "./controllers/workspace";
 
-// ── Constants ─────────────────────────────────────────────────────
+// ── Re-exports from controller ──────────────────────────────────
 
-const WS_MIN_WIDTH = 280;
-const WS_MAX_WIDTH = 700;
-const WS_WIDTH_KEY = "limerence-ws-width";
+export { isMarkdownPath, createDiffPreview } from "./controllers/workspace";
 
-// ── Utilities ──────────────────────────────────────────────────────
+// ── Workspace event tracking ────────────────────────────────────
 
-export function isMarkdownPath(path: string): boolean {
-  return path.toLowerCase().endsWith(".md");
+export function pushWorkspaceEvent(event: Omit<import("./app-state").WorkspaceEvent, "id">) {
+  state.workspaceEvents = pushEvent(state.workspaceEvents, event, MAX_WORKSPACE_EVENTS);
 }
 
-function summarizeWorkspaceText(text: string, maxLength = 90): string {
-  const compact = text.replace(/\s+/g, " ").trim();
-  if (!compact) return "空内容";
-  if (compact.length <= maxLength) return compact;
-  return `${compact.slice(0, maxLength - 3)}...`;
-}
-
-function formatWorkspaceTime(timestamp: string): string {
-  try {
-    return new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  } catch {
-    return timestamp;
-  }
-}
-
-// ── Diff ───────────────────────────────────────────────────────────
-
-function splitLines(text: string): string[] {
-  return text.split(/\r?\n/);
-}
-
-function computeSimpleLineDiff(baseLines: string[], nextLines: string[]): DiffLine[] {
-  const lines: DiffLine[] = [];
-  const maxLen = Math.max(baseLines.length, nextLines.length);
-  for (let i = 0; i < maxLen; i += 1) {
-    const oldLine = baseLines[i];
-    const newLine = nextLines[i];
-    if (oldLine === newLine) continue;
-    if (oldLine !== undefined) {
-      lines.push({ type: "removed", text: oldLine });
-    }
-    if (newLine !== undefined) {
-      lines.push({ type: "added", text: newLine });
-    }
-  }
-  return lines;
-}
-
-function computeLcsDiff(baseLines: string[], nextLines: string[]): DiffLine[] {
-  const n = baseLines.length;
-  const m = nextLines.length;
-  const dp: number[][] = Array.from({ length: n + 1 }, () => Array.from({ length: m + 1 }, () => 0));
-
-  for (let i = n - 1; i >= 0; i -= 1) {
-    for (let j = m - 1; j >= 0; j -= 1) {
-      dp[i][j] =
-        baseLines[i] === nextLines[j]
-          ? dp[i + 1][j + 1] + 1
-          : Math.max(dp[i + 1][j], dp[i][j + 1]);
-    }
-  }
-
-  const lines: DiffLine[] = [];
-  let i = 0;
-  let j = 0;
-  while (i < n && j < m) {
-    if (baseLines[i] === nextLines[j]) {
-      i += 1;
-      j += 1;
-      continue;
-    }
-
-    if (dp[i + 1][j] >= dp[i][j + 1]) {
-      lines.push({ type: "removed", text: baseLines[i] });
-      i += 1;
-    } else {
-      lines.push({ type: "added", text: nextLines[j] });
-      j += 1;
-    }
-  }
-
-  while (i < n) {
-    lines.push({ type: "removed", text: baseLines[i] });
-    i += 1;
-  }
-
-  while (j < m) {
-    lines.push({ type: "added", text: nextLines[j] });
-    j += 1;
-  }
-
-  return lines;
-}
-
-export function createDiffPreview(baseText: string, nextText: string): DiffPreview {
-  if (baseText === nextText) {
-    return { lines: [], added: 0, removed: 0, truncated: false };
-  }
-
-  const baseLines = splitLines(baseText);
-  const nextLines = splitLines(nextText);
-
-  const rawLines =
-    baseLines.length * nextLines.length > MAX_DIFF_MATRIX
-      ? computeSimpleLineDiff(baseLines, nextLines)
-      : computeLcsDiff(baseLines, nextLines);
-
-  const added = rawLines.filter((line) => line.type === "added").length;
-  const removed = rawLines.length - added;
-  const truncated = rawLines.length > MAX_DIFF_PREVIEW_LINES;
-
-  return {
-    lines: rawLines.slice(0, MAX_DIFF_PREVIEW_LINES),
-    added,
-    removed,
-    truncated,
-  };
-}
-
-// ── Workspace event tracking ───────────────────────────────────────
-
-export function pushWorkspaceEvent(event: Omit<WorkspaceEvent, "id">) {
-  state.workspaceEvents = [{ id: crypto.randomUUID(), ...event }, ...state.workspaceEvents].slice(
-    0,
-    MAX_WORKSPACE_EVENTS,
-  );
-}
-
-// ── File operations ────────────────────────────────────────────────
+// ── File operations ─────────────────────────────────────────────
 
 export async function refreshWorkspaceFiles(autoSelect = false) {
   state.workspaceFiles = await limerenceStorage.listWorkspaceFiles();
@@ -193,7 +80,7 @@ export async function openWorkspaceFile(path: string, addUserReadEvent = true) {
       path: normalized,
       timestamp: new Date().toISOString(),
       success: content !== null,
-      summary: content === null ? "文件不存在" : summarizeWorkspaceText(content),
+      summary: content === null ? "文件不存在" : summarizeText(content),
     });
   }
 }
@@ -223,7 +110,7 @@ export async function saveWorkspaceFile(pathInput?: string) {
     path: normalized,
     timestamp: new Date().toISOString(),
     success: true,
-    summary: summarizeWorkspaceText(state.workspaceEditorContent),
+    summary: summarizeText(state.workspaceEditorContent),
   });
 
   await refreshWorkspaceFiles(false);
@@ -261,7 +148,7 @@ export function handleAgentFileOperation(event: FileOperation) {
   void refreshWorkspaceFiles(false);
 }
 
-// ── Resize handle ─────────────────────────────────────────────────
+// ── Resize handle ──────────────────────────────────────────────
 
 export function startWorkspaceResize(e: MouseEvent) {
   e.preventDefault();
@@ -286,11 +173,11 @@ export function startWorkspaceResize(e: MouseEvent) {
   document.addEventListener("mouseup", onUp);
 }
 
-// ── Workspace panel rendering ──────────────────────────────────────
+// ── Workspace panel rendering ───────────────────────────────────
 
 export function renderWorkspacePanel() {
   const markdownFiles = state.workspaceFiles.filter((path) => isMarkdownPath(path));
-  const diff = createDiffPreview(state.workspaceBaseContent, state.workspaceEditorContent);
+  const diff = createDiffPreview(state.workspaceBaseContent, state.workspaceEditorContent, MAX_DIFF_MATRIX, MAX_DIFF_PREVIEW_LINES);
   const panelWidth = state.workspacePanelWidth;
 
   return html`
@@ -443,7 +330,7 @@ export function renderWorkspacePanel() {
                       <div class="limerence-workspace-event-meta">
                         <span class="limerence-workspace-pill">${event.source === "agent" ? "Agent" : "User"}</span>
                         <span class="limerence-workspace-pill">${event.action === "read" ? "READ" : "WRITE"}</span>
-                        <span class="limerence-workspace-time">${formatWorkspaceTime(event.timestamp)}</span>
+                        <span class="limerence-workspace-time">${formatTime(event.timestamp)}</span>
                       </div>
                       <div class="limerence-workspace-event-path">${event.path}</div>
                       <div class="limerence-workspace-event-summary">${event.summary}</div>

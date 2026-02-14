@@ -9,8 +9,7 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
     <section className="relative z-10 mx-auto max-w-6xl px-6 pb-24">
       <div className="mb-12 text-center">
         <h2
-          className="text-2xl font-bold tracking-tight sm:text-3xl"
-          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+          className="font-serif text-2xl font-bold tracking-tight sm:text-3xl"
         >
           架构
         </h2>

@@ -1,0 +1,61 @@
+/* ── Design Tokens ────────────────────────────────────────────────
+ * Semantic CSS variables for consistent theming across the app.
+ * pi-web-ui already provides --background, --foreground, --border,
+ * --muted-foreground, --accent, --secondary via its own app.css.
+ * This file adds Limerence-specific tokens.
+ * ─────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Workspace panel */
+  --ws-bg: color-mix(in oklab, var(--background) 94%, black 6%);
+  --ws-section-bg: color-mix(in oklab, var(--background) 92%, transparent);
+  --ws-input-bg: color-mix(in oklab, var(--background) 96%, transparent);
+  --ws-icon-btn-bg: color-mix(in oklab, var(--background) 88%, transparent);
+  --ws-accent-bg: color-mix(in oklab, var(--accent) 16%, transparent);
+  --ws-accent-hover: color-mix(in oklab, var(--accent) 28%, transparent);
+  --ws-file-active-border: color-mix(in oklab, var(--foreground) 32%, var(--border));
+  --ws-file-active-bg: color-mix(in oklab, var(--accent) 20%, transparent);
+
+  /* Diff colors */
+  --diff-added: #22c55e;
+  --diff-removed: #ef4444;
+  --diff-added-text: #166534;
+  --diff-removed-text: #991b1b;
+  --diff-added-border: color-mix(in oklab, var(--diff-added) 58%, var(--border));
+  --diff-removed-border: color-mix(in oklab, var(--diff-removed) 58%, var(--border));
+  --diff-added-bg: color-mix(in oklab, var(--diff-added) 18%, transparent);
+  --diff-removed-bg: color-mix(in oklab, var(--diff-removed) 16%, transparent);
+  --diff-added-line-border: color-mix(in oklab, var(--diff-added) 64%, var(--border));
+  --diff-removed-line-border: color-mix(in oklab, var(--diff-removed) 64%, var(--border));
+  --diff-added-sign: #15803d;
+  --diff-removed-sign: #b91c1c;
+
+  /* Dirty indicator */
+  --ws-dirty-color: #f59e0b;
+
+  /* Spacing */
+  --ws-padding: 10px;
+  --ws-gap: 10px;
+  --ws-section-radius: 12px;
+  --ws-input-radius: 10px;
+  --ws-btn-radius: 8px;
+
+  /* Typography — unified font system */
+  --font-sans: "Source Sans 3", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --font-serif: "Playfair Display", Georgia, "Noto Serif CJK SC", serif;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-size-xs: 10px;
+  --font-size-sm: 11px;
+  --font-size-base: 12px;
+  --font-size-md: 13px;
+
+  /* Touch targets */
+  --touch-min: 44px;
+}
+
+.dark {
+  --diff-added-text: #86efac;
+  --diff-removed-text: #fca5a5;
+  --diff-added-sign: #86efac;
+  --diff-removed-sign: #fca5a5;
+}
