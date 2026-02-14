@@ -1,8 +1,6 @@
 import { useRef, useEffect } from "react";
-import type { Theme } from "../hooks/useTheme";
 
 interface Props {
-  theme: Theme;
   /** Visual variant (0-3) */
   variant?: number;
   /** Canvas size in CSS pixels */
@@ -83,7 +81,7 @@ const VARIANTS: OrbVariant[] = [
   },
 ];
 
-export default function FourierHeart({ theme, variant = 0, size = 200 }: Props) {
+export default function FourierHeart({ variant = 0, size = 200 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
 

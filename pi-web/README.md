@@ -32,6 +32,20 @@ npm install
 npm run dev
 ```
 
+## 静态分析
+
+```bash
+cd pi-web
+npm run lint
+npm run check:loc
+npm run static
+```
+
+- `npm run lint`：运行 `oxlint`（启用 `--deny-warnings`，warning 也会失败）
+- `npm run check:loc`：校验源码文件 LOC 上限（默认每文件 500 行）
+- `npm run static`：依次执行 `typecheck + lint + check:loc`，用于本地和 CI 统一门禁
+- GitHub Actions 工作流 `pi-web-static-analysis.yml` 会在 `pi-web/**` 相关变更的 `push/pull_request` 上自动执行 `npm run static`
+
 ## Netlify GitHub 部署（推荐）
 
 1. 在 Netlify 里选择 `Add new site -> Import an existing project`

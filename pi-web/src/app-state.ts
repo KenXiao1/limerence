@@ -1,4 +1,4 @@
-import type { Agent, AgentMessage } from "@mariozechner/pi-agent-core";
+import type { Agent } from "@mariozechner/pi-agent-core";
 import type { Usage } from "@mariozechner/pi-ai";
 import {
   AppStorage,

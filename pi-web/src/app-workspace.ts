@@ -67,7 +67,7 @@ function computeSimpleLineDiff(baseLines: string[], nextLines: string[]): DiffLi
 function computeLcsDiff(baseLines: string[], nextLines: string[]): DiffLine[] {
   const n = baseLines.length;
   const m = nextLines.length;
-  const dp: number[][] = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0));
+  const dp: number[][] = Array.from({ length: n + 1 }, () => Array.from({ length: m + 1 }, () => 0));
 
   for (let i = n - 1; i >= 0; i -= 1) {
     for (let j = m - 1; j >= 0; j -= 1) {

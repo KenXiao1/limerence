@@ -10,7 +10,7 @@ import {
 import { FileText, History, Maximize2, Minimize2, Moon, Plus, Server, Settings, Sun } from "lucide";
 import { html, render } from "lit";
 import { state, storage } from "./app-state";
-import { getDefaultModel, isProxyModeEnabled, setProxyModeEnabled, setRoute } from "./app-agent";
+import { getDefaultModel, setProxyModeEnabled, setRoute } from "./app-agent";
 import { ROOT_PATH } from "./app-state";
 import { loadSession, newSession } from "./app-session";
 import { renderWorkspacePanel, toggleWorkspacePanel } from "./app-workspace";
