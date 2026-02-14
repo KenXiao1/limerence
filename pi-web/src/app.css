@@ -3,4 +3,6 @@
 @import "./styles/tokens.css";
 @import "./styles/layout.css";
 @import "./styles/workspace.css";
+@import "./styles/message-actions.css";
+@import "./styles/dialogs.css";
 @import "./styles/mobile.css";

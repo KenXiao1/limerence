@@ -7,7 +7,7 @@ import { icon } from "@mariozechner/mini-lit";
 import { Button } from "@mariozechner/mini-lit/dist/Button.js";
 import { Input } from "@mariozechner/mini-lit/dist/Input.js";
 import { SessionListDialog } from "@mariozechner/pi-web-ui";
-import { FileText, History, Maximize2, Minimize2, Moon, Plus, Server, Settings, Sun } from "lucide";
+import { FileText, History, Maximize2, Minimize2, Moon, Plus, Server, Settings, Sun, Download, Upload, Users, SlidersHorizontal } from "lucide";
 import { html } from "lit";
 import { renderTokenUsage } from "./token-usage";
 import { renderToolCalls } from "./tool-calls";
@@ -38,6 +38,10 @@ export interface HeaderActions {
   onToggleTheme: (e: MouseEvent) => void;
   onToggleFocus: () => void;
   onOpenSettings: () => void;
+  onOpenCharacterSelector: () => void;
+  onOpenLimerenceSettings: () => void;
+  onExportSession: () => void;
+  onImportSession: (file: File) => void;
 }
 
 export function renderHeader(s: HeaderState, actions: HeaderActions) {
@@ -102,6 +106,37 @@ export function renderHeader(s: HeaderState, actions: HeaderActions) {
         ${Button({
           variant: "ghost",
           size: "sm",
+          children: icon(Users, "sm"),
+          onClick: actions.onOpenCharacterSelector,
+          title: "选择角色",
+        })}
+
+        ${Button({
+          variant: "ghost",
+          size: "sm",
+          children: icon(Download, "sm"),
+          onClick: actions.onExportSession,
+          title: "导出会话",
+        })}
+
+        ${Button({
+          variant: "ghost",
+          size: "sm",
+          children: html`<label style="cursor:pointer;display:flex;align-items:center">
+            ${icon(Upload, "sm")}
+            <input type="file" accept=".json" style="display:none" @change=${(e: Event) => {
+              const file = (e.target as HTMLInputElement).files?.[0];
+              if (file) actions.onImportSession(file);
+              (e.target as HTMLInputElement).value = "";
+            }} />
+          </label>`,
+          onClick: () => {},
+          title: "导入会话",
+        })}
+
+        ${Button({
+          variant: "ghost",
+          size: "sm",
           children: html`<span class="inline-flex items-center gap-1">${icon(Server, "sm")}<span class="text-xs limerence-header-label">Proxy ${s.proxyModeEnabled ? "ON" : "OFF"}</span></span>`,
           onClick: actions.onToggleProxy,
           title: "切换 Netlify 代理模式",
@@ -113,6 +148,14 @@ export function renderHeader(s: HeaderState, actions: HeaderActions) {
           children: html`<span class="inline-flex items-center gap-1">${icon(FileText, "sm")}<span class="text-xs limerence-header-label">${s.workspacePanelOpen ? "工作区 ON" : "工作区"}</span></span>`,
           onClick: actions.onToggleWorkspace,
           title: "打开 Markdown 工作区",
+        })}
+
+        ${Button({
+          variant: "ghost",
+          size: "sm",
+          children: icon(SlidersHorizontal, "sm"),
+          onClick: actions.onOpenLimerenceSettings,
+          title: "Limerence 设置（人设/世界书/预设/正则）",
         })}
 
         ${Button({

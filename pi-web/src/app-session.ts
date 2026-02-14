@@ -2,6 +2,7 @@ import type { AgentMessage } from "@mariozechner/pi-agent-core";
 import { state, storage, limerenceStorage, memoryIndex, defaultUsage } from "./app-state";
 import { createAgent, updateUrl } from "./app-agent";
 import { repairTranscript } from "./app-repair";
+import { resetSwipeData } from "./app-message-actions";
 import {
   generateTitle as _generateTitle,
   shouldSaveSession as _shouldSaveSession,
@@ -57,6 +58,7 @@ export async function loadSession(sessionId: string): Promise<boolean> {
   const data = await storage.sessions.get(sessionId);
   if (!data) return false;
 
+  resetSwipeData();
   state.appView = "chat";
   state.currentSessionId = sessionId;
   state.currentTitle = data.title ?? "";
@@ -74,6 +76,7 @@ export async function loadSession(sessionId: string): Promise<boolean> {
 }
 
 export async function newSession() {
+  resetSwipeData();
   state.appView = "chat";
   state.currentSessionId = crypto.randomUUID();
   state.currentSessionCreatedAt = new Date().toISOString();

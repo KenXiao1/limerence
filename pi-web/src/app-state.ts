@@ -1,5 +1,12 @@
-import type { Agent } from "@mariozechner/pi-agent-core";
+import type { Agent, AgentMessage } from "@mariozechner/pi-agent-core";
 import type { Usage } from "@mariozechner/pi-ai";
+import type { SwipeState } from "./controllers/message-actions";
+import type { RegexRule } from "./controllers/regex-rules";
+import type { GenerationPreset } from "./controllers/presets";
+import type { CharacterEntry } from "./controllers/character";
+import type { SettingsTab } from "./views/settings-panels";
+import type { GroupChatConfig } from "./controllers/group-chat";
+import { DEFAULT_GROUP_CONFIG } from "./controllers/group-chat";
 import {
   AppStorage,
   ChatPanel,
@@ -10,7 +17,8 @@ import {
   SettingsStore,
   setAppStorage,
 } from "@mariozechner/pi-web-ui";
-import type { CharacterCard } from "./lib/character";
+import type { CharacterCard, Persona } from "./lib/character";
+import type { LorebookEntry } from "./lib/storage";
 import { MemoryIndex } from "./lib/memory";
 import { getLimerenceStoreConfigs, LimerenceStorage } from "./lib/storage";
 import type { FileOperation } from "./lib/tools";
@@ -104,6 +112,7 @@ const _rawState = {
   chatRuntimeReady: false,
 
   character: undefined as CharacterCard | undefined,
+  persona: undefined as Persona | undefined,
   chatPanel: undefined as ChatPanel | undefined,
   agent: undefined as Agent | undefined,
   agentUnsubscribe: undefined as (() => void) | undefined,
@@ -141,6 +150,44 @@ const _rawState = {
 
   // focus mode
   focusMode: false,
+
+  // message actions (swipe / edit / delete)
+  swipeData: new Map() as Map<number, SwipeState>,
+  editMode: false,
+  editingIndex: -1,
+  editText: "",
+  editRole: "" as string,
+
+  // character selector
+  characterSelectorOpen: false,
+  characterList: [] as CharacterEntry[],
+  characterImportError: "",
+
+  // lorebook
+  lorebookEntries: [] as LorebookEntry[],
+
+  // generation presets
+  activePreset: undefined as GenerationPreset | undefined,
+
+  // regex rules
+  regexRules: [] as RegexRule[],
+
+  // limerence settings panel
+  limerenceSettingsOpen: false,
+  limerenceSettingsTab: "persona" as SettingsTab,
+  lorebookDraftKeywords: "",
+  lorebookDraftContent: "",
+  customPresets: [] as GenerationPreset[],
+  regexDraftName: "",
+  regexDraftPattern: "",
+  regexDraftReplacement: "",
+  regexDraftScope: "output" as RegexRule["scope"],
+  regexError: "",
+
+  // group chat
+  groupChat: { ...DEFAULT_GROUP_CONFIG } as GroupChatConfig,
+  groupChatLastSpeakerId: null as string | null,
+  groupChatManualPickOpen: false,
 };
 
 export type AppState = typeof _rawState;

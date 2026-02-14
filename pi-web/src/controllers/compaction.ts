@@ -4,16 +4,13 @@
  */
 
 import type { AgentMessage } from "@mariozechner/pi-agent-core";
+import { countTokens } from "../lib/tokenizer";
 
 // ── Token estimation ────────────────────────────────────────────
 
-const CJK_RANGE = /[\u4e00-\u9fff\u3400-\u4dbf\u3000-\u303f\uff00-\uffef]/g;
-
-/** Rough token estimate: CJK chars ~ 1.5 tok each, other chars ~ 0.25 tok each. */
+/** Count tokens using precise tiktoken (with fallback to estimation). */
 export function estimateTokens(text: string): number {
-  const cjkCount = (text.match(CJK_RANGE) || []).length;
-  const otherCount = text.length - cjkCount;
-  return Math.ceil(cjkCount * 1.5 + otherCount * 0.25);
+  return countTokens(text);
 }
 
 function messageText(msg: AgentMessage): string {

@@ -1,17 +1,24 @@
 import type { StoreConfig, StorageBackend } from "@mariozechner/pi-web-ui";
 import type { MemoryEntry } from "./memory";
+import type { CharacterEntry } from "../controllers/character";
 
 const MEMORY_STORE = "limerence-memory";
 const NOTES_STORE = "limerence-notes";
 const FILES_STORE = "limerence-files";
+const CHARACTERS_STORE = "limerence-characters";
+const LOREBOOK_STORE = "limerence-lorebook";
 
 const MEMORY_KEY = "entries";
+const CHARACTERS_KEY = "list";
+const LOREBOOK_KEY = "entries";
 
 export function getLimerenceStoreConfigs(): StoreConfig[] {
   return [
     { name: MEMORY_STORE },
     { name: NOTES_STORE },
     { name: FILES_STORE },
+    { name: CHARACTERS_STORE },
+    { name: LOREBOOK_STORE },
   ];
 }
 
@@ -127,9 +134,63 @@ export class LimerenceStorage {
     return sorted.join("\n");
   }
 
+  // ── Character management ────────────────────────────────────
+
+  async loadCharacters(): Promise<CharacterEntry[]> {
+    return (await this.backend.get<CharacterEntry[]>(CHARACTERS_STORE, CHARACTERS_KEY)) ?? [];
+  }
+
+  async saveCharacters(characters: CharacterEntry[]): Promise<void> {
+    await this.backend.set(CHARACTERS_STORE, CHARACTERS_KEY, characters);
+  }
+
+  async addCharacter(entry: CharacterEntry): Promise<void> {
+    const list = await this.loadCharacters();
+    list.push(entry);
+    await this.backend.set(CHARACTERS_STORE, CHARACTERS_KEY, list);
+  }
+
+  async removeCharacter(id: string): Promise<void> {
+    const list = await this.loadCharacters();
+    await this.backend.set(
+      CHARACTERS_STORE,
+      CHARACTERS_KEY,
+      list.filter((c) => c.id !== id),
+    );
+  }
+
+  // ── Lorebook ───────────────────────────────────────────────
+
+  async loadLorebookEntries(): Promise<LorebookEntry[]> {
+    return (await this.backend.get<LorebookEntry[]>(LOREBOOK_STORE, LOREBOOK_KEY)) ?? [];
+  }
+
+  async saveLorebookEntries(entries: LorebookEntry[]): Promise<void> {
+    await this.backend.set(LOREBOOK_STORE, LOREBOOK_KEY, entries);
+  }
+
+  // ── Session export/import ──────────────────────────────────
+
+  async exportSession(sessionId: string): Promise<string | null> {
+    const data = await this.backend.get<unknown>("pi-web-ui:sessions", sessionId);
+    if (!data) return null;
+    return JSON.stringify(data, null, 2);
+  }
+
   private noteKey(title: string): string {
     return `note:${sanitizeTitle(title)}`;
   }
+}
+
+// ── Lorebook types ─────────────────────────────────────────────
+
+export interface LorebookEntry {
+  id: string;
+  keywords: string[];
+  content: string;
+  enabled: boolean;
+  /** Optional: bind to a specific character ID, or null for global */
+  characterId: string | null;
 }
 
 function sanitizeTitle(title: string): string {

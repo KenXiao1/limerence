@@ -30,12 +30,13 @@
 
 .limerence-chat-main {
   display: flex;
+  flex-direction: column;
   flex: 1;
   min-width: 0;
   min-height: 0;
 }
 
-.limerence-chat-main > * {
+.limerence-chat-main > :first-child {
   flex: 1;
   min-height: 0;
 }

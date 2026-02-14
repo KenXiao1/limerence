@@ -12,6 +12,7 @@ import {
   setShowChatCallback,
 } from "./app-render";
 import { addGlobalListener, cleanupApp, createAppContainers } from "./app-lifecycle";
+import { regenerateLastResponse } from "./app-message-actions";
 
 // ── Wire up the render callback ────────────────────────────────
 
@@ -88,10 +89,14 @@ async function initApp() {
   });
 
   // Focus mode shortcut: Ctrl+Shift+F to toggle, Escape to exit
+  // Regenerate shortcut: Ctrl+Shift+R
   addGlobalListener("keydown", (e) => {
     if (e.ctrlKey && e.shiftKey && e.key === "F") {
       e.preventDefault();
       state.focusMode = !state.focusMode;
+    } else if (e.ctrlKey && e.shiftKey && e.key === "R") {
+      e.preventDefault();
+      void regenerateLastResponse();
     } else if (e.key === "Escape" && state.focusMode) {
       state.focusMode = false;
     }
