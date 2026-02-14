@@ -6,13 +6,17 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "oxlint src/",
+    "check:loc": "node scripts/check-loc.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@mariozechner/mini-lit": "^0.2.0",
-    "@mariozechner/pi-agent-core": "^0.52.9",
-    "@mariozechner/pi-ai": "^0.52.9",
-    "@mariozechner/pi-web-ui": "^0.52.9",
+    "@mariozechner/pi-agent-core": "^0.52.10",
+    "@mariozechner/pi-ai": "^0.52.10",
+    "@mariozechner/pi-web-ui": "^0.52.10",
     "@tailwindcss/vite": "^4.1.17",
     "lit": "^3.3.1",
     "lucide": "^0.544.0",
@@ -23,7 +27,9 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
+    "oxlint": "^0.16.0",
     "typescript": "^5.7.3",
-    "vite": "^7.1.6"
+    "vite": "^7.1.6",
+    "vitest": "^3.0.0"
   }
 }

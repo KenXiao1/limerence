@@ -50,6 +50,13 @@ type LimerenceToolHooks = {
   onFileOperation?: (event: FileOperation) => void;
 };
 
+const TOOL_OUTPUT_CHAR_LIMIT = 50_000;
+
+function truncateToolOutput(text: string): string {
+  if (text.length <= TOOL_OUTPUT_CHAR_LIMIT) return text;
+  return text.slice(0, TOOL_OUTPUT_CHAR_LIMIT) + `\n\n[输出已截断，原始长度 ${text.length} 字符，上限 ${TOOL_OUTPUT_CHAR_LIMIT}]`;
+}
+
 function summarizeText(text: string, maxLength = 120): string {
   const compact = text.replace(/\s+/g, " ").trim();
   if (compact.length <= maxLength) return compact;
@@ -235,7 +242,7 @@ export function createLimerenceTools(
     },
   };
 
-  return [
+  const allTools = [
     memorySearchTool,
     webSearchTool,
     noteWriteTool,
@@ -243,4 +250,18 @@ export function createLimerenceTools(
     fileReadTool,
     fileWriteTool,
   ];
+
+  // Wrap all tools with output truncation
+  return allTools.map((tool) => ({
+    ...tool,
+    async execute(toolCallId: string, args: any) {
+      const result = await tool.execute(toolCallId, args);
+      return {
+        ...result,
+        content: result.content.map((block: any) =>
+          block?.type === "text" ? { ...block, text: truncateToolOutput(block.text) } : block,
+        ),
+      };
+    },
+  }));
 }

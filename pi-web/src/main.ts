@@ -66,6 +66,26 @@ async function routeByLocation() {
 
 // ── Init ───────────────────────────────────────────────────────────
 
+// Track listeners for cleanup (#12)
+const _cleanupFns: Array<() => void> = [];
+
+function addGlobalListener<K extends keyof WindowEventMap>(
+  type: K,
+  handler: (ev: WindowEventMap[K]) => void,
+) {
+  window.addEventListener(type, handler);
+  _cleanupFns.push(() => window.removeEventListener(type, handler));
+}
+
+export function cleanupApp() {
+  for (const fn of _cleanupFns) fn();
+  _cleanupFns.length = 0;
+  if (state.agentUnsubscribe) {
+    state.agentUnsubscribe();
+    state.agentUnsubscribe = undefined;
+  }
+}
+
 async function initApp() {
   state.appRoot = document.getElementById("app");
   if (!state.appRoot) throw new Error("App container not found");
@@ -89,8 +109,17 @@ async function initApp() {
   );
   state.introHost.style.display = "none";
 
-  window.addEventListener("popstate", () => {
+  // Popstate for routing
+  addGlobalListener("popstate", () => {
     void routeByLocation();
+  });
+
+  // Focus mode shortcut: Ctrl+Shift+F
+  addGlobalListener("keydown", (e) => {
+    if (e.ctrlKey && e.shiftKey && e.key === "F") {
+      e.preventDefault();
+      state.focusMode = !state.focusMode;
+    }
   });
 
   await routeByLocation();

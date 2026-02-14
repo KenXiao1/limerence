@@ -1,4 +1,3 @@
-import "@mariozechner/mini-lit/dist/ThemeToggle.js";
 import { icon } from "@mariozechner/mini-lit";
 import { Button } from "@mariozechner/mini-lit/dist/Button.js";
 import { Input } from "@mariozechner/mini-lit/dist/Input.js";
@@ -8,14 +7,16 @@ import {
   SessionListDialog,
   SettingsDialog,
 } from "@mariozechner/pi-web-ui";
-import { FileText, History, Plus, Server, Settings } from "lucide";
+import { FileText, History, Maximize2, Minimize2, Moon, Plus, Server, Settings, Sun } from "lucide";
 import { html, render } from "lit";
-import { state, storage, renderCurrentView } from "./app-state";
+import { state, storage } from "./app-state";
 import { getDefaultModel, isProxyModeEnabled, setProxyModeEnabled, setRoute } from "./app-agent";
 import { ROOT_PATH } from "./app-state";
 import { loadSession, newSession } from "./app-session";
 import { renderWorkspacePanel, toggleWorkspacePanel } from "./app-workspace";
 import { mountLegacyIntro, unmountLegacyIntro } from "./legacy-intro/mount";
+import { formatTokenCount, tokenUsagePercent } from "./app-compaction";
+import { startThemeTransition } from "./theme-transition";
 
 // ── Lit render helpers ─────────────────────────────────────────────
 
@@ -70,8 +71,8 @@ export function renderChatView() {
   const headerTitle = state.currentTitle || state.character?.data.name || "Limerence Pi Web";
 
   const appHtml = html`
-    <div class="w-full h-screen flex flex-col bg-background text-foreground overflow-hidden">
-      <div class="flex items-center justify-between border-b border-border shrink-0">
+    <div class="w-full h-screen flex flex-col bg-background text-foreground overflow-hidden ${state.focusMode ? "limerence-focus-mode" : ""}">
+      <div class="limerence-header flex items-center justify-between border-b border-border shrink-0">
         <div class="flex items-center gap-2 px-4 py-2 min-w-0">
           ${Button({
             variant: "ghost",
@@ -127,14 +128,12 @@ export function renderChatView() {
                       }
                     }
                     state.isEditingTitle = false;
-                    renderCurrentView();
                   },
                 })
               : html`<button
                   class="px-2 py-1 text-sm text-foreground hover:bg-secondary rounded transition-colors truncate max-w-[24rem]"
                   @click=${() => {
                     state.isEditingTitle = true;
-                    renderCurrentView();
                   }}
                   title="点击编辑标题"
                 >
@@ -144,6 +143,18 @@ export function renderChatView() {
         </div>
 
         <div class="flex items-center gap-1 px-2">
+          ${state.activeToolCalls.length > 0 ? html`
+            <span class="text-xs px-2 py-1 rounded text-blue-500 animate-pulse" title="工具执行中">
+              ⚙ ${state.activeToolCalls.map((t) => t.label).join(", ")}
+            </span>
+          ` : null}
+
+          ${state.estimatedTokens > 0 ? html`
+            <span class="text-xs px-2 py-1 rounded ${tokenUsagePercent(state.estimatedTokens, state.contextWindow) > 80 ? 'text-red-500' : tokenUsagePercent(state.estimatedTokens, state.contextWindow) > 60 ? 'text-yellow-500' : 'text-muted-foreground'}" title="估算 token 用量 / 上下文窗口">
+              ${formatTokenCount(state.estimatedTokens)}/${formatTokenCount(state.contextWindow)} (${tokenUsagePercent(state.estimatedTokens, state.contextWindow)}%)
+            </span>
+          ` : null}
+
           ${Button({
             variant: "ghost",
             size: "sm",
@@ -155,7 +166,6 @@ export function renderChatView() {
                 await storage.providerKeys.set("limerence-proxy", "__PROXY__");
               }
               state.agent!.setModel(await getDefaultModel());
-              renderCurrentView();
             },
             title: "切换 Netlify 代理模式",
           })}
@@ -170,7 +180,28 @@ export function renderChatView() {
             title: "打开 Markdown 工作区",
           })}
 
-          <theme-toggle></theme-toggle>
+          ${Button({
+            variant: "ghost",
+            size: "sm",
+            children: icon(getPreferredTheme() === "dark" ? Sun : Moon, "sm"),
+            onClick: (e: Event) => {
+              startThemeTransition(e as MouseEvent, () => {
+                const next = getPreferredTheme() === "dark" ? "light" : "dark";
+                applyTheme(next);
+              });
+            },
+            title: "切换主题",
+          })}
+
+          ${Button({
+            variant: "ghost",
+            size: "sm",
+            children: icon(state.focusMode ? Minimize2 : Maximize2, "sm"),
+            onClick: () => {
+              state.focusMode = !state.focusMode;
+            },
+            title: "专注模式 (Ctrl+Shift+F)",
+          })}
 
           ${Button({
             variant: "ghost",

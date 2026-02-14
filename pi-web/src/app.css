@@ -1,5 +1,21 @@
 @import "@mariozechner/pi-web-ui/app.css";
 
+/* ── View Transition (theme toggle animation) ──────────────────────── */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
 .limerence-chat-shell {
   position: relative;
   display: flex;
@@ -20,9 +36,6 @@
 }
 
 .limerence-workspace-panel {
-  width: min(38vw, 480px);
-  min-width: 320px;
-  max-width: 520px;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -30,6 +43,41 @@
   background:
     radial-gradient(120% 140% at 100% 0%, color-mix(in oklab, var(--muted) 22%, transparent), transparent 55%),
     color-mix(in oklab, var(--background) 94%, black 6%);
+}
+
+/* ── Resizable divider ─────────────────────────────────────────────── */
+
+.limerence-resize-handle {
+  width: 6px;
+  cursor: col-resize;
+  background: transparent;
+  position: relative;
+  flex-shrink: 0;
+  z-index: 10;
+  transition: background 0.15s;
+}
+
+.limerence-resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2px;
+  width: 2px;
+  background: var(--border);
+  transition: background 0.15s;
+}
+
+.limerence-resize-handle:hover::after,
+.limerence-resize-handle.is-dragging::after {
+  background: var(--foreground);
+  opacity: 0.5;
+}
+
+/* ── Focus mode ────────────────────────────────────────────────────── */
+
+.limerence-focus-mode .limerence-header {
+  display: none;
 }
 
 .limerence-workspace-head {

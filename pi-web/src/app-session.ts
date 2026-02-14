@@ -1,8 +1,9 @@
 import type { AgentMessage } from "@mariozechner/pi-agent-core";
 import type { Usage } from "@mariozechner/pi-ai";
-import { state, storage, limerenceStorage, memoryIndex, defaultUsage, renderCurrentView } from "./app-state";
+import { state, storage, limerenceStorage, memoryIndex, defaultUsage } from "./app-state";
 import { createAgent, updateUrl } from "./app-agent";
 import type { MemoryEntry } from "./lib/memory";
+import { repairTranscript } from "./app-repair";
 
 // ── Title generation ───────────────────────────────────────────────
 
@@ -181,12 +182,11 @@ export async function loadSession(sessionId: string): Promise<boolean> {
   await createAgent({
     model: data.model,
     thinkingLevel: data.thinkingLevel,
-    messages: data.messages,
+    messages: repairTranscript(data.messages ?? []),
     tools: [],
   });
 
   updateUrl(sessionId);
-  renderCurrentView();
   return true;
 }
 
@@ -199,5 +199,4 @@ export async function newSession() {
 
   updateUrl(state.currentSessionId);
   await createAgent();
-  renderCurrentView();
 }

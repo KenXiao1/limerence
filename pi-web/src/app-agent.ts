@@ -11,7 +11,6 @@ import {
   limerenceStorage,
   memoryIndex,
   defaultUsage,
-  renderCurrentView,
   PROXY_MODE_KEY,
   CHAT_PATH,
 } from "./app-state";
@@ -19,6 +18,7 @@ import { buildSystemPrompt, loadDefaultCharacter } from "./lib/character";
 import { createLimerenceTools } from "./lib/tools";
 import { handleAgentFileOperation } from "./app-workspace";
 import { generateTitle, indexMessageIntoMemory, saveSession, newSession } from "./app-session";
+import { compactMessages, estimateMessagesTokens } from "./app-compaction";
 
 // ── Routing helpers ────────────────────────────────────────────────
 
@@ -172,8 +172,10 @@ export async function createAgent(initialState?: Partial<AgentState>) {
     agent.sessionId = state.currentSessionId;
   }
 
-  // Wrap agent.prompt to support chat commands and message queue
+  // Wrap agent.prompt to support chat commands, message queue, compaction, and draft recovery
   const originalPrompt = agent.prompt.bind(agent);
+  const DRAFT_KEY = "limerence-draft";
+
   agent.prompt = ((message: any, images?: any) => {
     if (typeof message === "string" && handleChatCommand(message)) return Promise.resolve();
 
@@ -182,28 +184,75 @@ export async function createAgent(initialState?: Partial<AgentState>) {
       return Promise.resolve();
     }
 
-    return originalPrompt(message, images);
+    // Auto-compact before sending if approaching context limit
+    const contextWindow = agent.state.model?.contextWindow ?? 128000;
+    const compacted = compactMessages(agent.state.messages, contextWindow);
+    if (compacted) {
+      agent.replaceMessages(compacted);
+    }
+
+    // Save draft for recovery on failure (#13)
+    if (typeof message === "string") {
+      try { sessionStorage.setItem(DRAFT_KEY, message); } catch {}
+    }
+
+    return originalPrompt(message, images).then(
+      (result: any) => {
+        try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
+        return result;
+      },
+      (err: any) => {
+        // Restore draft to input on failure
+        const draft = sessionStorage.getItem(DRAFT_KEY);
+        if (draft && state.chatPanel?.agentInterface) {
+          state.chatPanel.agentInterface.setInput(draft);
+        }
+        try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
+        throw err;
+      },
+    );
   }) as typeof agent.prompt;
 
+  const TOOL_LABELS: Record<string, string> = {
+    memory_search: "记忆搜索",
+    web_search: "网络搜索",
+    note_write: "写笔记",
+    note_read: "读笔记",
+    file_read: "读文件",
+    file_write: "写文件",
+  };
+
   state.agentUnsubscribe = agent.subscribe((event) => {
+    if (event.type === "tool_execution_start") {
+      state.activeToolCalls = [
+        ...state.activeToolCalls,
+        { id: event.toolCallId, name: event.toolName, label: TOOL_LABELS[event.toolName] ?? event.toolName },
+      ];
+      return;
+    }
+
+    if (event.type === "tool_execution_end") {
+      state.activeToolCalls = state.activeToolCalls.filter((t) => t.id !== event.toolCallId);
+      return;
+    }
+
     if (event.type === "message_end") {
       void indexMessageIntoMemory(event.message);
       if (!state.currentTitle) {
         state.currentTitle = generateTitle(agent.state.messages);
       }
       void saveSession();
-      renderCurrentView();
       return;
     }
 
     if (event.type === "agent_end") {
+      state.activeToolCalls = [];
+      state.estimatedTokens = estimateMessagesTokens(agent.state.messages);
+      state.contextWindow = agent.state.model?.contextWindow ?? 128000;
       void saveSession();
       drainMessageQueue();
-      renderCurrentView();
       return;
     }
-
-    renderCurrentView();
   });
 
   state.agent = agent;
@@ -224,6 +273,11 @@ export async function createAgent(initialState?: Partial<AgentState>) {
         },
       }),
   });
+
+  // Enable image paste/drag attachments
+  if (state.chatPanel!.agentInterface) {
+    state.chatPanel!.agentInterface.enableAttachments = true;
+  }
 }
 
 // ── Runtime bootstrap ──────────────────────────────────────────────
@@ -232,7 +286,14 @@ export async function ensureChatRuntime() {
   if (state.chatRuntimeReady) return;
 
   state.character = await loadDefaultCharacter();
-  state.proxyModeEnabled = await isProxyModeEnabled();
+
+  // Settings validation (#11): ensure proxy mode is a boolean
+  try {
+    const raw = await storage.settings.get<unknown>(PROXY_MODE_KEY);
+    state.proxyModeEnabled = typeof raw === "boolean" ? raw : false;
+  } catch {
+    state.proxyModeEnabled = false;
+  }
 
   const memoryEntries = await limerenceStorage.loadMemoryEntries();
   memoryIndex.load(memoryEntries);

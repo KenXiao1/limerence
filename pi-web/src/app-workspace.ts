@@ -4,7 +4,6 @@ import { html } from "lit";
 import {
   state,
   limerenceStorage,
-  renderCurrentView,
   MAX_WORKSPACE_EVENTS,
   MAX_DIFF_MATRIX,
   MAX_DIFF_PREVIEW_LINES,
@@ -14,6 +13,12 @@ import {
 } from "./app-state";
 import { normalizePath } from "./lib/storage";
 import type { FileOperation } from "./lib/tools";
+
+// ── Constants ─────────────────────────────────────────────────────
+
+const WS_MIN_WIDTH = 280;
+const WS_MAX_WIDTH = 700;
+const WS_WIDTH_KEY = "limerence-ws-width";
 
 // ── Utilities ──────────────────────────────────────────────────────
 
@@ -162,7 +167,6 @@ export async function openWorkspaceFile(path: string, addUserReadEvent = true) {
   const normalized = normalizePath(path.trim());
   if (!normalized) {
     state.workspaceMessage = "文件路径无效。";
-    renderCurrentView();
     return;
   }
 
@@ -175,7 +179,6 @@ export async function openWorkspaceFile(path: string, addUserReadEvent = true) {
   state.workspaceDraftPath = normalized;
   state.workspaceLoadingFile = true;
   state.workspaceMessage = "";
-  renderCurrentView();
 
   const content = await limerenceStorage.readWorkspaceFile(normalized);
   state.workspaceEditorContent = content ?? "";
@@ -193,8 +196,6 @@ export async function openWorkspaceFile(path: string, addUserReadEvent = true) {
       summary: content === null ? "文件不存在" : summarizeWorkspaceText(content),
     });
   }
-
-  renderCurrentView();
 }
 
 export async function saveWorkspaceFile(pathInput?: string) {
@@ -202,7 +203,6 @@ export async function saveWorkspaceFile(pathInput?: string) {
   let normalized = normalizePath((basePath ?? "").trim());
   if (!normalized) {
     state.workspaceMessage = "请输入有效文件路径。";
-    renderCurrentView();
     return;
   }
 
@@ -227,7 +227,6 @@ export async function saveWorkspaceFile(pathInput?: string) {
   });
 
   await refreshWorkspaceFiles(false);
-  renderCurrentView();
 }
 
 export async function toggleWorkspacePanel() {
@@ -235,7 +234,6 @@ export async function toggleWorkspacePanel() {
   if (state.workspacePanelOpen) {
     await refreshWorkspaceFiles(true);
   }
-  renderCurrentView();
 }
 
 export function handleAgentFileOperation(event: FileOperation) {
@@ -257,17 +255,35 @@ export function handleAgentFileOperation(event: FileOperation) {
         state.workspaceEditorContent = content;
         state.workspaceBaseContent = content;
       }
-      if (state.workspacePanelOpen) {
-        renderCurrentView();
-      }
     });
   }
 
-  void refreshWorkspaceFiles(false).then(() => {
-    if (state.workspacePanelOpen) {
-      renderCurrentView();
-    }
-  });
+  void refreshWorkspaceFiles(false);
+}
+
+// ── Resize handle ─────────────────────────────────────────────────
+
+export function startWorkspaceResize(e: MouseEvent) {
+  e.preventDefault();
+  state.workspaceResizing = true;
+  const startX = e.clientX;
+  const startWidth = state.workspacePanelWidth;
+
+  const onMove = (ev: MouseEvent) => {
+    const delta = startX - ev.clientX;
+    const next = Math.min(WS_MAX_WIDTH, Math.max(WS_MIN_WIDTH, startWidth + delta));
+    state.workspacePanelWidth = next;
+  };
+
+  const onUp = () => {
+    state.workspaceResizing = false;
+    localStorage.setItem(WS_WIDTH_KEY, String(state.workspacePanelWidth));
+    document.removeEventListener("mousemove", onMove);
+    document.removeEventListener("mouseup", onUp);
+  };
+
+  document.addEventListener("mousemove", onMove);
+  document.addEventListener("mouseup", onUp);
 }
 
 // ── Workspace panel rendering ──────────────────────────────────────
@@ -275,9 +291,14 @@ export function handleAgentFileOperation(event: FileOperation) {
 export function renderWorkspacePanel() {
   const markdownFiles = state.workspaceFiles.filter((path) => isMarkdownPath(path));
   const diff = createDiffPreview(state.workspaceBaseContent, state.workspaceEditorContent);
+  const panelWidth = state.workspacePanelWidth;
 
   return html`
-    <aside class="limerence-workspace-panel border-l border-border bg-background">
+    <div
+      class="limerence-resize-handle ${state.workspaceResizing ? "is-dragging" : ""}"
+      @mousedown=${(e: Event) => startWorkspaceResize(e as MouseEvent)}
+    ></div>
+    <aside class="limerence-workspace-panel border-l border-border bg-background" style="width:${panelWidth}px;min-width:${WS_MIN_WIDTH}px;max-width:${WS_MAX_WIDTH}px">
       <div class="limerence-workspace-head">
         <div>
           <div class="limerence-workspace-title">Markdown 工作区</div>
@@ -289,7 +310,7 @@ export function renderWorkspacePanel() {
           <button
             class="limerence-workspace-icon-button"
             @click=${() => {
-              void refreshWorkspaceFiles(true).then(() => renderCurrentView());
+              void refreshWorkspaceFiles(true);
             }}
             title="刷新文件列表"
           >
@@ -299,7 +320,6 @@ export function renderWorkspacePanel() {
             class="limerence-workspace-icon-button"
             @click=${() => {
               state.workspacePanelOpen = false;
-              renderCurrentView();
             }}
             title="关闭面板"
           >

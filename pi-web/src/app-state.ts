@@ -76,9 +76,27 @@ setAppStorage(storage);
 export const limerenceStorage = new LimerenceStorage(backend);
 export const memoryIndex = new MemoryIndex();
 
-// ── Mutable app state ──────────────────────────────────────────────
+// ── Render callback (set by main.ts to break circular deps) ────────
 
-export const state = {
+export let renderCurrentView: () => void = () => {};
+export function setRenderCallback(fn: () => void) {
+  renderCurrentView = fn;
+}
+
+// ── Reactive state (Proxy auto-triggers renderCurrentView) ─────────
+
+let _renderScheduled = false;
+
+function scheduleRender() {
+  if (_renderScheduled) return;
+  _renderScheduled = true;
+  queueMicrotask(() => {
+    _renderScheduled = false;
+    renderCurrentView();
+  });
+}
+
+const _rawState = {
   appRoot: null as HTMLElement | null,
   chatHost: null as HTMLElement | null,
   introHost: null as HTMLElement | null,
@@ -99,6 +117,8 @@ export const state = {
 
   // workspace
   workspacePanelOpen: false,
+  workspacePanelWidth: Number(localStorage.getItem("limerence-ws-width")) || 420,
+  workspaceResizing: false,
   workspaceFiles: [] as string[],
   workspaceSelectedPath: "",
   workspaceDraftPath: "notes/daily.md",
@@ -111,14 +131,29 @@ export const state = {
 
   // message queue (send when agent finishes)
   messageQueue: [] as string[],
+
+  // active tool calls (for progress display)
+  activeToolCalls: [] as Array<{ id: string; name: string; label: string }>,
+
+  // token usage tracking
+  estimatedTokens: 0,
+  contextWindow: 128000,
+
+  // focus mode
+  focusMode: false,
 };
 
-// ── Render callback (set by main.ts to break circular deps) ────────
+export type AppState = typeof _rawState;
 
-export let renderCurrentView: () => void = () => {};
-export function setRenderCallback(fn: () => void) {
-  renderCurrentView = fn;
-}
+export const state: AppState = new Proxy(_rawState, {
+  set(target, prop, value) {
+    const key = prop as keyof AppState;
+    if (target[key] === value) return true;
+    (target as any)[key] = value;
+    scheduleRender();
+    return true;
+  },
+});
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
