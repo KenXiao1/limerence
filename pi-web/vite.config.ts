@@ -11,11 +11,23 @@ export default defineConfig({
     conditions: ["browser", "module", "import", "default"],
     alias: [
       {
+        find: /^@mariozechner\/pi-web-ui\/app\.css$/,
+        replacement: path.resolve(__dirname, "src/shims/pi-web-ui-app.css"),
+      },
+      {
         find: /^@mariozechner\/pi-ai$/,
         replacement: path.resolve(__dirname, "src/shims/pi-ai-browser.ts"),
       },
       {
-        find: /^@mariozechner\/pi-ai\/dist\/env-api-keys\.js$/,
+        find: /^\.\.\/env-api-keys\.js$/,
+        replacement: path.resolve(__dirname, "src/shims/env-api-keys.ts"),
+      },
+      {
+        find: /^@lmstudio\/sdk$/,
+        replacement: path.resolve(__dirname, "src/shims/lmstudio-sdk.ts"),
+      },
+      {
+        find: /@mariozechner\/pi-ai\/dist\/env-api-keys\.js$/,
         replacement: path.resolve(__dirname, "src/shims/env-api-keys.ts"),
       },
     ],
