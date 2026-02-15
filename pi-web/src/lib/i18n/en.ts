@@ -255,6 +255,17 @@ const en: Record<string, string> = {
   "auth.loggedInAs": "Logged in as: {0}",
   "auth.logout": "Log out",
   "auth.customSupabase": "Use your own Supabase instance →",
+  "auth.forgotPassword": "Forgot password?",
+  "auth.resetPassword": "Reset password",
+  "auth.resetPasswordHint": "Enter your email and we'll send you a password reset link.",
+  "auth.sendResetLink": "Send reset link",
+  "auth.resetEmailSent": "Reset link sent! Check your email and click the link to set a new password.",
+  "auth.backToLogin": "← Back to login",
+  "auth.newPassword": "New password",
+  "auth.confirmPassword": "Confirm password",
+  "auth.setNewPassword": "Set new password",
+  "auth.passwordMismatch": "Passwords do not match",
+  "auth.passwordUpdateSuccess": "Password updated! Please log in with your new password.",
 
   // ── Sync ──────────────────────────────────────────────────
   "sync.idle": "Not synced",

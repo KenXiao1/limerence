@@ -140,6 +140,13 @@ export async function initAuth(): Promise<void> {
       syncEngine.stop();
       state.authUser = null;
       state.syncStatus = "idle";
+    } else if (event === "PASSWORD_RECOVERY") {
+      // User clicked the password reset link in email — open the "set new password" dialog
+      state.authPasswordRecovery = true;
+      state.authDialogTab = "newPassword";
+      state.authDialogOpen = true;
+      state.authDialogError = "";
+      doRenderCurrentView();
     }
   });
   if (unsub) onCleanup(unsub);

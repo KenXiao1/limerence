@@ -211,6 +211,9 @@ const _rawState = {
   authDialogLoading: false,
   authDialogError: "",
   authSignupSuccess: false,
+  authResetEmailSent: false,
+  authPasswordRecovery: false,
+  authPasswordUpdateSuccess: false,
   supabaseConfigDialogOpen: false,
 };
 

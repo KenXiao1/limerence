@@ -56,7 +56,7 @@ import { t } from "./lib/i18n";
 import { renderAuthDialog, type AuthDialogState, type AuthDialogActions, type AuthTab } from "./views/auth-dialog";
 import { renderSupabaseConfigDialog, type SupabaseConfigDialogState, type SupabaseConfigDialogActions } from "./views/supabase-config-dialog";
 import { isConfigured } from "./lib/supabase";
-import { signUp, signIn, signOut } from "./lib/auth";
+import { signUp, signIn, signOut, resetPassword, updatePassword } from "./lib/auth";
 
 // ── Lit render helpers ─────────────────────────────────────────
 
@@ -206,6 +206,9 @@ function renderAuthDialogView() {
     loading: state.authDialogLoading,
     error: state.authDialogError,
     signupSuccess: state.authSignupSuccess,
+    resetEmailSent: state.authResetEmailSent,
+    passwordRecovery: state.authPasswordRecovery,
+    passwordUpdateSuccess: state.authPasswordUpdateSuccess,
   };
 
   const actions: AuthDialogActions = {
@@ -213,17 +216,31 @@ function renderAuthDialogView() {
       state.authDialogOpen = false;
       state.authDialogError = "";
       state.authSignupSuccess = false;
+      state.authResetEmailSent = false;
+      state.authPasswordUpdateSuccess = false;
+      // If in password recovery mode, stay on newPassword tab but allow closing
+      if (!state.authPasswordRecovery) {
+        state.authDialogTab = "login";
+      }
     },
     onTabChange: (tab: AuthTab) => {
       state.authDialogTab = tab;
       state.authDialogError = "";
       state.authSignupSuccess = false;
+      state.authResetEmailSent = false;
+      state.authPasswordUpdateSuccess = false;
     },
     onSubmit: (email: string, password: string) => {
       void handleAuthSubmit(email, password);
     },
     onCustomConfig: () => {
       state.supabaseConfigDialogOpen = true;
+    },
+    onResetPassword: (email: string) => {
+      void handleResetPassword(email);
+    },
+    onUpdatePassword: (newPassword: string) => {
+      void handleUpdatePassword(newPassword);
     },
   };
 
@@ -286,6 +303,34 @@ async function handleLogout() {
   state.authUser = null;
   state.syncStatus = "idle";
   await signOut();
+}
+
+async function handleResetPassword(email: string) {
+  state.authDialogLoading = true;
+  state.authDialogError = "";
+  const result = await resetPassword(email);
+  state.authDialogLoading = false;
+  if (result.error) {
+    state.authDialogError = result.error;
+  } else {
+    state.authResetEmailSent = true;
+  }
+}
+
+async function handleUpdatePassword(newPassword: string) {
+  state.authDialogLoading = true;
+  state.authDialogError = "";
+  const result = await updatePassword(newPassword);
+  state.authDialogLoading = false;
+  if (result.error) {
+    state.authDialogError = result.error;
+  } else {
+    state.authPasswordRecovery = false;
+    state.authDialogTab = "login";
+    state.authPasswordUpdateSuccess = true;
+    // Sign out so user logs in fresh with new password
+    await signOut();
+  }
 }
 
 // ── Message actions bar ───────────────────────────────────────

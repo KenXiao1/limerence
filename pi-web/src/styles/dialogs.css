@@ -919,6 +919,22 @@
   color: hsl(var(--foreground));
 }
 
+.limerence-auth-forgot-link {
+  display: block;
+  margin: 10px auto 0;
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 0.8rem;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.limerence-auth-forgot-link:hover {
+  color: hsl(var(--foreground));
+}
+
 /* ── Auth dialog — light mode ────────────────────────────────── */
 
 :root:not(.dark) .limerence-auth-dialog {

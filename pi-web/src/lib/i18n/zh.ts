@@ -255,6 +255,17 @@ const zh: Record<string, string> = {
   "auth.loggedInAs": "已登录：{0}",
   "auth.logout": "登出",
   "auth.customSupabase": "使用自己的 Supabase 实例 →",
+  "auth.forgotPassword": "忘记密码？",
+  "auth.resetPassword": "重置密码",
+  "auth.resetPasswordHint": "输入注册邮箱，我们将发送密码重置链接。",
+  "auth.sendResetLink": "发送重置链接",
+  "auth.resetEmailSent": "重置链接已发送！请查收邮件，点击链接后设置新密码。",
+  "auth.backToLogin": "← 返回登录",
+  "auth.newPassword": "新密码",
+  "auth.confirmPassword": "确认密码",
+  "auth.setNewPassword": "设置新密码",
+  "auth.passwordMismatch": "两次输入的密码不一致",
+  "auth.passwordUpdateSuccess": "密码已更新！请使用新密码登录。",
 
   // ── Sync ──────────────────────────────────────────────────
   "sync.idle": "未同步",
