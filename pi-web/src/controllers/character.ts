@@ -17,6 +17,42 @@ export interface CharacterEntry {
 
 // ── Validation ─────────────────────────────────────────────────
 
+type LooseObject = Record<string, unknown>;
+
+function isObject(value: unknown): value is LooseObject {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function toStringField(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value == null) return "";
+  return String(value);
+}
+
+function preferPrimaryString(primary: unknown, fallback: unknown): string {
+  const primaryStr = toStringField(primary);
+  if (primaryStr.trim()) return primaryStr;
+  return toStringField(fallback);
+}
+
+function toExtensions(value: unknown): Record<string, unknown> {
+  if (isObject(value)) return { ...value };
+  return {};
+}
+
+function normalizeCardData(primary: LooseObject, fallback?: LooseObject): CharacterCard["data"] {
+  return {
+    name: preferPrimaryString(primary.name, fallback?.name),
+    description: preferPrimaryString(primary.description, fallback?.description),
+    personality: preferPrimaryString(primary.personality, fallback?.personality),
+    scenario: preferPrimaryString(primary.scenario, fallback?.scenario),
+    first_mes: preferPrimaryString(primary.first_mes, fallback?.first_mes),
+    system_prompt: preferPrimaryString(primary.system_prompt, fallback?.system_prompt),
+    mes_example: preferPrimaryString(primary.mes_example, fallback?.mes_example),
+    extensions: toExtensions(primary.extensions ?? fallback?.extensions),
+  };
+}
+
 /**
  * Validate a character card JSON object.
  * Returns the card if valid, or null with an error message.
@@ -24,59 +60,54 @@ export interface CharacterEntry {
 export function validateCharacterCard(
   data: unknown,
 ): { card: CharacterCard; error: null } | { card: null; error: string } {
-  if (!data || typeof data !== "object") {
+  if (!isObject(data)) {
     return { card: null, error: "无效的 JSON 数据" };
   }
 
-  const obj = data as Record<string, unknown>;
+  const obj = data;
+  const topLevelName = toStringField(obj.name).trim();
 
   // SillyTavern V2 format
-  if (obj.spec === "chara_card_v2" && obj.data && typeof obj.data === "object") {
-    const d = obj.data as Record<string, unknown>;
-    if (typeof d.name !== "string" || !d.name.trim()) {
+  if (obj.spec === "chara_card_v2" && isObject(obj.data)) {
+    const cardData = normalizeCardData(obj.data, obj);
+    if (!cardData.name.trim() && topLevelName) cardData.name = topLevelName;
+    if (!cardData.name.trim()) {
       return { card: null, error: "角色卡缺少名字 (data.name)" };
     }
-    return { card: data as CharacterCard, error: null };
+    return {
+      card: {
+        spec: "chara_card_v2",
+        spec_version: "2.0",
+        data: cardData,
+      },
+      error: null,
+    };
   }
 
   // SillyTavern V3 format — normalize to V2 (V3 data is a superset of V2)
-  if (obj.spec === "chara_card_v3" && obj.data && typeof obj.data === "object") {
-    const d = obj.data as Record<string, unknown>;
-    if (typeof d.name !== "string" || !d.name.trim()) {
+  if (obj.spec === "chara_card_v3") {
+    const source = isObject(obj.data) ? obj.data : obj;
+    const cardData = normalizeCardData(source, obj);
+    if (!cardData.name.trim() && topLevelName) cardData.name = topLevelName;
+    if (!cardData.name.trim()) {
       return { card: null, error: "角色卡缺少名字 (data.name)" };
     }
-    const card: CharacterCard = {
-      spec: "chara_card_v2",
-      spec_version: "2.0",
-      data: {
-        name: String(d.name),
-        description: String(d.description ?? ""),
-        personality: String(d.personality ?? ""),
-        scenario: String(d.scenario ?? ""),
-        first_mes: String(d.first_mes ?? ""),
-        system_prompt: String(d.system_prompt ?? ""),
-        mes_example: String(d.mes_example ?? ""),
-        extensions: (d.extensions as Record<string, unknown>) ?? {},
+    return {
+      card: {
+        spec: "chara_card_v2",
+        spec_version: "2.0",
+        data: cardData,
       },
+      error: null,
     };
-    return { card, error: null };
   }
 
   // Simple format: just has name + description at top level
-  if (typeof obj.name === "string" && obj.name.trim()) {
+  if (topLevelName) {
     const card: CharacterCard = {
       spec: "chara_card_v2",
       spec_version: "2.0",
-      data: {
-        name: String(obj.name),
-        description: String(obj.description ?? ""),
-        personality: String(obj.personality ?? ""),
-        scenario: String(obj.scenario ?? ""),
-        first_mes: String(obj.first_mes ?? ""),
-        system_prompt: String(obj.system_prompt ?? ""),
-        mes_example: String(obj.mes_example ?? ""),
-        extensions: (obj.extensions as Record<string, unknown>) ?? {},
-      },
+      data: normalizeCardData(obj),
     };
     return { card, error: null };
   }

@@ -25,6 +25,7 @@ function crc32(buf: Uint8Array, start = 0, end = buf.length): number {
 // ── PNG signature ──────────────────────────────────────────────
 
 const PNG_SIG = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+const utf8Decoder = new TextDecoder("utf-8");
 
 function isPng(buf: Uint8Array): boolean {
   if (buf.length < 8) return false;
@@ -45,13 +46,16 @@ function readChunks(buf: Uint8Array): PngChunk[] {
   const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
   const chunks: PngChunk[] = [];
   let offset = 8; // skip PNG signature
-  while (offset < buf.length) {
+  while (offset + 12 <= buf.length) {
     const length = view.getUint32(offset);
-    const typeBytes = buf.slice(offset + 4, offset + 8);
+    const chunkEnd = offset + 12 + length;
+    if (chunkEnd > buf.length) break;
+    const typeBytes = buf.subarray(offset + 4, offset + 8);
     const type = String.fromCharCode(...typeBytes);
-    const data = buf.slice(offset + 8, offset + 8 + length);
+    const data = buf.subarray(offset + 8, offset + 8 + length);
     chunks.push({ type, data });
-    offset += 12 + length; // 4 length + 4 type + data + 4 crc
+    offset = chunkEnd; // 4 length + 4 type + data + 4 crc
+    if (type === "IEND") break;
   }
   return chunks;
 }
@@ -72,9 +76,114 @@ function buildChunkBytes(type: string, data: Uint8Array): Uint8Array {
 
 // ── Public API ─────────────────────────────────────────────────
 
+function decodeLatin1(bytes: Uint8Array): string {
+  let out = "";
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    out += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return out;
+}
+
+function decodeBase64Json(base64Text: string): unknown | null {
+  const normalized = base64Text
+    .replace(/\s+/g, "")
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
+  if (!normalized) return null;
+  const padLength = normalized.length % 4;
+  const padded = padLength === 0 ? normalized : `${normalized}${"=".repeat(4 - padLength)}`;
+  try {
+    const decoded = atob(padded);
+    const bytes = new Uint8Array(decoded.length);
+    for (let i = 0; i < decoded.length; i++) bytes[i] = decoded.charCodeAt(i);
+    const json = utf8Decoder.decode(bytes);
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
+function parseTextChunkKeyword(data: Uint8Array): string | null {
+  const nullIdx = data.indexOf(0);
+  if (nullIdx <= 0) return null;
+  return decodeLatin1(data.subarray(0, nullIdx));
+}
+
+async function inflateDeflate(data: Uint8Array): Promise<Uint8Array | null> {
+  if (typeof DecompressionStream === "undefined") return null;
+  try {
+    const arrayBuffer = data.buffer.slice(
+      data.byteOffset,
+      data.byteOffset + data.byteLength,
+    ) as ArrayBuffer;
+    const stream = new Blob([arrayBuffer]).stream().pipeThrough(new DecompressionStream("deflate"));
+    const inflated = await new Response(stream).arrayBuffer();
+    return new Uint8Array(inflated);
+  } catch {
+    return null;
+  }
+}
+
+async function parseTextChunk(chunk: PngChunk): Promise<{ keyword: string; text: string } | null> {
+  if (chunk.type === "tEXt") {
+    const keyword = parseTextChunkKeyword(chunk.data);
+    if (!keyword) return null;
+    return {
+      keyword,
+      text: decodeLatin1(chunk.data.subarray(keyword.length + 1)),
+    };
+  }
+
+  if (chunk.type === "zTXt") {
+    const keyword = parseTextChunkKeyword(chunk.data);
+    if (!keyword) return null;
+    const separator = keyword.length;
+    const compressionMethod = chunk.data[separator + 1];
+    if (compressionMethod !== 0) return null;
+    const compressed = chunk.data.subarray(separator + 2);
+    const inflated = await inflateDeflate(compressed);
+    if (!inflated) return null;
+    return {
+      keyword,
+      text: decodeLatin1(inflated),
+    };
+  }
+
+  if (chunk.type === "iTXt") {
+    const keyword = parseTextChunkKeyword(chunk.data);
+    if (!keyword) return null;
+    let offset = keyword.length + 1;
+    if (offset + 2 > chunk.data.length) return null;
+    const compressionFlag = chunk.data[offset];
+    const compressionMethod = chunk.data[offset + 1];
+    offset += 2;
+
+    const languageEnd = chunk.data.indexOf(0, offset);
+    if (languageEnd < 0) return null;
+    offset = languageEnd + 1;
+
+    const translatedEnd = chunk.data.indexOf(0, offset);
+    if (translatedEnd < 0) return null;
+    offset = translatedEnd + 1;
+
+    const textBytes = chunk.data.subarray(offset);
+    if (compressionFlag === 1) {
+      if (compressionMethod !== 0) return null;
+      const inflated = await inflateDeflate(textBytes);
+      if (!inflated) return null;
+      return { keyword, text: utf8Decoder.decode(inflated) };
+    }
+
+    return { keyword, text: utf8Decoder.decode(textBytes) };
+  }
+
+  return null;
+}
+
 /**
- * Extract character card JSON from a PNG file's `tEXt` chunk (keyword "chara").
- * Returns the parsed object, or null if not found.
+ * Extract character card JSON from a PNG file's text chunks.
+ * Supports both V2 (`chara`) and V3 (`ccv3`) keywords; V3 takes precedence.
  */
 export async function readCharaFromPng(file: File): Promise<unknown | null> {
   const arrayBuf = await file.arrayBuffer();
@@ -82,30 +191,27 @@ export async function readCharaFromPng(file: File): Promise<unknown | null> {
   if (!isPng(buf)) return null;
 
   const chunks = readChunks(buf);
+  let v2Card: unknown | null = null;
+  let v3Card: unknown | null = null;
+
   for (const chunk of chunks) {
-    if (chunk.type !== "tEXt") continue;
-    // tEXt: keyword \0 text
-    const nullIdx = chunk.data.indexOf(0);
-    if (nullIdx < 0) continue;
-    const keyword = String.fromCharCode(...chunk.data.slice(0, nullIdx));
-    if (keyword !== "chara") continue;
-    const base64Text = String.fromCharCode(...chunk.data.slice(nullIdx + 1));
-    try {
-      const decoded = atob(base64Text);
-      const bytes = new Uint8Array(decoded.length);
-      for (let i = 0; i < decoded.length; i++) bytes[i] = decoded.charCodeAt(i);
-      const json = new TextDecoder("utf-8").decode(bytes);
-      return JSON.parse(json);
-    } catch {
-      return null;
-    }
+    if (chunk.type !== "tEXt" && chunk.type !== "zTXt" && chunk.type !== "iTXt") continue;
+    const parsed = await parseTextChunk(chunk);
+    if (!parsed) continue;
+    const keyword = parsed.keyword.toLowerCase();
+    if (keyword !== "chara" && keyword !== "ccv3") continue;
+    const parsedCard = decodeBase64Json(parsed.text);
+    if (parsedCard == null) continue;
+    if (keyword === "ccv3") v3Card = parsedCard;
+    else if (v2Card == null) v2Card = parsedCard;
   }
-  return null;
+
+  return v3Card ?? v2Card;
 }
 
 /**
  * Embed character card JSON into a PNG image as a `tEXt` chunk (keyword "chara").
- * Removes any existing chara/ccv3 tEXt chunks first.
+ * Removes any existing chara/ccv3 text chunks first.
  */
 export async function writeCharaToPng(card: unknown, imageSource: Blob): Promise<Blob> {
   const arrayBuf = await imageSource.arrayBuffer();
@@ -114,13 +220,13 @@ export async function writeCharaToPng(card: unknown, imageSource: Blob): Promise
 
   const chunks = readChunks(buf);
 
-  // Filter out existing chara/ccv3 tEXt chunks
+  // Filter out existing chara/ccv3 text chunks
   const filtered = chunks.filter((c) => {
-    if (c.type !== "tEXt") return true;
-    const nullIdx = c.data.indexOf(0);
-    if (nullIdx < 0) return true;
-    const kw = String.fromCharCode(...c.data.slice(0, nullIdx));
-    return kw !== "chara" && kw !== "ccv3";
+    if (c.type !== "tEXt" && c.type !== "zTXt" && c.type !== "iTXt") return true;
+    const keyword = parseTextChunkKeyword(c.data);
+    if (!keyword) return true;
+    const normalizedKeyword = keyword.toLowerCase();
+    return normalizedKeyword !== "chara" && normalizedKeyword !== "ccv3";
   });
 
   // Build new tEXt chunk: "chara\0<base64>"

@@ -427,8 +427,13 @@ async function handleCharacterImport(file: File) {
     await limerenceStorage.addCharacter(entry);
     state.characterList = await limerenceStorage.loadCharacters();
     state.characterImportError = "";
-  } catch {
-    state.characterImportError = t("app.importFailed");
+  } catch (error) {
+    console.error("Character import failed:", error);
+    if (error instanceof Error && error.message) {
+      state.characterImportError = `${t("char.importFailed")} (${error.message})`;
+    } else {
+      state.characterImportError = t("char.importFailed");
+    }
   }
 }
 

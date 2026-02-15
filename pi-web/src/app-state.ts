@@ -49,7 +49,7 @@ export type DiffPreview = {
 // ── Constants ──────────────────────────────────────────────────────
 
 export const DB_NAME = "limerence-pi-web";
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 export const PROXY_MODE_KEY = "limerence.proxy_mode";
 export const ROOT_PATH = "/";
 export const CHAT_PATH = "/chat";
