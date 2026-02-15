@@ -208,17 +208,17 @@ $$ language plpgsql security definer;
 -- ── pg_cron: 每天 03:00 UTC 删除 15 天不活跃用户 ────────────
 -- 注意：需要先在 Supabase Dashboard 中启用 pg_cron 扩展
 
--- select cron.schedule(
---   'delete-inactive-users',
---   '0 3 * * *',
---   $$
---     delete from auth.users
---     where id in (
---       select id from public.user_profiles
---       where last_active_at < now() - interval '15 days'
---     );
---   $$
--- );
+ select cron.schedule(
+   'delete-inactive-users',
+   '0 3 * * *',
+   $$
+     delete from auth.users
+     where id in (
+       select id from public.user_profiles
+       where last_active_at < now() - interval '15 days'
+     );
+   $$
+);
 
 -- ── Realtime publication ────────────────────────────────────
 
