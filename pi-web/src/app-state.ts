@@ -22,6 +22,7 @@ import type { User } from "@supabase/supabase-js";
 import type { CharacterCard, Persona } from "./lib/character";
 import type { LorebookEntry } from "./lib/storage";
 import { MemoryIndex } from "./lib/memory";
+import { MemoryDB } from "./lib/memory-db";
 import { getLimerenceStoreConfigs, LimerenceStorage } from "./lib/storage";
 import type { FileOperation } from "./lib/tools";
 import { SyncEngine, type SyncStatus } from "./lib/sync-engine";
@@ -90,6 +91,7 @@ setAppStorage(storage);
 
 export const limerenceStorage = new LimerenceStorage(backend);
 export const memoryIndex = new MemoryIndex();
+export const memoryDB = new MemoryDB();
 export const syncEngine = new SyncEngine(backend);
 
 // ── Render callback (set by main.ts to break circular deps) ────────
@@ -202,6 +204,10 @@ const _rawState = {
   groupChat: { ...DEFAULT_GROUP_CONFIG } as GroupChatConfig,
   groupChatLastSpeakerId: null as string | null,
   groupChatManualPickOpen: false,
+
+  // memory DB
+  memoryDBReady: false,
+  memoryFlushDone: false,
 
   // auth & sync
   authUser: null as User | null,

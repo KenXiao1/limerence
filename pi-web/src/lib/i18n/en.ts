@@ -134,6 +134,8 @@ const en: Record<string, string> = {
 
   // ── Tool labels (UI only) ──────────────────────────────
   "tool.memorySearch": "Memory search",
+  "tool.memoryWrite": "Write memory",
+  "tool.memoryGet": "Read memory",
   "tool.webSearch": "Web search",
   "tool.noteWrite": "Write note",
   "tool.noteRead": "Read note",

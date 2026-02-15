@@ -10,11 +10,12 @@ import {
   storage,
   limerenceStorage,
   memoryIndex,
+  memoryDB,
   defaultUsage,
   PROXY_MODE_KEY,
   CHAT_PATH,
 } from "./app-state";
-import { buildSystemPrompt, buildSystemPromptFromPreset, loadDefaultCharacter, PERSONA_SETTINGS_KEY, type Persona } from "./lib/character";
+import { buildSystemPrompt, buildSystemPromptFromPreset, buildMemoryInjection, loadDefaultCharacter, PERSONA_SETTINGS_KEY, type Persona } from "./lib/character";
 import type { PromptPresetConfig } from "./controllers/prompt-presets";
 import { ACTIVE_PROMPT_PRESET_KEY, PROMPT_PRESETS_KEY } from "./controllers/prompt-presets";
 import { createLimerenceTools } from "./lib/tools";
@@ -179,29 +180,50 @@ function applyRegexToMessage(message: any) {
   }
 }
 
-// ── Lorebook injection ──────────────────────────────────────────
+// ── Memory context injection ─────────────────────────────────────
 
-async function injectLorebook(agent: Agent) {
-  if (state.lorebookEntries.length === 0) return;
+/** Cached memory injection text, rebuilt on each prompt. */
+let _memoryInjectionCache: string | null = null;
 
-  const recentText = extractRecentText(agent.state.messages, 10);
-  const charId = state.character?.data?.name ?? null;
-  const matched = scanLorebook(state.lorebookEntries, recentText, charId);
-  const injection = buildLorebookInjection(matched);
+async function refreshMemoryInjection(): Promise<string | null> {
+  const userName = state.persona?.name || "用户";
+  const profileContent = await limerenceStorage.readWorkspaceFile("memory/PROFILE.md");
+  const memoryContent = await limerenceStorage.readWorkspaceFile("memory/MEMORY.md");
+  _memoryInjectionCache = buildMemoryInjection(profileContent, memoryContent, userName);
+  return _memoryInjectionCache;
+}
 
-  if (injection) {
-    // Rebuild system prompt with lorebook injection appended
-    if (state.activePromptPreset) {
-      agent.state.systemPrompt = buildSystemPromptFromPreset(
-        state.activePromptPreset,
-        state.character!,
-        state.persona,
-        injection,
-      );
-    } else {
-      const basePrompt = buildSystemPrompt(state.character!, state.persona);
-      agent.state.systemPrompt = `${basePrompt}\n\n${injection}`;
+// ── Lorebook + memory injection ─────────────────────────────────
+
+async function injectContextIntoPrompt(agent: Agent) {
+  // 1. Refresh memory injection
+  const memInjection = await refreshMemoryInjection();
+
+  // 2. Lorebook injection
+  let lorebookInjection: string | undefined;
+  if (state.lorebookEntries.length > 0) {
+    const recentText = extractRecentText(agent.state.messages, 10);
+    const charId = state.character?.data?.name ?? null;
+    const matched = scanLorebook(state.lorebookEntries, recentText, charId);
+    lorebookInjection = buildLorebookInjection(matched) ?? undefined;
+  }
+
+  // 3. Rebuild system prompt with both injections
+  if (state.activePromptPreset) {
+    agent.state.systemPrompt = buildSystemPromptFromPreset(
+      state.activePromptPreset,
+      state.character!,
+      state.persona,
+      lorebookInjection,
+      undefined,
+      memInjection ?? undefined,
+    );
+  } else {
+    let prompt = buildSystemPrompt(state.character!, state.persona, memInjection ?? undefined);
+    if (lorebookInjection) {
+      prompt = `${prompt}\n\n${lorebookInjection}`;
     }
+    agent.state.systemPrompt = prompt;
   }
 }
 
@@ -328,8 +350,8 @@ export async function createAgent(initialState?: Partial<AgentState>) {
       }
     }
 
-    // Lorebook injection: scan recent messages and update system prompt
-    void injectLorebook(agent);
+    // Memory + lorebook injection: update system prompt with PROFILE.md, MEMORY.md, and lorebook
+    void injectContextIntoPrompt(agent);
 
     // Group chat: set up turn queue and swap system prompt to first speaker
     const groupMember = setupGroupTurn();
@@ -421,9 +443,12 @@ export async function createAgent(initialState?: Partial<AgentState>) {
       return ApiKeyPromptDialog.prompt(provider);
     },
     toolsFactory: () =>
-      createLimerenceTools(memoryIndex, limerenceStorage, {
+      createLimerenceTools(memoryIndex, memoryDB, limerenceStorage, {
         onFileOperation: (event) => {
           handleAgentFileOperation(event);
+        },
+        onMemoryFileWrite: async (path, content) => {
+          await memoryDB.indexFile(path, content);
         },
       }),
   });
@@ -516,6 +541,16 @@ export async function ensureChatRuntime() {
 
   const memoryEntries = await limerenceStorage.loadMemoryEntries();
   memoryIndex.load(memoryEntries);
+
+  // Initialize SQLite WASM memory database
+  await memoryDB.init();
+  if (memoryDB.listFiles().length === 0) {
+    const memoryFiles = await limerenceStorage.readAllMemoryFiles();
+    for (const { path, content } of memoryFiles) {
+      await memoryDB.indexFile(path, content);
+    }
+  }
+  state.memoryDBReady = true;
 
   state.chatPanel = new ChatPanel();
   state.chatRuntimeReady = true;

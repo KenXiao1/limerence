@@ -41,11 +41,44 @@ export function applyTemplateVars(
     .replace(/\{\{persona\}\}/gi, userName);
 }
 
+// ── Memory injection ──────────────────────────────────────────
+
+const MEMORY_INJECTION_MAX_CHARS = 3000;
+
+function truncateFromHead(text: string, maxChars: number): string {
+  if (text.length <= maxChars) return text;
+  return "...\n" + text.slice(text.length - maxChars);
+}
+
+/**
+ * Build memory context injection text from PROFILE.md and MEMORY.md contents.
+ */
+export function buildMemoryInjection(
+  profileContent: string | null,
+  memoryContent: string | null,
+  userName: string,
+): string | null {
+  const parts: string[] = [];
+
+  if (profileContent?.trim()) {
+    const truncated = truncateFromHead(profileContent.trim(), MEMORY_INJECTION_MAX_CHARS);
+    parts.push(`[${userName}的记忆档案]\n${truncated}`);
+  }
+
+  if (memoryContent?.trim()) {
+    const truncated = truncateFromHead(memoryContent.trim(), MEMORY_INJECTION_MAX_CHARS);
+    parts.push(`[长期记忆摘要]\n${truncated}`);
+  }
+
+  return parts.length > 0 ? parts.join("\n\n") : null;
+}
+
 // ── System prompt builder ──────────────────────────────────────
 
 export function buildSystemPrompt(
   card: CharacterCard,
   persona?: Persona,
+  memoryInjection?: string,
 ): string {
   const d = card.data;
   const charName = d.name;
@@ -79,18 +112,12 @@ export function buildSystemPrompt(
     parts.push(personaParts.join("\n"));
   }
 
-  parts.push(
-    `你可以使用以下工具来增强对话体验：
-- memory_search：搜索与${userName}的历史对话记忆
-- web_search：搜索互联网获取实时信息
-- note_write：写入持久化笔记，记录${userName}的重要信息
-- note_read：读取之前写的笔记
-- file_read：读取工作区文件
-- file_write：在工作区创建或写入文件
+  // Memory injection (PROFILE.md + MEMORY.md)
+  if (memoryInjection) {
+    parts.push(memoryInjection);
+  }
 
-主动使用 memory_search 回忆${userName}之前提到的事情。
-用 note_write 记录${userName}的重要信息（偏好、经历、情绪状态等）。`,
-  );
+  parts.push(buildToolInstructions(userName));
 
   return parts.join("\n\n");
 }
@@ -110,6 +137,7 @@ export function buildSystemPromptFromPreset(
   persona?: Persona,
   lorebookInjection?: string,
   toolInstructions?: string,
+  memoryInjection?: string,
 ): string {
   const d = card.data;
   const charName = d.name;
@@ -139,6 +167,11 @@ export function buildSystemPromptFromPreset(
     }
 
     parts.push(text);
+  }
+
+  // Memory injection (PROFILE.md + MEMORY.md)
+  if (memoryInjection) {
+    parts.push(memoryInjection);
   }
 
   // Append tool instructions (reuse existing logic)
@@ -191,15 +224,24 @@ function expandMarker(
 
 function buildToolInstructions(userName: string): string {
   return `你可以使用以下工具来增强对话体验：
-- memory_search：搜索与${userName}的历史对话记忆
+- memory_search：搜索历史对话和持久记忆文件
+- memory_write：写入持久记忆文件（memory/PROFILE.md, memory/MEMORY.md, memory/YYYY-MM-DD.md）
+- memory_get：读取记忆文件的指定行范围（搜索后精确获取）
 - web_search：搜索互联网获取实时信息
-- note_write：写入持久化笔记，记录${userName}的重要信息
-- note_read：读取之前写的笔记
+- note_write：写入临时笔记
+- note_read：读取临时笔记
 - file_read：读取工作区文件
 - file_write：在工作区创建或写入文件
 
-主动使用 memory_search 回忆${userName}之前提到的事情。
-用 note_write 记录${userName}的重要信息（偏好、经历、情绪状态等）。`;
+## 记忆管理
+你有一个持久记忆系统。以下文件会在每次对话时自动加载到你的上下文中：
+- memory/PROFILE.md：${userName}的基本信息、偏好、重要关系（保持简洁，只记录确认的事实）
+- memory/MEMORY.md：长期重要记忆的精炼摘要
+
+回忆之前的事情时：先用 memory_search 搜索，再用 memory_get 获取完整内容。
+日常对话中的观察和事件应记录到 memory/YYYY-MM-DD.md（今日日期的日志，只追加不覆盖）。
+定期将日志中的重要信息整理到 PROFILE.md 或 MEMORY.md，删除过时内容。
+发现${userName}的新信息时，立即用 memory_write 记录。`;
 }
 
 export async function loadDefaultCharacter(): Promise<CharacterCard> {

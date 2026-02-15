@@ -134,6 +134,8 @@ const zh: Record<string, string> = {
 
   // ── Tool labels (UI only, descriptions stay zh for LLM) ─
   "tool.memorySearch": "记忆搜索",
+  "tool.memoryWrite": "写记忆",
+  "tool.memoryGet": "读记忆",
   "tool.webSearch": "网络搜索",
   "tool.noteWrite": "写笔记",
   "tool.noteRead": "读笔记",

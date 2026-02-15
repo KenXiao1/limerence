@@ -200,6 +200,30 @@ export class LimerenceStorage {
     return JSON.stringify(data, null, 2);
   }
 
+  // ── Memory files ──────────────────────────────────────────────
+
+  static isMemoryPath(path: string): boolean {
+    const n = normalizePath(path);
+    return n === "memory" || n.startsWith("memory/");
+  }
+
+  async listMemoryFiles(): Promise<string[]> {
+    const keys = await this.backend.keys(FILES_STORE);
+    return keys.filter((k) => k.startsWith("memory/")).sort();
+  }
+
+  async readAllMemoryFiles(): Promise<Array<{ path: string; content: string }>> {
+    const paths = await this.listMemoryFiles();
+    const results: Array<{ path: string; content: string }> = [];
+    for (const p of paths) {
+      const content = await this.backend.get<string>(FILES_STORE, p);
+      if (content !== null) {
+        results.push({ path: p, content });
+      }
+    }
+    return results;
+  }
+
   private noteKey(title: string): string {
     return `note:${sanitizeTitle(title)}`;
   }

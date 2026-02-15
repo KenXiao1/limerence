@@ -1,12 +1,27 @@
 import type { AgentTool } from "@mariozechner/pi-agent-core";
 import { Type, type Static } from "@mariozechner/pi-ai";
 import { MemoryIndex } from "./memory";
-import { LimerenceStorage } from "./storage";
+import { MemoryDB, type SearchResult as MemoryDBSearchResult } from "./memory-db";
+import { LimerenceStorage, normalizePath } from "./storage";
 import { t } from "./i18n";
+
+// ── Schemas ─────────────────────────────────────────────────────
 
 const memorySearchSchema = Type.Object({
   query: Type.String({ description: "搜索关键词" }),
   limit: Type.Optional(Type.Integer({ default: 5, minimum: 1, maximum: 20 })),
+});
+
+const memoryWriteSchema = Type.Object({
+  path: Type.String({ description: "记忆文件路径，如 memory/PROFILE.md, memory/MEMORY.md, memory/2025-01-01.md" }),
+  content: Type.String({ description: "要写入的内容" }),
+  append: Type.Optional(Type.Boolean({ default: true, description: "是否追加（默认追加）" })),
+});
+
+const memoryGetSchema = Type.Object({
+  path: Type.String({ description: "记忆文件路径" }),
+  from: Type.Optional(Type.Integer({ description: "起始行号（1-based）" })),
+  lines: Type.Optional(Type.Integer({ default: 50, description: "读取行数" })),
 });
 
 const webSearchSchema = Type.Object({
@@ -33,11 +48,15 @@ const fileWriteSchema = Type.Object({
 });
 
 type MemorySearchParams = Static<typeof memorySearchSchema>;
+type MemoryWriteParams = Static<typeof memoryWriteSchema>;
+type MemoryGetParams = Static<typeof memoryGetSchema>;
 type WebSearchParams = Static<typeof webSearchSchema>;
 type NoteWriteParams = Static<typeof noteWriteSchema>;
 type NoteReadParams = Static<typeof noteReadSchema>;
 type FileReadParams = Static<typeof fileReadSchema>;
 type FileWriteParams = Static<typeof fileWriteSchema>;
+
+// ── Types ───────────────────────────────────────────────────────
 
 export type FileOperation = {
   action: "read" | "write";
@@ -47,9 +66,12 @@ export type FileOperation = {
   summary: string;
 };
 
-type LimerenceToolHooks = {
+export type LimerenceToolHooks = {
   onFileOperation?: (event: FileOperation) => void;
+  onMemoryFileWrite?: (path: string, content: string) => Promise<void>;
 };
+
+// ── Helpers ─────────────────────────────────────────────────────
 
 const TOOL_OUTPUT_CHAR_LIMIT = 50_000;
 
@@ -64,15 +86,31 @@ function summarizeText(text: string, maxLength = 120): string {
   return `${compact.slice(0, maxLength - 3)}...`;
 }
 
+function isMemoryPath(path: string): boolean {
+  return LimerenceStorage.isMemoryPath(path);
+}
+
+function formatMemoryDBResult(r: MemoryDBSearchResult, index: number): string {
+  const pathName = r.path.replace(/^memory\//, "");
+  const content = r.text.length > 300 ? `${r.text.slice(0, 300)}...` : r.text;
+  return `[${index + 1}] [记忆:${pathName}:L${r.startLine}-L${r.endLine}] ${content}`;
+}
+
+// ── Main factory ────────────────────────────────────────────────
+
 export function createLimerenceTools(
   memory: MemoryIndex,
+  memoryDB: MemoryDB,
   storage: LimerenceStorage,
   hooks: LimerenceToolHooks = {},
 ): AgentTool<any>[] {
+
+  // ── memory_search ─────────────────────────────────────────────
+
   const memorySearchTool: AgentTool<typeof memorySearchSchema, { query: string }> = {
     label: t("tool.memorySearch"),
     name: "memory_search",
-    description: "搜索与用户的历史对话记忆。用于回忆用户之前提到的事情。",
+    description: "搜索持久记忆文件和历史对话。用于回忆之前的事情。返回带来源标记的结果。",
     parameters: memorySearchSchema,
     async execute(_toolCallId, args: MemorySearchParams) {
       const query = String(args.query ?? "").trim();
@@ -85,29 +123,149 @@ export function createLimerenceTools(
         };
       }
 
-      const results = memory.search(query, limit);
-      if (results.length === 0) {
+      const parts: string[] = [];
+
+      // 1. Search persistent memory files via SQLite FTS5
+      if (memoryDB.ready) {
+        const dbResults = memoryDB.searchHybrid(query, undefined, limit);
+        if (dbResults.length > 0) {
+          parts.push("── 持久记忆 ──");
+          parts.push(...dbResults.map((r, i) => formatMemoryDBResult(r, i)));
+        }
+      }
+
+      // 2. Fallback: search conversation history via BM25 in-memory index
+      const convResults = memory.search(query, limit);
+      if (convResults.length > 0) {
+        parts.push("── 对话历史 ──");
+        parts.push(
+          ...convResults.map((r, i) => {
+            const time = r.timestamp.slice(0, 16).replace("T", " ");
+            const role = r.role === "user" ? "用户" : r.role === "assistant" ? "助手" : r.role;
+            const content = r.content.length > 200 ? `${r.content.slice(0, 200)}...` : r.content;
+            return `[${i + 1}] [${time}] ${role}：${content}`;
+          }),
+        );
+      }
+
+      if (parts.length === 0) {
         return {
           content: [{ type: "text", text: "没有找到相关记忆。" }],
           details: { query },
         };
       }
 
-      const text = results
-        .map((r, i) => {
-          const time = r.timestamp.slice(0, 16).replace("T", " ");
-          const role = r.role === "user" ? "用户" : r.role === "assistant" ? "助手" : r.role;
-          const content = r.content.length > 200 ? `${r.content.slice(0, 200)}...` : r.content;
-          return `[${i + 1}] [${time}] ${role}：${content}`;
-        })
-        .join("\n");
-
       return {
-        content: [{ type: "text", text }],
+        content: [{ type: "text", text: parts.join("\n") }],
         details: { query },
       };
     },
   };
+
+  // ── memory_write ──────────────────────────────────────────────
+
+  const memoryWriteTool: AgentTool<typeof memoryWriteSchema, { path: string }> = {
+    label: t("tool.memoryWrite"),
+    name: "memory_write",
+    description: "写入持久记忆文件。路径必须以 memory/ 开头。支持 PROFILE.md（用户档案）、MEMORY.md（长期记忆）、YYYY-MM-DD.md（每日日志）。默认追加模式。",
+    parameters: memoryWriteSchema,
+    async execute(_toolCallId, args: MemoryWriteParams) {
+      const rawPath = String(args.path ?? "").trim();
+      const content = String(args.content ?? "");
+      const append = args.append !== false; // default true
+
+      if (!rawPath) {
+        return {
+          content: [{ type: "text", text: "请提供记忆文件路径。" }],
+          details: { path: rawPath },
+        };
+      }
+
+      const path = normalizePath(rawPath);
+      if (!isMemoryPath(path)) {
+        return {
+          content: [{ type: "text", text: "记忆文件路径必须以 memory/ 开头。" }],
+          details: { path },
+        };
+      }
+
+      if (append) {
+        const existing = await storage.readWorkspaceFile(path);
+        const merged = existing ? `${existing}\n${content}` : content;
+        await storage.fileWrite(path, merged);
+        await hooks.onMemoryFileWrite?.(path, merged);
+        return {
+          content: [{ type: "text", text: `已追加内容到记忆文件：${path}` }],
+          details: { path },
+        };
+      }
+
+      await storage.fileWrite(path, content);
+      await hooks.onMemoryFileWrite?.(path, content);
+      return {
+        content: [{ type: "text", text: `已写入记忆文件：${path}` }],
+        details: { path },
+      };
+    },
+  };
+
+  // ── memory_get ────────────────────────────────────────────────
+
+  const memoryGetTool: AgentTool<typeof memoryGetSchema, { path: string }> = {
+    label: t("tool.memoryGet"),
+    name: "memory_get",
+    description: "读取记忆文件的指定行范围。搜索后用此工具获取完整内容。路径必须以 memory/ 开头。",
+    parameters: memoryGetSchema,
+    async execute(_toolCallId, args: MemoryGetParams) {
+      const rawPath = String(args.path ?? "").trim();
+      const from = Number(args.from ?? 1);
+      const lineCount = Number(args.lines ?? 50);
+
+      if (!rawPath) {
+        // List memory files
+        const files = await storage.listMemoryFiles();
+        if (files.length === 0) {
+          return {
+            content: [{ type: "text", text: "暂无记忆文件。" }],
+            details: { path: rawPath },
+          };
+        }
+        return {
+          content: [{ type: "text", text: `记忆文件列表：\n${files.join("\n")}` }],
+          details: { path: rawPath },
+        };
+      }
+
+      const path = normalizePath(rawPath);
+      if (!isMemoryPath(path)) {
+        return {
+          content: [{ type: "text", text: "记忆文件路径必须以 memory/ 开头。" }],
+          details: { path },
+        };
+      }
+
+      const content = await storage.readWorkspaceFile(path);
+      if (content === null) {
+        return {
+          content: [{ type: "text", text: `记忆文件不存在：${path}` }],
+          details: { path },
+        };
+      }
+
+      const allLines = content.split("\n");
+      const startIdx = Math.max(0, from - 1); // convert 1-based to 0-based
+      const endIdx = Math.min(allLines.length, startIdx + lineCount);
+      const slice = allLines.slice(startIdx, endIdx);
+
+      const header = `[${path}] 共 ${allLines.length} 行，显示 L${startIdx + 1}-L${endIdx}：`;
+      return {
+        content: [{ type: "text", text: `${header}\n${slice.join("\n")}` }],
+        details: { path },
+      };
+    },
+  };
+
+  // ── web_search ────────────────────────────────────────────────
 
   const webSearchTool: AgentTool<typeof webSearchSchema, { query: string }> = {
     label: t("tool.webSearch"),
@@ -166,6 +324,8 @@ export function createLimerenceTools(
     },
   };
 
+  // ── note_write ────────────────────────────────────────────────
+
   const noteWriteTool: AgentTool<typeof noteWriteSchema, { title: string }> = {
     label: t("tool.noteWrite"),
     name: "note_write",
@@ -183,6 +343,8 @@ export function createLimerenceTools(
     },
   };
 
+  // ── note_read ─────────────────────────────────────────────────
+
   const noteReadTool: AgentTool<typeof noteReadSchema, { title: string }> = {
     label: t("tool.noteRead"),
     name: "note_read",
@@ -197,6 +359,8 @@ export function createLimerenceTools(
       };
     },
   };
+
+  // ── file_read ─────────────────────────────────────────────────
 
   const fileReadTool: AgentTool<typeof fileReadSchema, { path: string }> = {
     label: t("tool.fileRead"),
@@ -220,14 +384,25 @@ export function createLimerenceTools(
     },
   };
 
+  // ── file_write ────────────────────────────────────────────────
+
   const fileWriteTool: AgentTool<typeof fileWriteSchema, { path: string }> = {
     label: t("tool.fileWrite"),
     name: "file_write",
-    description: "在工作区创建或写入文件。路径相对于工作区根目录，自动创建子目录。",
+    description: "在工作区创建或写入文件。路径相对于工作区根目录，自动创建子目录。不可写入 memory/ 目录（请用 memory_write）。",
     parameters: fileWriteSchema,
     async execute(_toolCallId, args: FileWriteParams) {
       const path = String(args.path ?? "");
       const content = String(args.content ?? "");
+
+      // Block memory/ paths — must use memory_write instead
+      if (isMemoryPath(path)) {
+        return {
+          content: [{ type: "text", text: "memory/ 目录下的文件请使用 memory_write 工具写入。" }],
+          details: { path },
+        };
+      }
+
       const result = await storage.fileWrite(path, content);
       hooks.onFileOperation?.({
         action: "write",
@@ -243,8 +418,12 @@ export function createLimerenceTools(
     },
   };
 
+  // ── Assemble & wrap ───────────────────────────────────────────
+
   const allTools = [
     memorySearchTool,
+    memoryWriteTool,
+    memoryGetTool,
     webSearchTool,
     noteWriteTool,
     noteReadTool,
