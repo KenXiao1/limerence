@@ -211,7 +211,7 @@ const zh: Record<string, string> = {
   "landing.feat2Title": "工具调用",
   "landing.feat2Desc": "搜索互联网、读写笔记和文件，不只是聊天",
   "landing.feat3Title": "角色卡",
-  "landing.feat3Desc": "SillyTavern V2 兼容，自定义你的 AI 伙伴",
+  "landing.feat3Desc": "SillyTavern V2/V3 兼容，自定义你的 AI 伙伴",
   "landing.feat4Title": "隐私优先",
   "landing.feat4Desc": "数据存储在浏览器本地，API Key 不经过服务器。项目完全开源，你可以 fork 后部署自己的 Supabase 实例",
 

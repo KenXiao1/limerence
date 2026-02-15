@@ -211,7 +211,7 @@ const en: Record<string, string> = {
   "landing.feat2Title": "Tool Calling",
   "landing.feat2Desc": "Search the web, read/write notes and files — more than just chat",
   "landing.feat3Title": "Character Cards",
-  "landing.feat3Desc": "SillyTavern V2 compatible — customize your AI companion",
+  "landing.feat3Desc": "SillyTavern V2/V3 compatible — customize your AI companion",
   "landing.feat4Title": "Privacy First",
   "landing.feat4Desc": "Data stored locally in your browser — API keys never touch the server. Fully open source — fork and deploy your own Supabase instance",
 

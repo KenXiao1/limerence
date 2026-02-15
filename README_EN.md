@@ -7,28 +7,35 @@ Minimal AI companion agent with memory. Rust TUI + Web, ready out of the box.
 ## Architecture
 
 ```
-                     Rust (TUI)                           Web (Browser)
-                     ─────────                            ────────────
-┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-│ limerence-ai │──→│limerence-core│──→│limerence-tui │
-│ LLM abstract │   │ Agent runtime│   │ ratatui TUI  │
-│ OpenAI proto  │   │ BM25·tools·  │   │ filesystem   │
-│               │   │ session      │   │ persistence  │
-└──────────────┘   └──────┬───────┘   └──────────────┘
-                          │
-                   Isomorphic TS port
-                          │
-                          ▼
-                   ┌──────────────┐   ┌──────────────┐
-                   │  Agent Loop  │──→│Edge Functions │
-                   │  (React+TS)  │   │ chat-proxy.ts │
-                   │  IndexedDB   │   │ web-search.ts │
-                   └──────────────┘   └──────────────┘
+  ┌──────────────────── Rust (TUI) ────────────────────────┐
+  │                                                         │
+  │  limerence-ai ───▶ limerence-core ───▶ limerence-tui   │
+  │  LLM abstract       Agent runtime       ratatui TUI     │
+  │  OpenAI protocol     BM25 · tools ·      filesystem      │
+  │                      session             persistence     │
+  └────────────────────────┬────────────────────────────────┘
+                           │
+                    Isomorphic TS port
+                           │
+                           ▼
+  ┌─────────────────── Web (Lit + TS) ─────────────────────┐
+  │                                                         │
+  │  pi-mono framework ──▶ Agent Loop ──▶ Netlify Edge      │
+  │  pi-agent-core         8 tools ·       chat-proxy.ts    │
+  │  pi-ai · pi-web-ui     characters      web-search.ts   │
+  │                         IndexedDB                       │
+  │                            │                            │
+  │                     ┌──────┴───────┐                    │
+  │                     │ SQLite WASM  │                    │
+  │                     │ FTS5 search  │                    │
+  │                     │ vector cache │                    │
+  │                     └──────────────┘                    │
+  └─────────────────────────────────────────────────────────┘
 ```
 
 Layer rule: lower layers don't know upper layers exist. `limerence-ai` knows nothing about agents, `limerence-core` knows nothing about terminals.
 
-`pi-web/` is the current web mainline. `legacy-web/src/lib/` is the earlier isomorphic TypeScript port of `limerence-core` (BM25, tool dispatch, session management).
+`pi-web/` is the current web mainline, built with Lit + Tailwind CSS 4. `legacy-web/src/lib/` is the earlier isomorphic TypeScript port of `limerence-core` (BM25, tool dispatch, session management).
 
 ## Quick Start
 
@@ -68,14 +75,15 @@ The current web mainline (`pi-web`) can be deployed to Netlify:
 Web architecture:
 
 ```
-Browser (React)                    Netlify Edge Functions
+Browser (Lit + TS)                  Netlify Edge Functions
 ┌─────────────────────┐           ┌──────────────────┐
-│  Agent Loop (TS)    │           │  chat-proxy.ts   │
-│  ├─ LLM streaming   │──stream──→│  (LLM API proxy) │
-│  ├─ BM25 memory     │           │                  │
-│  ├─ Notes system     │           │  web-search.ts   │
-│  ├─ Session mgmt     │──fetch───→│  (search proxy)  │
-│  └─ IndexedDB store  │           └──────────────────┘
+│  Agent Loop          │           │  chat-proxy.ts   │
+│  ├─ LLM streaming    │──stream──→│  (LLM API proxy) │
+│  ├─ SQLite WASM mem   │           │                  │
+│  │  └─ FTS5 + vectors │           │  web-search.ts   │
+│  ├─ Notes & files     │──fetch───→│  (search proxy)  │
+│  ├─ Session mgmt      │           └──────────────────┘
+│  └─ IndexedDB store   │
 └─────────────────────┘
 ```
 
@@ -123,11 +131,13 @@ api_key_env = "OLLAMA_API_KEY"  # any value works, Ollama doesn't validate
 
 ## Tools
 
-The agent has 6 built-in tools, invoked automatically based on conversation context:
+The agent has 8 built-in tools, invoked automatically based on conversation context:
 
 | Tool | Purpose |
 |------|---------|
-| `memory_search` | BM25 keyword search over conversation history, CJK-aware tokenization |
+| `memory_search` | SQLite FTS5 + BM25 hybrid search over memory files and conversation history, CJK-aware |
+| `memory_write` | Write persistent memory files (PROFILE.md / MEMORY.md / daily logs) |
+| `memory_get` | Read memory file content by line range |
 | `web_search` | DuckDuckGo / SearXNG web search |
 | `note_write` | Write persistent notes to `~/.limerence/notes/` |
 | `note_read` | Read notes or list all notes |
@@ -136,7 +146,7 @@ The agent has 6 built-in tools, invoked automatically based on conversation cont
 
 ## Character Cards
 
-Compatible with SillyTavern V2 format. Load a custom character with `-c`:
+Compatible with SillyTavern V2/V3 format. Load a custom character with `-c`:
 
 ```bash
 cargo run --release -- -c path/to/character.json
@@ -167,7 +177,7 @@ Card structure:
 }
 ```
 
-SillyTavern ignores `extensions.limerence`, Limerence ignores SillyTavern's extra fields.
+SillyTavern ignores `extensions.limerence`, Limerence ignores SillyTavern's extra fields. V3 cards are automatically normalized to V2 format internally.
 
 ## Data Directory
 
@@ -175,8 +185,10 @@ SillyTavern ignores `extensions.limerence`, Limerence ignores SillyTavern's extr
 ~/.limerence/
 ├── config.toml      # Configuration
 ├── sessions/        # JSONL conversation history
-├── memory/          # Memory index (BM25)
+├── memory/          # Memory files (PROFILE.md / MEMORY.md / daily logs)
 ├── notes/           # Agent's notes
 ├── workspace/       # Sandboxed filesystem
 └── characters/      # Character cards
 ```
+
+On the web, memory is stored in the browser's IndexedDB via SQLite WASM (FTS5 full-text search + vector embedding cache) for hybrid search.
