@@ -224,6 +224,9 @@ function renderAuthDialogView() {
     onSubmit: (email: string, password: string) => {
       void handleAuthSubmit(email, password);
     },
+    onCustomConfig: () => {
+      state.supabaseConfigDialogOpen = true;
+    },
   };
 
   return renderAuthDialog(s, actions);
@@ -238,7 +241,7 @@ function renderSupabaseConfigDialogView() {
     onClose: () => { state.supabaseConfigDialogOpen = false; },
     onSave: () => {
       state.supabaseConfigDialogOpen = false;
-      // After configuring Supabase, open auth dialog
+      // After configuring custom Supabase, open auth dialog
       state.authDialogOpen = true;
     },
   };
@@ -247,10 +250,12 @@ function renderSupabaseConfigDialogView() {
 }
 
 function handleLoginClick() {
-  if (!isConfigured()) {
-    state.supabaseConfigDialogOpen = true;
-  } else {
+  if (isConfigured()) {
+    // Default env config or custom localStorage config exists — go straight to auth
     state.authDialogOpen = true;
+  } else {
+    // No default and no custom config — must configure first
+    state.supabaseConfigDialogOpen = true;
   }
 }
 

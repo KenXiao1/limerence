@@ -211,7 +211,7 @@ const zh: Record<string, string> = {
   "landing.feat3Title": "角色卡",
   "landing.feat3Desc": "SillyTavern V2 兼容，自定义你的 AI 伙伴",
   "landing.feat4Title": "隐私优先",
-  "landing.feat4Desc": "数据存储在浏览器本地，API Key 不经过服务器",
+  "landing.feat4Desc": "数据存储在浏览器本地，API Key 不经过服务器。项目完全开源，你可以 fork 后部署自己的 Supabase 实例",
 
   // ── Landing — Architecture ──────────────────────────────
   "landing.archTitle": "架构",
@@ -254,6 +254,7 @@ const zh: Record<string, string> = {
   "auth.signupHint": "注册后需要验证邮箱。15 天不活跃账号将被自动删除，但可用同一邮箱重新注册。",
   "auth.loggedInAs": "已登录：{0}",
   "auth.logout": "登出",
+  "auth.customSupabase": "使用自己的 Supabase 实例 →",
 
   // ── Sync ──────────────────────────────────────────────────
   "sync.idle": "未同步",

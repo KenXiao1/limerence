@@ -20,6 +20,7 @@ export interface AuthDialogActions {
   onClose: () => void;
   onTabChange: (tab: AuthTab) => void;
   onSubmit: (email: string, password: string) => void;
+  onCustomConfig: () => void;
 }
 
 export function renderAuthDialog(s: AuthDialogState, actions: AuthDialogActions) {
@@ -102,6 +103,13 @@ export function renderAuthDialog(s: AuthDialogState, actions: AuthDialogActions)
             ? html`<p class="text-xs text-muted-foreground">${t("auth.signupHint")}</p>`
             : null
           }
+
+          <div class="border-t border-border pt-3 mt-1">
+            <button
+              class="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              @click=${() => { actions.onClose(); actions.onCustomConfig(); }}
+            >${t("auth.customSupabase")}</button>
+          </div>
         </div>
       </div>
     </div>

@@ -211,7 +211,7 @@ const en: Record<string, string> = {
   "landing.feat3Title": "Character Cards",
   "landing.feat3Desc": "SillyTavern V2 compatible — customize your AI companion",
   "landing.feat4Title": "Privacy First",
-  "landing.feat4Desc": "Data stored locally in your browser — API keys never touch the server",
+  "landing.feat4Desc": "Data stored locally in your browser — API keys never touch the server. Fully open source — fork and deploy your own Supabase instance",
 
   // ── Landing — Architecture ──────────────────────────────
   "landing.archTitle": "Architecture",
@@ -254,6 +254,7 @@ const en: Record<string, string> = {
   "auth.signupHint": "Email verification required. Accounts inactive for 15 days are automatically deleted, but you can re-register with the same email.",
   "auth.loggedInAs": "Logged in as: {0}",
   "auth.logout": "Log out",
+  "auth.customSupabase": "Use your own Supabase instance →",
 
   // ── Sync ──────────────────────────────────────────────────
   "sync.idle": "Not synced",

@@ -1,6 +1,7 @@
 /**
  * Supabase client singleton.
- * Reads user-configured URL + anon key from localStorage, lazily initializes.
+ * Priority: localStorage (custom) > Vite env vars (default).
+ * Normal users use the default project; power users can configure their own.
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -8,16 +9,41 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 const URL_KEY = "limerence-supabase-url";
 const ANON_KEY = "limerence-supabase-anon-key";
 
+// Default Supabase config from environment variables (set at build time)
+const DEFAULT_URL = import.meta.env.VITE_SUPABASE_URL ?? "";
+const DEFAULT_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? "";
+
 let _client: SupabaseClient | null = null;
 
+/** Resolve effective URL: localStorage override > env default */
+function resolveUrl(): string {
+  return localStorage.getItem(URL_KEY) || DEFAULT_URL;
+}
+
+/** Resolve effective anon key: localStorage override > env default */
+function resolveKey(): string {
+  return localStorage.getItem(ANON_KEY) || DEFAULT_ANON_KEY;
+}
+
+/** Whether Supabase is usable (either default or custom config exists) */
 export function isConfigured(): boolean {
+  return Boolean(resolveUrl() && resolveKey());
+}
+
+/** Whether the built-in default config is available */
+export function hasDefaultConfig(): boolean {
+  return Boolean(DEFAULT_URL && DEFAULT_ANON_KEY);
+}
+
+/** Whether the user has set a custom (non-default) config */
+export function isUsingCustomConfig(): boolean {
   return Boolean(localStorage.getItem(URL_KEY) && localStorage.getItem(ANON_KEY));
 }
 
 export function getSupabase(): SupabaseClient | null {
   if (_client) return _client;
-  const url = localStorage.getItem(URL_KEY);
-  const key = localStorage.getItem(ANON_KEY);
+  const url = resolveUrl();
+  const key = resolveKey();
   if (!url || !key) return null;
   _client = createClient(url, key);
   return _client;
