@@ -3,6 +3,7 @@ import { state, storage, limerenceStorage, memoryIndex, defaultUsage, syncEngine
 import { createAgent, updateUrl } from "./app-agent";
 import { repairTranscript } from "./app-repair";
 import { resetSwipeData } from "./app-message-actions";
+import { onSessionChanged, reprocessAllMessages } from "./iframe-runner";
 import {
   generateTitle as _generateTitle,
   shouldSaveSession as _shouldSaveSession,
@@ -72,12 +73,20 @@ export async function loadSession(sessionId: string): Promise<boolean> {
   state.currentTitle = data.title ?? "";
   state.currentSessionCreatedAt = data.createdAt;
 
+  const repairedMessages = repairTranscript(data.messages ?? []);
+
   await createAgent({
     model: data.model,
     thinkingLevel: data.thinkingLevel,
-    messages: repairTranscript(data.messages ?? []),
+    messages: repairedMessages,
     tools: [],
   });
+
+  // iframe-runner: update session context and re-process existing messages
+  if (state.iframeRunnerEnabled) {
+    onSessionChanged(sessionId);
+    reprocessAllMessages(repairedMessages);
+  }
 
   updateUrl(sessionId);
   return true;
@@ -92,5 +101,11 @@ export async function newSession() {
   state.isEditingTitle = false;
 
   updateUrl(state.currentSessionId);
+
+  // iframe-runner: update session context
+  if (state.iframeRunnerEnabled) {
+    onSessionChanged(state.currentSessionId);
+  }
+
   await createAgent();
 }

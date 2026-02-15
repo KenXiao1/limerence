@@ -329,6 +329,19 @@ const zh: Record<string, string> = {
   "landing.termLine8": "养了一只叫「比特」的猫",
   "landing.archMod5": "SQLite WASM 记忆",
   "landing.archMod5Sub": "FTS5 · 持久化",
+
+  // ── Scripts (iframe-runner) ────────────────────────────────────
+  "settings.scripts": "脚本",
+  "scripts.hint": "角色卡中嵌入的 JS-Slash-Runner 脚本。启用后，AI 回复中的 HTML 内容会在 iframe 中渲染。",
+  "scripts.enabled": "脚本已启用",
+  "scripts.enable": "启用脚本",
+  "scripts.noScripts": "当前角色卡没有嵌入脚本",
+  "scripts.regexLabel": "正则替换脚本",
+  "scripts.persistentLabel": "持久脚本",
+  "scripts.aiOutput": "AI 输出",
+  "scripts.userInput": "用户输入",
+  "scripts.enableScript": "启用",
+  "scripts.disableScript": "禁用",
 };
 
 export default zh;

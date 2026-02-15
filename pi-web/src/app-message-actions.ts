@@ -7,6 +7,7 @@
 import { state } from "./app-state";
 import { saveSession } from "./app-session";
 import { estimateMessagesTokens } from "./app-compaction";
+import { destroyMessageIframe } from "./iframe-runner";
 import {
   prepareRegeneration,
   findLastUserMessageIndex,
@@ -106,6 +107,12 @@ function swipeDirection(direction: "prev" | "next") {
 
   const newSwipe = switchSwipeAlternative(swipe, direction);
   state.swipeData = new Map(state.swipeData).set(userIdx, newSwipe);
+
+  // Clean up iframes for the response group being swapped out
+  if (state.iframeRunnerEnabled) {
+    const [start, end] = findResponseGroup(messages, userIdx);
+    for (let i = start; i < end; i++) destroyMessageIframe(i);
+  }
 
   const newMessages = applySwipe(messages, userIdx, newSwipe);
   agent.replaceMessages(newMessages);
@@ -218,7 +225,11 @@ export function deleteLastResponseGroup() {
   if (userIdx < 0) return;
 
   // Delete the response group and the user message
-  const [, end] = findResponseGroup(messages, userIdx);
+  const [responseStart, end] = findResponseGroup(messages, userIdx);
+  // Clean up iframes for deleted messages
+  if (state.iframeRunnerEnabled) {
+    for (let i = responseStart; i < end; i++) destroyMessageIframe(i);
+  }
   const newMessages = [...messages.slice(0, userIdx), ...messages.slice(end)];
 
   // Clean up swipe data for this position
