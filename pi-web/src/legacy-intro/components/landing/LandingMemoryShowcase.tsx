@@ -21,15 +21,15 @@ export default function LandingMemoryShowcase({ isDark }: LandingMemoryShowcaseP
   ];
 
   const terminalLines = [
-    "## 用户档案",
-    "- 名字：小明",
-    "- 喜欢：编程、音乐、咖啡",
-    "- 生日：1月15日",
+    t("landing.termLine1"),
+    t("landing.termLine2"),
+    t("landing.termLine3"),
+    t("landing.termLine4"),
     "",
-    "## 长期记忆",
-    "最近在学 Rust，对 WASM 很感兴趣",
-    "喜欢在深夜写代码",
-    "养了一只叫「比特」的猫",
+    t("landing.termLine5"),
+    t("landing.termLine6"),
+    t("landing.termLine7"),
+    t("landing.termLine8"),
   ];
 
   return (
