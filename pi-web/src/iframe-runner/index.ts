@@ -30,6 +30,7 @@ import type { CharacterCard } from "../lib/character";
 import type { AppState } from "../app-state";
 
 let _initialized = false;
+let _pendingPersistentScripts: import("./types").ScriptConfig[] = [];
 
 /**
  * Initialize the iframe-runner system.
@@ -43,6 +44,10 @@ export function initIframeRunner(state: AppState): void {
   installTavernBridge();
   installResizeListener();
   startMessageObserver();
+
+  if (_pendingPersistentScripts.length > 0) {
+    startPersistentScripts(_pendingPersistentScripts);
+  }
 
   if (state.currentSessionId) {
     setCurrentSessionId(state.currentSessionId);
@@ -82,8 +87,10 @@ export function onCharacterChanged(card: CharacterCard): {
   // Update message iframe processor
   setRegexScripts(regexScripts);
 
-  // Start persistent scripts
-  if (persistentScripts.length > 0) {
+  // Start persistent scripts immediately if runner is active,
+  // otherwise queue them and start when initIframeRunner() runs.
+  _pendingPersistentScripts = persistentScripts;
+  if (_initialized && persistentScripts.length > 0) {
     startPersistentScripts(persistentScripts);
   }
 

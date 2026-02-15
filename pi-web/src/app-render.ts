@@ -59,6 +59,7 @@ import {
   onCharacterChanged,
   extractAllRegexScripts,
   setRegexScripts,
+  reprocessAllMessages,
 } from "./iframe-runner";
 import { renderAuthDialog, type AuthDialogState, type AuthDialogActions, type AuthTab } from "./views/auth-dialog";
 import { renderSupabaseConfigDialog, type SupabaseConfigDialogState, type SupabaseConfigDialogActions } from "./views/supabase-config-dialog";
@@ -790,7 +791,12 @@ function handleIframeRunnerToggle() {
   state.iframeRunnerEnabled = !state.iframeRunnerEnabled;
   if (state.iframeRunnerEnabled && state.character) {
     initIframeRunner(state);
-    onCharacterChanged(state.character);
+    const result = onCharacterChanged(state.character);
+    state.iframeRunnerRegexScripts = extractAllRegexScripts(state.character);
+    state.iframeRunnerPersistentScripts = result.persistentScripts;
+    if (state.agent) {
+      reprocessAllMessages(state.agent.state.messages);
+    }
   } else {
     destroyIframeRunner();
   }
@@ -803,6 +809,9 @@ function handleRegexScriptToggle(id: string) {
   // Update the active regex scripts in the message processor
   if (state.iframeRunnerEnabled) {
     setRegexScripts(state.iframeRunnerRegexScripts.filter((s) => !s.disabled));
+    if (state.agent) {
+      reprocessAllMessages(state.agent.state.messages);
+    }
   }
 }
 

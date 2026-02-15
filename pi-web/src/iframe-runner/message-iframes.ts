@@ -19,9 +19,11 @@ let _observer: MutationObserver | null = null;
 /** Current regex scripts to apply. */
 let _regexScripts: RegexScriptData[] = [];
 
+/** Last known full message list (for raw index -> rendered index mapping). */
+let _latestMessages: any[] = [];
+
 /** Selector for the ChatPanel's message list container. */
 const CHAT_CONTAINER_SELECTOR = "pi-chat-panel";
-const MESSAGE_SELECTOR = "[data-message-index]";
 
 // ── Public API ──
 
@@ -64,11 +66,17 @@ export function processRenderedMessage(
   messageIndex: number,
   role: string,
   originalText: string,
+  messages?: any[],
 ): void {
   if (role !== "assistant") return;
   if (_regexScripts.length === 0) return;
 
-  const htmlContent = applyRegexScriptsToText(originalText);
+  if (Array.isArray(messages)) {
+    _latestMessages = messages;
+  }
+
+  const depth = computeDepth(messageIndex, _latestMessages);
+  const htmlContent = applyRegexScriptsToText(originalText, depth);
   if (!htmlContent) return;
 
   // Wait for DOM to update, then inject iframe
@@ -94,6 +102,7 @@ export function destroyMessageIframe(messageIndex: number): void {
 export function reprocessAllMessages(messages: any[]): void {
   if (_regexScripts.length === 0) return;
 
+  _latestMessages = messages;
   destroyAllMessageIframes();
 
   for (let i = 0; i < messages.length; i++) {
@@ -106,7 +115,8 @@ export function reprocessAllMessages(messages: any[]): void {
     const text = textBlock?.text ?? "";
     if (!text) continue;
 
-    const htmlContent = applyRegexScriptsToText(text);
+    const depth = Math.max(0, messages.length - 1 - i);
+    const htmlContent = applyRegexScriptsToText(text, depth);
     if (htmlContent) {
       // Delay to allow DOM rendering
       setTimeout(() => injectIframeForMessage(i, htmlContent), 100 + i * 20);
@@ -116,36 +126,109 @@ export function reprocessAllMessages(messages: any[]): void {
 
 // ── Internal ──
 
-function applyRegexScriptsToText(text: string): string | null {
+function applyRegexScriptsToText(text: string, depth?: number): string | null {
   let result = text;
   let matched = false;
 
   for (const script of _regexScripts) {
     // Only apply scripts targeting AI output
     if (!script.placement.includes(PLACEMENT.AI_OUTPUT)) continue;
+    // Display-side rendering should not apply prompt-only scripts.
+    if (script.promptOnly) continue;
+    if (!isDepthAllowed(script, depth)) continue;
 
-    try {
-      const regex = new RegExp(script.findRegex, "gm");
-      if (regex.test(result)) {
-        // Reset lastIndex after test
-        regex.lastIndex = 0;
-        result = result.replace(regex, script.replaceString);
-        matched = true;
-      }
-    } catch (err) {
-      console.warn(`[iframe-runner] Invalid regex in script "${script.scriptName}":`, err);
+    const regex = regexFromString(script.findRegex);
+    if (!regex) {
+      console.warn(`[iframe-runner] Invalid regex in script "${script.scriptName}"`);
+      continue;
     }
+
+    if (regex.global || regex.sticky) {
+      regex.lastIndex = 0;
+    }
+    if (!regex.test(result)) {
+      continue;
+    }
+    if (regex.global || regex.sticky) {
+      regex.lastIndex = 0;
+    }
+
+    result = runRegexScriptLikeSillyTavern(script, result, regex);
+    matched = true;
   }
 
   if (!matched) return null;
 
   // Strip code fence wrappers if present
-  result = stripCodeFence(result);
+  result = stripCodeFence(result.trim());
 
   // Check if the result is HTML frontend content
   if (!isFrontend(result)) return null;
 
   return result;
+}
+
+function runRegexScriptLikeSillyTavern(script: RegexScriptData, text: string, regex: RegExp): string {
+  const replaceString = String(script.replaceString ?? "").replace(/\{\{match\}\}/gi, "$0");
+  return text.replace(regex, (...args: any[]) => {
+    const rawMatch = String(args[0] ?? "");
+    const namedGroups = (
+      args.length > 0 && typeof args[args.length - 1] === "object"
+        ? args[args.length - 1]
+        : undefined
+    ) as Record<string, string> | undefined;
+
+    const replacedGroups = replaceString.replace(/\$(\d+)|\$<([^>]+)>/g, (_whole, num, groupName) => {
+      const captured = num ? args[Number(num)] : namedGroups?.[groupName];
+      if (typeof captured !== "string") return "";
+      return applyTrimStrings(captured, script.trimStrings);
+    });
+
+    return replacedGroups.replace(/\$0/g, applyTrimStrings(rawMatch, script.trimStrings));
+  });
+}
+
+function applyTrimStrings(value: string, trimStrings?: string[]): string {
+  if (!Array.isArray(trimStrings) || trimStrings.length === 0) return value;
+  let result = value;
+  for (const trim of trimStrings) {
+    if (!trim) continue;
+    result = result.split(trim).join("");
+  }
+  return result;
+}
+
+function regexFromString(input: string): RegExp | null {
+  try {
+    // Compatible with SillyTavern's regexFromString utility.
+    const m = input.match(/(\/?)(.+)\1([a-z]*)/i);
+    if (!m) return null;
+
+    const flags = m[3] ?? "";
+    if (flags && !/^(?!.*?(.).*?\1)[dgimsuvy]+$/.test(flags)) {
+      return new RegExp(input);
+    }
+
+    return new RegExp(m[2], flags);
+  } catch {
+    return null;
+  }
+}
+
+function isDepthAllowed(script: RegexScriptData, depth?: number): boolean {
+  if (typeof depth !== "number") return true;
+  const min = typeof script.minDepth === "number" && Number.isFinite(script.minDepth) ? script.minDepth : null;
+  const max = typeof script.maxDepth === "number" && Number.isFinite(script.maxDepth) ? script.maxDepth : null;
+
+  if (min !== null && min >= -1 && depth < min) return false;
+  if (max !== null && max >= 0 && depth > max) return false;
+  return true;
+}
+
+function computeDepth(messageIndex: number, messages: any[]): number | undefined {
+  if (!Array.isArray(messages) || messages.length === 0) return undefined;
+  if (!Number.isInteger(messageIndex) || messageIndex < 0 || messageIndex >= messages.length) return undefined;
+  return Math.max(0, messages.length - 1 - messageIndex);
 }
 
 function injectIframeForMessage(messageIndex: number, htmlContent: string): void {
@@ -189,12 +272,32 @@ function findMessageElement(index: number): Element | null {
 
   // Look inside shadow DOM if needed
   const root = chatPanel.shadowRoot ?? chatPanel;
-  const messages = root.querySelectorAll(".message, [class*='message']");
+  const renderIndex = toRenderedMessageIndex(index, _latestMessages) ?? index;
 
-  // The ChatPanel may use various class names; try to find the right one
-  if (messages.length > index) return messages[index];
+  const messageListRoot = root.querySelector("message-list") ?? root;
+  const visibleMessages = messageListRoot.querySelectorAll("assistant-message, user-message, [data-message-index]");
+  if (visibleMessages.length > renderIndex) return visibleMessages[renderIndex];
+
+  // Fallback for unknown host layouts
+  const fallback = root.querySelectorAll(".message, [class*='message']");
+  if (fallback.length > renderIndex) return fallback[renderIndex];
 
   return null;
+}
+
+function toRenderedMessageIndex(rawIndex: number, messages: any[]): number | null {
+  if (!Array.isArray(messages) || messages.length === 0) return null;
+  const clamped = Math.min(Math.max(rawIndex, 0), messages.length - 1);
+
+  let rendered = -1;
+  for (let i = 0; i <= clamped; i++) {
+    const role = messages[i]?.role;
+    if (role === "assistant" || role === "user" || role === "user-with-attachments") {
+      rendered++;
+    }
+  }
+
+  return rendered >= 0 ? rendered : null;
 }
 
 function findContentElement(msgEl: Element): HTMLElement | null {

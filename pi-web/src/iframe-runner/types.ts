@@ -12,6 +12,18 @@ export interface RegexScriptData {
   placement: number[];
   disabled: boolean;
   trimStrings: string[];
+  /** True = only apply on display-side markdown rendering. */
+  markdownOnly?: boolean;
+  /** True = only apply when building prompts. */
+  promptOnly?: boolean;
+  /** Whether the script can run on edited messages. */
+  runOnEdit?: boolean;
+  /** SillyTavern substituteRegex mode (kept for compatibility). */
+  substituteRegex?: number | boolean;
+  /** Minimum message depth to apply this script. */
+  minDepth?: number | null;
+  /** Maximum message depth to apply this script. */
+  maxDepth?: number | null;
 }
 
 /** A persistent script extracted from character card extensions. */

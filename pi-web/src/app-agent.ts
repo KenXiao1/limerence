@@ -433,7 +433,7 @@ export async function createAgent(initialState?: Partial<AgentState>) {
             : null;
           const text = textBlock?.text ?? "";
           if (text) {
-            processRenderedMessage(msgIndex, "assistant", text);
+            processRenderedMessage(msgIndex, "assistant", text, agent.state.messages);
           }
         }
       }

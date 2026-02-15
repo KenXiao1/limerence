@@ -3,7 +3,7 @@ import { state, storage, limerenceStorage, memoryIndex, defaultUsage, syncEngine
 import { createAgent, updateUrl } from "./app-agent";
 import { repairTranscript } from "./app-repair";
 import { resetSwipeData } from "./app-message-actions";
-import { onSessionChanged, reprocessAllMessages } from "./iframe-runner";
+import { onSessionChanged, onCharacterChanged, extractAllRegexScripts, reprocessAllMessages } from "./iframe-runner";
 import {
   generateTitle as _generateTitle,
   shouldSaveSession as _shouldSaveSession,
@@ -84,6 +84,11 @@ export async function loadSession(sessionId: string): Promise<boolean> {
 
   // iframe-runner: update session context and re-process existing messages
   if (state.iframeRunnerEnabled) {
+    if (state.character) {
+      const result = onCharacterChanged(state.character);
+      state.iframeRunnerRegexScripts = extractAllRegexScripts(state.character);
+      state.iframeRunnerPersistentScripts = result.persistentScripts;
+    }
     onSessionChanged(sessionId);
     reprocessAllMessages(repairedMessages);
   }
@@ -104,8 +109,18 @@ export async function newSession() {
 
   // iframe-runner: update session context
   if (state.iframeRunnerEnabled) {
+    if (state.character) {
+      const result = onCharacterChanged(state.character);
+      state.iframeRunnerRegexScripts = extractAllRegexScripts(state.character);
+      state.iframeRunnerPersistentScripts = result.persistentScripts;
+    }
     onSessionChanged(state.currentSessionId);
   }
 
   await createAgent();
+
+  // Ensure initial greeting messages are processed too.
+  if (state.iframeRunnerEnabled && state.agent) {
+    reprocessAllMessages(state.agent.state.messages);
+  }
 }

@@ -5,6 +5,15 @@
 import type { CharacterCard } from "../lib/character";
 import type { RegexScriptData, ScriptConfig } from "./types";
 
+function toNumberOrNull(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
 /**
  * Extract enabled regex_scripts from a character card's extensions.
  * Returns only scripts that are not disabled.
@@ -24,6 +33,15 @@ export function extractRegexScripts(card: CharacterCard): RegexScriptData[] {
       placement: Array.isArray(s.placement) ? s.placement : [],
       disabled: false,
       trimStrings: Array.isArray(s.trimStrings) ? s.trimStrings : [],
+      markdownOnly: !!s.markdownOnly,
+      promptOnly: !!s.promptOnly,
+      runOnEdit: s.runOnEdit !== false,
+      substituteRegex:
+        typeof s.substituteRegex === "number" || typeof s.substituteRegex === "boolean"
+          ? s.substituteRegex
+          : 0,
+      minDepth: toNumberOrNull(s.minDepth),
+      maxDepth: toNumberOrNull(s.maxDepth),
     }));
 }
 
@@ -45,6 +63,15 @@ export function extractAllRegexScripts(card: CharacterCard): RegexScriptData[] {
       placement: Array.isArray(s.placement) ? s.placement : [],
       disabled: !!s.disabled,
       trimStrings: Array.isArray(s.trimStrings) ? s.trimStrings : [],
+      markdownOnly: !!s.markdownOnly,
+      promptOnly: !!s.promptOnly,
+      runOnEdit: s.runOnEdit !== false,
+      substituteRegex:
+        typeof s.substituteRegex === "number" || typeof s.substituteRegex === "boolean"
+          ? s.substituteRegex
+          : 0,
+      minDepth: toNumberOrNull(s.minDepth),
+      maxDepth: toNumberOrNull(s.maxDepth),
     }));
 }
 
