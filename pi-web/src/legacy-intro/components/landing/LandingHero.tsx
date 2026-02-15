@@ -6,9 +6,10 @@ interface LandingHeroProps {
   isDark: boolean;
   theme: Theme;
   onStartChat: () => void;
+  startingChat?: boolean;
 }
 
-export default function LandingHero({ isDark, theme, onStartChat }: LandingHeroProps) {
+export default function LandingHero({ isDark, theme, onStartChat, startingChat = false }: LandingHeroProps) {
   const { t } = useI18n();
 
   return (
@@ -51,7 +52,10 @@ export default function LandingHero({ isDark, theme, onStartChat }: LandingHeroP
           <div className="mt-8 flex items-center gap-4">
             <button
               onClick={onStartChat}
-              className={`inline-block rounded-xl px-7 py-3.5 text-sm font-medium text-white transition-all hover:scale-[1.02] active:scale-[0.98] ${
+              disabled={startingChat}
+              className={`inline-block rounded-xl px-7 py-3.5 text-sm font-medium text-white transition-all ${
+                startingChat ? "cursor-not-allowed opacity-70" : "hover:scale-[1.02] active:scale-[0.98]"
+              } ${
                 isDark
                   ? "bg-magenta shadow-lg shadow-magenta/20 hover:shadow-magenta/30"
                   : "bg-magenta-dark shadow-lg shadow-magenta-dark/20 hover:shadow-magenta-dark/30"

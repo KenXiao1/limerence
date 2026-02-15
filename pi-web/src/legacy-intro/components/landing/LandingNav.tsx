@@ -4,12 +4,21 @@ interface LandingNavProps {
   isDark: boolean;
   onToggleTheme: () => void;
   onStartChat: () => void;
+  startingChat?: boolean;
   onLogin?: () => void;
   authEmail?: string | null;
   onLogout?: () => void;
 }
 
-export default function LandingNav({ isDark, onToggleTheme, onStartChat, onLogin, authEmail, onLogout }: LandingNavProps) {
+export default function LandingNav({
+  isDark,
+  onToggleTheme,
+  onStartChat,
+  startingChat = false,
+  onLogin,
+  authEmail,
+  onLogout,
+}: LandingNavProps) {
   const { t, toggle } = useI18n();
 
   return (
@@ -103,7 +112,10 @@ export default function LandingNav({ isDark, onToggleTheme, onStartChat, onLogin
 
         <button
           onClick={onStartChat}
+          disabled={startingChat}
           className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            startingChat ? "cursor-not-allowed opacity-70" : ""
+          } ${
             isDark
               ? "bg-magenta/15 text-magenta-light hover:bg-magenta/25"
               : "bg-magenta-dark/10 text-magenta-dark hover:bg-magenta-dark/20"

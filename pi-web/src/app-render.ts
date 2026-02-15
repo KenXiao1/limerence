@@ -824,6 +824,7 @@ export function doRenderCurrentView() {
     mountLegacyIntro(state.introHost, () => {
       void _showChatCallback(true);
     }, {
+      startingChat: state.switchingToChat,
       onLogin: () => { handleLoginClick(); },
       authEmail: state.authUser?.email ?? null,
       onLogout: () => { void handleLogout(); },

@@ -506,97 +506,114 @@ export async function createAgent(initialState?: Partial<AgentState>) {
 
 // ── Runtime bootstrap ──────────────────────────────────────────
 
+let _chatRuntimeInitPromise: Promise<void> | null = null;
+
 export async function ensureChatRuntime() {
   if (state.chatRuntimeReady) return;
+  if (_chatRuntimeInitPromise) {
+    await _chatRuntimeInitPromise;
+    return;
+  }
 
-  state.character = await loadDefaultCharacter();
+  _chatRuntimeInitPromise = (async () => {
+    state.character = await loadDefaultCharacter();
 
-  // Load persona from settings
-  try {
-    const persona = await storage.settings.get<Persona>(PERSONA_SETTINGS_KEY);
-    if (persona?.name || persona?.description) {
-      state.persona = persona;
+    // Load persona from settings
+    try {
+      const persona = await storage.settings.get<Persona>(PERSONA_SETTINGS_KEY);
+      if (persona?.name || persona?.description) {
+        state.persona = persona;
+      }
+    } catch {
+      // ignore
     }
-  } catch {
-    // ignore
-  }
 
-  // Settings validation: ensure proxy mode is a boolean
-  try {
-    const raw = await storage.settings.get<unknown>(PROXY_MODE_KEY);
-    state.proxyModeEnabled = typeof raw === "boolean" ? raw : false;
-  } catch {
-    state.proxyModeEnabled = false;
-  }
-
-  // Load lorebook entries
-  try {
-    state.lorebookEntries = await limerenceStorage.loadLorebookEntries();
-  } catch {
-    state.lorebookEntries = [];
-  }
-
-  // Load active preset
-  try {
-    const preset = await storage.settings.get<GenerationPreset>(ACTIVE_PRESET_KEY);
-    if (preset) state.activePreset = preset;
-  } catch {
-    // ignore
-  }
-
-  // Load regex rules
-  try {
-    const rules = await storage.settings.get<RegexRule[]>(REGEX_RULES_KEY);
-    if (Array.isArray(rules)) state.regexRules = rules;
-  } catch {
-    // ignore
-  }
-
-  // Load prompt presets
-  try {
-    const presets = await storage.settings.get<PromptPresetConfig[]>(PROMPT_PRESETS_KEY);
-    if (Array.isArray(presets)) state.promptPresets = presets;
-  } catch {
-    // ignore
-  }
-
-  // Load active prompt preset
-  try {
-    const activePreset = await storage.settings.get<PromptPresetConfig>(ACTIVE_PROMPT_PRESET_KEY);
-    if (activePreset?.id) state.activePromptPreset = activePreset;
-  } catch {
-    // ignore
-  }
-
-  // Load character list
-  try {
-    state.characterList = await limerenceStorage.loadCharacters();
-  } catch {
-    state.characterList = [];
-  }
-
-  // Load group chat config
-  try {
-    const raw = await storage.settings.get<unknown>(GROUP_CHAT_KEY);
-    const gc = deserializeGroupConfig(raw);
-    if (gc) state.groupChat = gc;
-  } catch {
-    // ignore
-  }
-
-  const memoryEntries = await limerenceStorage.loadMemoryEntries();
-  memoryIndex.load(memoryEntries);
-
-  // Initialize SQLite WASM memory database
-  await memoryDB.init();
-  if (memoryDB.listFiles().length === 0) {
-    const memoryFiles = await limerenceStorage.readAllMemoryFiles();
-    for (const { path, content } of memoryFiles) {
-      await memoryDB.indexFile(path, content);
+    // Settings validation: ensure proxy mode is a boolean
+    try {
+      const raw = await storage.settings.get<unknown>(PROXY_MODE_KEY);
+      state.proxyModeEnabled = typeof raw === "boolean" ? raw : false;
+    } catch {
+      state.proxyModeEnabled = false;
     }
-  }
-  state.memoryDBReady = true;
 
-  state.chatPanel = new ChatPanel();
-  state.chatRuntimeReady = true;
+    // Load lorebook entries
+    try {
+      state.lorebookEntries = await limerenceStorage.loadLorebookEntries();
+    } catch {
+      state.lorebookEntries = [];
+    }
+
+    // Load active preset
+    try {
+      const preset = await storage.settings.get<GenerationPreset>(ACTIVE_PRESET_KEY);
+      if (preset) state.activePreset = preset;
+    } catch {
+      // ignore
+    }
+
+    // Load regex rules
+    try {
+      const rules = await storage.settings.get<RegexRule[]>(REGEX_RULES_KEY);
+      if (Array.isArray(rules)) state.regexRules = rules;
+    } catch {
+      // ignore
+    }
+
+    // Load prompt presets
+    try {
+      const presets = await storage.settings.get<PromptPresetConfig[]>(PROMPT_PRESETS_KEY);
+      if (Array.isArray(presets)) state.promptPresets = presets;
+    } catch {
+      // ignore
+    }
+
+    // Load active prompt preset
+    try {
+      const activePreset = await storage.settings.get<PromptPresetConfig>(ACTIVE_PROMPT_PRESET_KEY);
+      if (activePreset?.id) state.activePromptPreset = activePreset;
+    } catch {
+      // ignore
+    }
+
+    // Load character list
+    try {
+      state.characterList = await limerenceStorage.loadCharacters();
+    } catch {
+      state.characterList = [];
+    }
+
+    // Load group chat config
+    try {
+      const raw = await storage.settings.get<unknown>(GROUP_CHAT_KEY);
+      const gc = deserializeGroupConfig(raw);
+      if (gc) state.groupChat = gc;
+    } catch {
+      // ignore
+    }
+
+    const memoryEntries = await limerenceStorage.loadMemoryEntries();
+    memoryIndex.load(memoryEntries);
+
+    // Initialize SQLite WASM memory database
+    await memoryDB.init();
+    if (memoryDB.listFiles().length === 0) {
+      const memoryFiles = await limerenceStorage.readAllMemoryFiles();
+      for (const { path, content } of memoryFiles) {
+        await memoryDB.indexFile(path, content, { persist: false });
+      }
+      if (memoryFiles.length > 0) {
+        await memoryDB.persist();
+      }
+    }
+    state.memoryDBReady = true;
+
+    state.chatPanel = new ChatPanel();
+    state.chatRuntimeReady = true;
+  })();
+
+  try {
+    await _chatRuntimeInitPromise;
+  } finally {
+    _chatRuntimeInitPromise = null;
+  }
 }

@@ -7,6 +7,7 @@ let rootContainer: HTMLElement | null = null;
 
 export interface LegacyIntroOptions {
   onStartChat: () => void;
+  startingChat?: boolean;
   onLogin?: () => void;
   authEmail?: string | null;
   onLogout?: () => void;
@@ -24,6 +25,7 @@ export function mountLegacyIntro(container: HTMLElement, onStartChat: () => void
   root.render(
     <Landing
       onStartChat={onStartChat}
+      startingChat={options?.startingChat}
       onLogin={options?.onLogin}
       authEmail={options?.authEmail}
       onLogout={options?.onLogout}

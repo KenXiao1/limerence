@@ -37,6 +37,19 @@ function isChatRoute(): boolean {
   return url.pathname === CHAT_PATH || url.searchParams.has("session");
 }
 
+let _chatRuntimeWarmupPromise: Promise<void> | null = null;
+
+function warmChatRuntimeInBackground() {
+  if (state.chatRuntimeReady || _chatRuntimeWarmupPromise) return;
+  _chatRuntimeWarmupPromise = ensureChatRuntime()
+    .catch((error) => {
+      console.warn("[App] Background chat runtime warmup failed:", error);
+    })
+    .finally(() => {
+      _chatRuntimeWarmupPromise = null;
+    });
+}
+
 async function showChat(pushHistory: boolean) {
   if (state.switchingToChat) return;
   state.switchingToChat = true;
@@ -62,6 +75,10 @@ async function showChat(pushHistory: boolean) {
     }
 
     await newSession();
+  } catch (error) {
+    console.error("[App] Failed to enter chat view:", error);
+    state.appView = "intro";
+    doRenderCurrentView();
   } finally {
     state.switchingToChat = false;
   }
@@ -75,6 +92,7 @@ async function routeByLocation() {
     await showChat(false);
   } else {
     showIntro(false);
+    warmChatRuntimeInBackground();
   }
 }
 

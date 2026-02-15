@@ -20,7 +20,7 @@ const IDB_KEY = "sqlite";
 
 // ── Schema ──────────────────────────────────────────────────────
 
-const SCHEMA_SQL = `
+const BASE_SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS files (
   path TEXT PRIMARY KEY,
   hash TEXT NOT NULL,
@@ -41,19 +41,21 @@ CREATE TABLE IF NOT EXISTS chunks (
 
 CREATE INDEX IF NOT EXISTS idx_chunks_path ON chunks(path);
 
+CREATE TABLE IF NOT EXISTS embedding_cache (
+  text_hash TEXT PRIMARY KEY,
+  embedding TEXT NOT NULL,
+  model TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+`;
+
+const FTS5_SCHEMA_SQL = `
 CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(
   text,
   id UNINDEXED,
   path UNINDEXED,
   start_line UNINDEXED,
   end_line UNINDEXED
-);
-
-CREATE TABLE IF NOT EXISTS embedding_cache (
-  text_hash TEXT PRIMARY KEY,
-  embedding TEXT NOT NULL,
-  model TEXT NOT NULL,
-  created_at INTEGER NOT NULL
 );
 `;
 
@@ -196,6 +198,15 @@ function escapeFts(text: string): string {
   return text.replace(/"/g, '""');
 }
 
+function escapeLike(text: string): string {
+  return text.replace(/[\\%_]/g, "\\$&");
+}
+
+function isMissingFtsModuleError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.toLowerCase().includes("no such module: fts5");
+}
+
 /**
  * Convert FTS5 bm25 rank (negative) to a 0-1 score.
  * Ported from OpenClaw `bm25RankToScore()`.
@@ -315,6 +326,8 @@ function idbSet(storeName: string, key: string, value: Uint8Array): Promise<void
 
 export class MemoryDB {
   private db: Database | null = null;
+  private initPromise: Promise<void> | null = null;
+  private ftsAvailable = false;
   private _ready = false;
 
   get ready(): boolean {
@@ -322,29 +335,85 @@ export class MemoryDB {
   }
 
   async init(): Promise<void> {
-    if (this.db) return;
+    if (this.db && this._ready) return;
+    if (this.initPromise) {
+      await this.initPromise;
+      return;
+    }
 
+    this.initPromise = this.initInternal();
+    try {
+      await this.initPromise;
+    } catch (error) {
+      this.close();
+      throw error;
+    } finally {
+      this.initPromise = null;
+    }
+  }
+
+  private async initInternal(): Promise<void> {
     const SQL = await initSqlJs({
       locateFile: () => "/sql-wasm.wasm",
     });
 
     // Try to restore from IndexedDB
     const saved = await idbGet(IDB_STORE, IDB_KEY);
-    if (saved) {
-      this.db = new SQL.Database(saved);
-    } else {
+    let restored = false;
+    let recreatedFromUnsupportedSchema = false;
+    if (saved !== null) {
+      try {
+        this.db = new SQL.Database(saved);
+        restored = true;
+      } catch {
+        this.db = null;
+      }
+    }
+    if (!this.db) this.db = new SQL.Database();
+
+    try {
+      // Ensure base schema exists
+      this.db.run(BASE_SCHEMA_SQL);
+    } catch (error) {
+      // Persisted DB can contain FTS tables created by a different SQLite build.
+      // Recreate a clean DB if current wasm doesn't support FTS5.
+      if (!(restored && isMissingFtsModuleError(error))) {
+        throw error;
+      }
+      this.db.close();
       this.db = new SQL.Database();
+      this.db.run(BASE_SCHEMA_SQL);
+      recreatedFromUnsupportedSchema = true;
     }
 
-    // Ensure schema exists
-    this.db.run(SCHEMA_SQL);
+    this.ftsAvailable = this.tryEnableFts();
+    if (!this.ftsAvailable) {
+      console.warn("[MemoryDB] FTS5 unavailable; using LIKE keyword fallback.");
+    }
+    if (recreatedFromUnsupportedSchema) {
+      await this.persist();
+    }
     this._ready = true;
+  }
+
+  private tryEnableFts(): boolean {
+    if (!this.db) return false;
+    try {
+      this.db.run(FTS5_SCHEMA_SQL);
+      return true;
+    } catch (error) {
+      if (!isMissingFtsModuleError(error)) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.warn(`[MemoryDB] Failed to enable FTS5: ${message}`);
+      }
+      return false;
+    }
   }
 
   /**
    * Index a memory file: chunk it and insert into SQLite + FTS5.
    */
-  async indexFile(path: string, content: string): Promise<void> {
+  async indexFile(path: string, content: string, options?: { persist?: boolean }): Promise<void> {
     if (!this.db) return;
 
     const hash = await sha256(content);
@@ -373,19 +442,21 @@ export class MemoryDB {
     const insertChunk = this.db.prepare(
       "INSERT OR REPLACE INTO chunks (id, path, start_line, end_line, hash, text, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
     );
-    const insertFts = this.db.prepare(
-      "INSERT INTO chunks_fts (text, id, path, start_line, end_line) VALUES (?, ?, ?, ?, ?)",
-    );
+    const insertFts = this.ftsAvailable
+      ? this.db.prepare("INSERT INTO chunks_fts (text, id, path, start_line, end_line) VALUES (?, ?, ?, ?, ?)")
+      : null;
 
     for (const chunk of chunks) {
       insertChunk.run([chunk.id, chunk.path, chunk.startLine, chunk.endLine, chunk.hash, chunk.text, now]);
-      insertFts.run([chunk.text, chunk.id, chunk.path, chunk.startLine, chunk.endLine]);
+      insertFts?.run([chunk.text, chunk.id, chunk.path, chunk.startLine, chunk.endLine]);
     }
 
     insertChunk.free();
-    insertFts.free();
+    insertFts?.free();
 
-    await this.persist();
+    if (options?.persist !== false) {
+      await this.persist();
+    }
   }
 
   /**
@@ -399,12 +470,14 @@ export class MemoryDB {
 
   private removeFileSync(path: string): void {
     if (!this.db) return;
-    // Get chunk IDs for FTS cleanup
-    const rows = this.db.exec("SELECT id FROM chunks WHERE path = ?", [path]);
-    if (rows.length > 0) {
-      for (const row of rows[0].values) {
-        const id = row[0] as string;
-        this.db.run("DELETE FROM chunks_fts WHERE id = ?", [id]);
+    if (this.ftsAvailable) {
+      // Get chunk IDs for FTS cleanup
+      const rows = this.db.exec("SELECT id FROM chunks WHERE path = ?", [path]);
+      if (rows.length > 0) {
+        for (const row of rows[0].values) {
+          const id = row[0] as string;
+          this.db.run("DELETE FROM chunks_fts WHERE id = ?", [id]);
+        }
       }
     }
     this.db.run("DELETE FROM chunks WHERE path = ?", [path]);
@@ -415,6 +488,12 @@ export class MemoryDB {
    * FTS5 BM25 keyword search.
    */
   searchKeyword(query: string, limit = 10, sourcePath?: string): SearchResult[] {
+    if (!this.db) return [];
+    if (this.ftsAvailable) return this.searchKeywordWithFts(query, limit, sourcePath);
+    return this.searchKeywordWithLike(query, limit, sourcePath);
+  }
+
+  private searchKeywordWithFts(query: string, limit: number, sourcePath?: string): SearchResult[] {
     if (!this.db) return [];
 
     const ftsQuery = buildFtsQuery(query);
@@ -453,6 +532,60 @@ export class MemoryDB {
       }));
     } catch {
       // FTS query syntax error — return empty
+      return [];
+    }
+  }
+
+  private searchKeywordWithLike(query: string, limit: number, sourcePath?: string): SearchResult[] {
+    if (!this.db) return [];
+    if (limit <= 0) return [];
+
+    const tokens = [...new Set(tokenizeForFts(query).filter(Boolean))].slice(0, 12);
+    if (tokens.length === 0) return [];
+
+    const likeClauses = tokens.map(() => "LOWER(text) LIKE ? ESCAPE '\\\\'");
+    const params: any[] = tokens.map((token) => `%${escapeLike(token)}%`);
+    let sql = `SELECT id, path, start_line, end_line, text
+               FROM chunks
+               WHERE (${likeClauses.join(" OR ")})`;
+
+    if (sourcePath) {
+      sql += " AND path = ?";
+      params.push(sourcePath);
+    }
+
+    const candidateLimit = Math.max(limit * 8, 40);
+    sql += " LIMIT ?";
+    params.push(candidateLimit);
+
+    try {
+      const rows = this.db.exec(sql, params);
+      if (rows.length === 0) return [];
+
+      const loweredQuery = query.toLowerCase();
+      const ranked = rows[0].values.map((row: any[]) => {
+        const text = row[4] as string;
+        const lowered = text.toLowerCase();
+        let hits = 0;
+        for (const token of tokens) {
+          if (lowered.includes(token)) hits++;
+        }
+        const hasExactQuery = loweredQuery.length > 0 && lowered.includes(loweredQuery) ? 1 : 0;
+        const score = (hits + hasExactQuery) / (tokens.length + 1);
+        return {
+          id: row[0] as string,
+          path: row[1] as string,
+          startLine: row[2] as number,
+          endLine: row[3] as number,
+          text,
+          score,
+        } satisfies SearchResult;
+      });
+
+      return ranked
+        .sort((a, b) => b.score - a.score)
+        .slice(0, limit);
+    } catch {
       return [];
     }
   }
@@ -582,6 +715,8 @@ export class MemoryDB {
     if (this.db) {
       this.db.close();
       this.db = null;
+      this.initPromise = null;
+      this.ftsAvailable = false;
       this._ready = false;
     }
   }
