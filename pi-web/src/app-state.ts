@@ -46,6 +46,16 @@ export type DiffPreview = {
   removed: number;
   truncated: boolean;
 };
+export type WorkspaceTab = "files" | "memory";
+export type MemoryOp = {
+  id: string;
+  tool: "memory_search" | "memory_write" | "memory_get";
+  path?: string;
+  query?: string;
+  timestamp: string;
+  success: boolean;
+  summary: string;
+};
 
 // ── Constants ──────────────────────────────────────────────────────
 
@@ -208,6 +218,13 @@ const _rawState = {
   // memory DB
   memoryDBReady: false,
   memoryFlushDone: false,
+
+  // workspace memory tab
+  workspaceTab: "files" as WorkspaceTab,
+  memoryFiles: [] as string[],
+  memoryPreviewPath: "",
+  memoryPreviewContent: "",
+  memoryOps: [] as MemoryOp[],
 
   // auth & sync
   authUser: null as User | null,

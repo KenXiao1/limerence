@@ -8,7 +8,7 @@ import { state, storage, limerenceStorage, syncEngine } from "./app-state";
 import { getDefaultModel, setProxyModeEnabled, setRoute, exportCurrentSession } from "./app-agent";
 import { ROOT_PATH } from "./app-state";
 import { loadSession, newSession } from "./app-session";
-import { renderWorkspacePanel, toggleWorkspacePanel } from "./app-workspace";
+import { renderWorkspacePanel, toggleWorkspacePanel, openWorkspaceFile } from "./app-workspace";
 import { mountLegacyIntro, unmountLegacyIntro } from "./legacy-intro/mount";
 import { startThemeTransition } from "./theme-transition";
 import { renderHeader, type HeaderState, type HeaderActions } from "./views/header";
@@ -107,6 +107,15 @@ export function renderChatView() {
   unmountLegacyIntro();
   state.introHost.style.display = "none";
   state.chatHost.style.display = "block";
+
+  // Listen for memory-file-click events from tool renderers
+  document.addEventListener("memory-file-click", ((e: CustomEvent) => {
+    const path = e.detail?.path;
+    if (!path) return;
+    if (!state.workspacePanelOpen) void toggleWorkspacePanel();
+    state.workspaceTab = "files";
+    void openWorkspaceFile(path);
+  }) as EventListener, { once: false });
 
   const headerState: HeaderState = {
     currentTitle: state.currentTitle,

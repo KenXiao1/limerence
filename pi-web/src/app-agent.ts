@@ -19,7 +19,8 @@ import { buildSystemPrompt, buildSystemPromptFromPreset, buildMemoryInjection, l
 import type { PromptPresetConfig } from "./controllers/prompt-presets";
 import { ACTIVE_PROMPT_PRESET_KEY, PROMPT_PRESETS_KEY } from "./controllers/prompt-presets";
 import { createLimerenceTools } from "./lib/tools";
-import { handleAgentFileOperation } from "./app-workspace";
+import { handleAgentFileOperation, refreshMemoryFiles } from "./app-workspace";
+import type { MemoryOp } from "./app-state";
 import { generateTitle, indexMessageIntoMemory, saveSession, newSession } from "./app-session";
 import { compactMessages, estimateMessagesTokens } from "./app-compaction";
 import {
@@ -449,6 +450,13 @@ export async function createAgent(initialState?: Partial<AgentState>) {
         },
         onMemoryFileWrite: async (path, content) => {
           await memoryDB.indexFile(path, content);
+        },
+        onMemoryOperation: (op) => {
+          state.memoryOps = [
+            { ...op, id: crypto.randomUUID(), timestamp: new Date().toISOString() } as MemoryOp,
+            ...state.memoryOps,
+          ].slice(0, 80);
+          if (op.tool === "memory_write") void refreshMemoryFiles();
         },
       }),
   });

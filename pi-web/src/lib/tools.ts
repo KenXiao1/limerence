@@ -69,6 +69,7 @@ export type FileOperation = {
 export type LimerenceToolHooks = {
   onFileOperation?: (event: FileOperation) => void;
   onMemoryFileWrite?: (path: string, content: string) => Promise<void>;
+  onMemoryOperation?: (op: { tool: string; path?: string; query?: string; success: boolean; summary: string }) => void;
 };
 
 // ── Helpers ─────────────────────────────────────────────────────
@@ -149,12 +150,15 @@ export function createLimerenceTools(
       }
 
       if (parts.length === 0) {
+        hooks.onMemoryOperation?.({ tool: "memory_search", query, success: true, summary: "没有找到相关记忆" });
         return {
           content: [{ type: "text", text: "没有找到相关记忆。" }],
           details: { query },
         };
       }
 
+      const resultCount = parts.filter((p) => p.startsWith("[")).length;
+      hooks.onMemoryOperation?.({ tool: "memory_search", query, success: true, summary: `${resultCount} 条结果` });
       return {
         content: [{ type: "text", text: parts.join("\n") }],
         details: { query },
@@ -194,6 +198,7 @@ export function createLimerenceTools(
         const merged = existing ? `${existing}\n${content}` : content;
         await storage.fileWrite(path, merged);
         await hooks.onMemoryFileWrite?.(path, merged);
+        hooks.onMemoryOperation?.({ tool: "memory_write", path, success: true, summary: `追加 ${content.length} 字符` });
         return {
           content: [{ type: "text", text: `已追加内容到记忆文件：${path}` }],
           details: { path },
@@ -202,6 +207,7 @@ export function createLimerenceTools(
 
       await storage.fileWrite(path, content);
       await hooks.onMemoryFileWrite?.(path, content);
+      hooks.onMemoryOperation?.({ tool: "memory_write", path, success: true, summary: `写入 ${content.length} 字符` });
       return {
         content: [{ type: "text", text: `已写入记忆文件：${path}` }],
         details: { path },
@@ -258,6 +264,7 @@ export function createLimerenceTools(
       const slice = allLines.slice(startIdx, endIdx);
 
       const header = `[${path}] 共 ${allLines.length} 行，显示 L${startIdx + 1}-L${endIdx}：`;
+      hooks.onMemoryOperation?.({ tool: "memory_get", path, success: true, summary: `${allLines.length} 行` });
       return {
         content: [{ type: "text", text: `${header}\n${slice.join("\n")}` }],
         details: { path },

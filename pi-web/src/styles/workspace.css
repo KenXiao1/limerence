@@ -392,3 +392,135 @@
   color: var(--muted-foreground);
   padding: 8px 0;
 }
+
+/* ── Workspace tab bar ──────────────────────────────────────── */
+
+.limerence-workspace-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.limerence-workspace-tab {
+  flex: 1;
+  padding: 7px 12px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  text-align: center;
+  color: var(--muted-foreground);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.limerence-workspace-tab:hover {
+  color: var(--foreground);
+}
+
+.limerence-workspace-tab.is-active {
+  color: var(--foreground);
+  border-bottom-color: var(--accent);
+}
+
+/* ── Memory file tree ───────────────────────────────────────── */
+
+.limerence-memory-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 200px;
+  overflow: auto;
+}
+
+.limerence-memory-file {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: var(--font-size-base);
+  text-align: left;
+  cursor: pointer;
+}
+
+.limerence-memory-file:hover {
+  background: var(--ws-accent-bg);
+}
+
+.limerence-memory-file.is-active {
+  border-color: color-mix(in oklab, var(--memory-write) 40%, var(--border));
+  background: color-mix(in oklab, var(--memory-write) 10%, transparent);
+}
+
+.limerence-memory-file-icon {
+  display: inline-flex;
+  color: var(--memory-write);
+  flex-shrink: 0;
+}
+
+.limerence-memory-file-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Memory preview ─────────────────────────────────────────── */
+
+.limerence-memory-preview {
+  min-height: 180px;
+  max-height: 320px;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: var(--ws-padding);
+  border: 1px solid var(--border);
+  border-radius: var(--ws-input-radius);
+  background: var(--ws-input-bg);
+  color: var(--foreground);
+}
+
+/* ── Memory operation log ───────────────────────────────────── */
+
+.limerence-memory-op {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--ws-btn-radius);
+  font-size: var(--font-size-sm);
+}
+
+.limerence-memory-op-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.limerence-memory-op-icon.is-search { color: var(--memory-search); }
+.limerence-memory-op-icon.is-write  { color: var(--memory-write); }
+.limerence-memory-op-icon.is-get    { color: var(--memory-get); }
+
+.limerence-memory-op-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.limerence-memory-op-summary {
+  color: var(--foreground);
+  word-break: break-word;
+}
+
+.limerence-memory-op-time {
+  font-size: var(--font-size-xs);
+  color: var(--muted-foreground);
+  margin-top: 2px;
+}

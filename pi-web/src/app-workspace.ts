@@ -8,6 +8,7 @@ import {
   MAX_DIFF_MATRIX,
   MAX_DIFF_PREVIEW_LINES,
 } from "./app-state";
+import type { WorkspaceTab } from "./app-state";
 import { normalizePath } from "./lib/storage";
 import type { FileOperation } from "./lib/tools";
 import {
@@ -21,10 +22,30 @@ import {
   WS_WIDTH_KEY,
 } from "./controllers/workspace";
 import { t, tf } from "./lib/i18n";
+import { renderWorkspaceMemoryTab } from "./views/workspace-memory";
 
 // ── Re-exports from controller ──────────────────────────────────
 
 export { isMarkdownPath, createDiffPreview } from "./controllers/workspace";
+
+// ── Memory tab helpers ───────────────────────────────────────────
+
+export async function refreshMemoryFiles() {
+  state.memoryFiles = await limerenceStorage.listMemoryFiles();
+}
+
+async function loadMemoryPreview(path: string) {
+  state.memoryPreviewPath = path;
+  const content = await limerenceStorage.readWorkspaceFile(path);
+  state.memoryPreviewContent = content ?? "";
+}
+
+function switchWorkspaceTab(tab: WorkspaceTab) {
+  state.workspaceTab = tab;
+  if (tab === "memory") {
+    void refreshMemoryFiles();
+  }
+}
 
 // ── Workspace event tracking ────────────────────────────────────
 
@@ -121,6 +142,7 @@ export async function toggleWorkspacePanel() {
   state.workspacePanelOpen = !state.workspacePanelOpen;
   if (state.workspacePanelOpen) {
     await refreshWorkspaceFiles(true);
+    void refreshMemoryFiles();
   }
 }
 
@@ -180,43 +202,22 @@ export function renderWorkspacePanel() {
   const markdownFiles = state.workspaceFiles.filter((path) => isMarkdownPath(path));
   const diff = createDiffPreview(state.workspaceBaseContent, state.workspaceEditorContent, MAX_DIFF_MATRIX, MAX_DIFF_PREVIEW_LINES);
   const panelWidth = state.workspacePanelWidth;
+  const tab = state.workspaceTab;
 
-  return html`
-    <div
-      class="limerence-resize-handle ${state.workspaceResizing ? "is-dragging" : ""}"
-      @mousedown=${(e: Event) => startWorkspaceResize(e as MouseEvent)}
-    ></div>
-    <aside class="limerence-workspace-panel border-l border-border bg-background" style="width:${panelWidth}px;min-width:${WS_MIN_WIDTH}px;max-width:${WS_MAX_WIDTH}px">
-      <div class="limerence-workspace-head">
-        <div>
-          <div class="limerence-workspace-title">${t("ws.title")}</div>
-          <div class="limerence-workspace-subtitle">
-            ${tf("ws.subtitle", String(markdownFiles.length), String(state.workspaceEvents.length))}
-          </div>
-        </div>
-        <div class="limerence-workspace-head-actions">
-          <button
-            class="limerence-workspace-icon-button"
-            @click=${() => {
-              void refreshWorkspaceFiles(true);
-            }}
-            title="${t("ws.refresh")}"
-          >
-            ${icon(RefreshCw, "sm")}
-          </button>
-          <button
-            class="limerence-workspace-icon-button"
-            @click=${() => {
-              state.workspacePanelOpen = false;
-            }}
-            title="${t("ws.close")}"
-          >
-            ${icon(X, "sm")}
-          </button>
-        </div>
-      </div>
+  const tabBar = html`
+    <div class="limerence-workspace-tabs">
+      <button
+        class="limerence-workspace-tab ${tab === "files" ? "is-active" : ""}"
+        @click=${() => switchWorkspaceTab("files")}
+      >${t("ws.tabFiles")}</button>
+      <button
+        class="limerence-workspace-tab ${tab === "memory" ? "is-active" : ""}"
+        @click=${() => switchWorkspaceTab("memory")}
+      >${t("ws.tabMemory")}</button>
+    </div>
+  `;
 
-      <div class="limerence-workspace-content">
+  const filesContent = html`
         <section class="limerence-workspace-section">
           <div class="limerence-workspace-section-title">${t("ws.pathLabel")}</div>
           <div class="limerence-workspace-row">
@@ -340,6 +341,64 @@ export function renderWorkspacePanel() {
                 )}
           </div>
         </section>
+  `;
+
+  const memoryContent = renderWorkspaceMemoryTab(
+    {
+      memoryFiles: state.memoryFiles,
+      memoryPreviewPath: state.memoryPreviewPath,
+      memoryPreviewContent: state.memoryPreviewContent,
+      memoryOps: state.memoryOps,
+    },
+    {
+      onSelectFile: (path) => { void loadMemoryPreview(path); },
+      onOpenInEditor: (path) => {
+        state.workspaceTab = "files";
+        void openWorkspaceFile(path);
+      },
+    },
+  );
+
+  return html`
+    <div
+      class="limerence-resize-handle ${state.workspaceResizing ? "is-dragging" : ""}"
+      @mousedown=${(e: Event) => startWorkspaceResize(e as MouseEvent)}
+    ></div>
+    <aside class="limerence-workspace-panel border-l border-border bg-background" style="width:${panelWidth}px;min-width:${WS_MIN_WIDTH}px;max-width:${WS_MAX_WIDTH}px">
+      <div class="limerence-workspace-head">
+        <div>
+          <div class="limerence-workspace-title">${t("ws.title")}</div>
+          <div class="limerence-workspace-subtitle">
+            ${tf("ws.subtitle", String(markdownFiles.length), String(state.workspaceEvents.length))}
+          </div>
+        </div>
+        <div class="limerence-workspace-head-actions">
+          <button
+            class="limerence-workspace-icon-button"
+            @click=${() => {
+              void refreshWorkspaceFiles(true);
+              void refreshMemoryFiles();
+            }}
+            title="${t("ws.refresh")}"
+          >
+            ${icon(RefreshCw, "sm")}
+          </button>
+          <button
+            class="limerence-workspace-icon-button"
+            @click=${() => {
+              state.workspacePanelOpen = false;
+            }}
+            title="${t("ws.close")}"
+          >
+            ${icon(X, "sm")}
+          </button>
+        </div>
+      </div>
+
+      ${tabBar}
+
+      <div class="limerence-workspace-content">
+        ${tab === "files" ? filesContent : memoryContent}
       </div>
     </aside>
   `;

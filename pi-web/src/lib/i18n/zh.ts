@@ -282,6 +282,45 @@ const zh: Record<string, string> = {
   "supabase.urlLabel": "项目 URL",
   "supabase.anonKeyLabel": "Publishable Key",
   "supabase.downloadSchema": "下载 SQL Schema 文件",
+
+  // ── Memory 渲染器 ─────────────────────────────────────────
+  "memory.searchHeader": "搜索记忆：{0}",
+  "memory.writeHeader": "写入记忆：{0}",
+  "memory.getHeader": "读取记忆：{0}",
+  "memory.persistentSection": "持久记忆",
+  "memory.conversationSection": "对话历史",
+  "memory.noResults": "没有找到相关记忆",
+  "memory.resultCount": "{0} 条结果",
+  "memory.appended": "已追加",
+  "memory.written": "已写入",
+  "memory.lines": "共 {0} 行",
+  "memory.openInEditor": "在编辑器中打开",
+  "memory.error": "执行出错",
+
+  // ── Workspace Memory 标签页 ───────────────────────────────
+  "ws.tabFiles": "文件",
+  "ws.tabMemory": "记忆",
+  "ws.memoryFiles": "记忆文件",
+  "ws.memoryPreview": "预览",
+  "ws.memoryOps": "操作日志",
+  "ws.noMemoryFiles": "暂无记忆文件",
+  "ws.noMemoryOps": "暂无记忆操作",
+
+  // ── Landing — Memory Showcase ─────────────────────────────
+  "landing.memoryTitle": "记忆系统",
+  "landing.memorySubtitle": "你的 AI 伙伴会记住你",
+  "landing.memoryFlow1": "对话消息",
+  "landing.memoryFlow2": "BM25 + FTS5 索引",
+  "landing.memoryFlow3": "SQLite WASM 持久化",
+  "landing.memoryFlow4": "记忆文件",
+  "landing.memoryStat1": "SQLite WASM",
+  "landing.memoryStat1Desc": "浏览器内嵌数据库",
+  "landing.memoryStat2": "FTS5 全文搜索",
+  "landing.memoryStat2Desc": "中日韩分词支持",
+  "landing.memoryStat3": "BM25 排序",
+  "landing.memoryStat3Desc": "相关性评分",
+  "landing.archMod5": "SQLite WASM 记忆",
+  "landing.archMod5Sub": "FTS5 · 持久化",
 };
 
 export default zh;

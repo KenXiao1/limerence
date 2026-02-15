@@ -49,6 +49,11 @@
   --font-size-base: 12px;
   --font-size-md: 13px;
 
+  /* Memory tool colors */
+  --memory-search: #3b82f6;
+  --memory-write: #10b981;
+  --memory-get: #8b5cf6;
+
   /* Touch targets */
   --touch-min: 44px;
 }

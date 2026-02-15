@@ -282,6 +282,45 @@ const en: Record<string, string> = {
   "supabase.urlLabel": "Project URL",
   "supabase.anonKeyLabel": "Publishable Key",
   "supabase.downloadSchema": "Download SQL Schema file",
+
+  // ── Memory renderers ──────────────────────────────────────
+  "memory.searchHeader": "Search memory: {0}",
+  "memory.writeHeader": "Write memory: {0}",
+  "memory.getHeader": "Read memory: {0}",
+  "memory.persistentSection": "Persistent Memory",
+  "memory.conversationSection": "Conversation History",
+  "memory.noResults": "No relevant memories found",
+  "memory.resultCount": "{0} results",
+  "memory.appended": "Appended",
+  "memory.written": "Written",
+  "memory.lines": "{0} lines",
+  "memory.openInEditor": "Open in editor",
+  "memory.error": "Execution error",
+
+  // ── Workspace Memory tab ──────────────────────────────────
+  "ws.tabFiles": "Files",
+  "ws.tabMemory": "Memory",
+  "ws.memoryFiles": "Memory Files",
+  "ws.memoryPreview": "Preview",
+  "ws.memoryOps": "Operation Log",
+  "ws.noMemoryFiles": "No memory files yet",
+  "ws.noMemoryOps": "No memory operations yet",
+
+  // ── Landing — Memory Showcase ─────────────────────────────
+  "landing.memoryTitle": "Memory System",
+  "landing.memorySubtitle": "Your AI companion remembers you",
+  "landing.memoryFlow1": "Conversation",
+  "landing.memoryFlow2": "BM25 + FTS5 Index",
+  "landing.memoryFlow3": "SQLite WASM Persistence",
+  "landing.memoryFlow4": "Memory Files",
+  "landing.memoryStat1": "SQLite WASM",
+  "landing.memoryStat1Desc": "In-browser database",
+  "landing.memoryStat2": "FTS5 Full-text Search",
+  "landing.memoryStat2Desc": "CJK tokenization support",
+  "landing.memoryStat3": "BM25 Ranking",
+  "landing.memoryStat3Desc": "Relevance scoring",
+  "landing.archMod5": "SQLite WASM Memory",
+  "landing.archMod5Sub": "FTS5 · Persistence",
 };
 
 export default en;

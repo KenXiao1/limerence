@@ -130,10 +130,21 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
                   />
                   <span className={`font-mono text-[11px] font-medium ${isDark ? "text-magenta-light" : "text-magenta-dark"}`}>Agent Loop</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {AGENT_MODULES.map((moduleItem) => (
-                    <div key={moduleItem.label} className={`rounded-lg px-3 py-2 ${isDark ? "bg-zinc-800/60" : "bg-zinc-100/80"}`}>
-                      <div className={`text-[11px] font-medium ${isDark ? "text-zinc-300" : "text-zinc-700"}`}>{moduleItem.label}</div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {AGENT_MODULES.map((moduleItem, idx) => (
+                    <div
+                      key={moduleItem.label}
+                      className={`rounded-lg px-3 py-2 ${
+                        idx === 4
+                          ? isDark ? "bg-magenta/10 ring-1 ring-magenta/20" : "bg-magenta-dark/5 ring-1 ring-magenta-dark/15"
+                          : isDark ? "bg-zinc-800/60" : "bg-zinc-100/80"
+                      }`}
+                    >
+                      <div className={`text-[11px] font-medium ${
+                        idx === 4
+                          ? isDark ? "text-magenta-light" : "text-magenta-dark"
+                          : isDark ? "text-zinc-300" : "text-zinc-700"
+                      }`}>{moduleItem.label}</div>
                       <div className={`font-mono text-[9px] ${isDark ? "text-zinc-600" : "text-zinc-400"}`}>{moduleItem.sub}</div>
                     </div>
                   ))}

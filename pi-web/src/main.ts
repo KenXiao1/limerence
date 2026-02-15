@@ -16,6 +16,10 @@ import { regenerateLastResponse } from "./app-message-actions";
 import { getLocale, onLocaleChange } from "./lib/i18n";
 import { setTranslations, defaultEnglish } from "@mariozechner/mini-lit";
 import { miniLitChinese } from "./lib/mini-lit-zh";
+import { registerMemoryRenderers } from "./renderers/memory-renderers";
+
+// ── Register custom tool renderers ───────────────────────────────
+registerMemoryRenderers();
 
 // ── Sync mini-lit i18n with our locale system ─────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

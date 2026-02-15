@@ -2,6 +2,7 @@ import LandingArchitecture from "../components/landing/LandingArchitecture";
 import LandingFeatures from "../components/landing/LandingFeatures";
 import LandingFooter from "../components/landing/LandingFooter";
 import LandingHero from "../components/landing/LandingHero";
+import LandingMemoryShowcase from "../components/landing/LandingMemoryShowcase";
 import LandingNav from "../components/landing/LandingNav";
 import { useTheme } from "../hooks/useTheme";
 
@@ -25,6 +26,7 @@ export default function Landing({ onStartChat, onLogin, authEmail, onLogout }: L
       <LandingNav isDark={isDark} onToggleTheme={toggle} onStartChat={onStartChat} onLogin={onLogin} authEmail={authEmail} onLogout={onLogout} />
       <LandingHero isDark={isDark} theme={theme} onStartChat={onStartChat} />
       <LandingFeatures isDark={isDark} />
+      <LandingMemoryShowcase isDark={isDark} />
       <LandingArchitecture isDark={isDark} />
       <LandingFooter isDark={isDark} />
     </div>
