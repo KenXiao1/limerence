@@ -61,7 +61,7 @@ export function renderSupabaseConfigDialog(
             id="sb-config-key"
             type="text"
             class="limerence-input"
-            placeholder="eyJhbGciOiJIUzI1NiIs..."
+            placeholder="sb_publishable_... 或 eyJhbGciOiJIUzI1NiIs..."
             .value=${keyValue}
           />
 

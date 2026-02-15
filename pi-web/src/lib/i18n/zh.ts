@@ -264,9 +264,9 @@ const zh: Record<string, string> = {
 
   // ── Supabase config ───────────────────────────────────────
   "supabase.configTitle": "配置 Supabase",
-  "supabase.configHint": "输入你的 Supabase 项目 URL 和 anon key。这些是公开的 publishable key，存储在本地浏览器中。首次使用前请先在 Supabase SQL Editor 中执行 schema 文件。",
+  "supabase.configHint": "输入你的 Supabase 项目 URL 和 Publishable Key（或 legacy anon key）。这些是公开密钥，存储在本地浏览器中。首次使用前请先在 Supabase SQL Editor 中执行 schema 文件。",
   "supabase.urlLabel": "项目 URL",
-  "supabase.anonKeyLabel": "Anon Key",
+  "supabase.anonKeyLabel": "Publishable Key",
   "supabase.downloadSchema": "下载 SQL Schema 文件",
 };
 

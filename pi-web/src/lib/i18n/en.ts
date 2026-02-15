@@ -264,9 +264,9 @@ const en: Record<string, string> = {
 
   // ── Supabase config ───────────────────────────────────────
   "supabase.configTitle": "Configure Supabase",
-  "supabase.configHint": "Enter your Supabase project URL and anon key. These are public publishable keys stored in your browser. Before first use, execute the schema file in Supabase SQL Editor.",
+  "supabase.configHint": "Enter your Supabase project URL and Publishable Key (or legacy anon key). These are public keys stored in your browser. Before first use, execute the schema file in Supabase SQL Editor.",
   "supabase.urlLabel": "Project URL",
-  "supabase.anonKeyLabel": "Anon Key",
+  "supabase.anonKeyLabel": "Publishable Key",
   "supabase.downloadSchema": "Download SQL Schema file",
 };
 
