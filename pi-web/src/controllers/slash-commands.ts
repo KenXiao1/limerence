@@ -3,7 +3,6 @@
  * Extends the existing chat command parser.
  */
 
-import type { AgentMessage } from "@mariozechner/pi-agent-core";
 import { t } from "../lib/i18n";
 
 export type SlashCommandResult =

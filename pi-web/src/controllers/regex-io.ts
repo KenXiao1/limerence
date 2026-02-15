@@ -65,7 +65,7 @@ export function convertSTRegex(st: unknown): RegexRule | null {
   const [, pattern, flags] = match;
   const replacement = String(obj.replaceString ?? "");
   const name = String(obj.scriptName ?? "ST Rule");
-  const disabled = obj.disabled === true;
+  const _disabled = obj.disabled === true;
 
   // placement mapping: [1] → input, [2] → output, [1,2] → both
   const placement = Array.isArray(obj.placement) ? obj.placement : [];

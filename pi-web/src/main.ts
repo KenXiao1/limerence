@@ -11,7 +11,7 @@ import {
   showIntro,
   setShowChatCallback,
 } from "./app-render";
-import { addGlobalListener, cleanupApp, createAppContainers } from "./app-lifecycle";
+import { addGlobalListener, cleanupApp, createAppContainers, initAuth } from "./app-lifecycle";
 import { regenerateLastResponse } from "./app-message-actions";
 import { getLocale, onLocaleChange } from "./lib/i18n";
 import { setTranslations, defaultEnglish } from "@mariozechner/mini-lit";
@@ -93,6 +93,9 @@ async function initApp() {
 
   // Re-render on locale change
   onLocaleChange(() => doRenderCurrentView());
+
+  // Initialize auth & sync (non-blocking)
+  void initAuth();
 
   // Popstate for routing
   addGlobalListener("popstate", () => {

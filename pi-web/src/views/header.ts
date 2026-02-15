@@ -7,11 +7,13 @@ import { icon } from "@mariozechner/mini-lit";
 import { Button } from "@mariozechner/mini-lit/dist/Button.js";
 import { Input } from "@mariozechner/mini-lit/dist/Input.js";
 import { SessionListDialog } from "@mariozechner/pi-web-ui";
-import { FileText, Globe, History, Maximize2, Minimize2, Moon, Plus, Server, Settings, Sun, Download, Upload, Users, SlidersHorizontal } from "lucide";
+import { FileText, History, Maximize2, Minimize2, Moon, Plus, Server, Settings, Sun, Download, Upload, Users, SlidersHorizontal, Cloud, LogOut } from "lucide";
 import { html } from "lit";
 import { t, getLocale, setLocale } from "../lib/i18n";
 import { renderTokenUsage } from "./token-usage";
 import { renderToolCalls } from "./tool-calls";
+
+import type { SyncStatus } from "../lib/sync-engine";
 
 export interface HeaderState {
   currentTitle: string;
@@ -25,6 +27,8 @@ export interface HeaderState {
   activeToolCalls: Array<{ id: string; name: string; label: string }>;
   currentSessionId: string | undefined;
   preferredTheme: "light" | "dark";
+  authEmail: string | null;
+  syncStatus: SyncStatus;
 }
 
 export interface HeaderActions {
@@ -43,6 +47,8 @@ export interface HeaderActions {
   onOpenLimerenceSettings: () => void;
   onExportSession: () => void;
   onImportSession: (file: File) => void;
+  onLoginClick: () => void;
+  onLogout: () => void;
 }
 
 export function renderHeader(s: HeaderState, actions: HeaderActions) {
@@ -190,6 +196,33 @@ export function renderHeader(s: HeaderState, actions: HeaderActions) {
           onClick: actions.onOpenSettings,
           title: t("header.settings"),
         })}
+
+        ${s.authEmail
+          ? html`
+            <span class="inline-flex items-center gap-1 px-1">
+              ${icon(Cloud, "sm")}
+              <span class="w-2 h-2 rounded-full ${
+                s.syncStatus === "synced" ? "bg-green-500" :
+                s.syncStatus === "syncing" ? "bg-yellow-500 animate-pulse" :
+                s.syncStatus === "error" ? "bg-red-500" :
+                "bg-zinc-400"
+              }"></span>
+            </span>
+            ${Button({
+              variant: "ghost",
+              size: "sm",
+              children: html`<span class="inline-flex items-center gap-1">${icon(LogOut, "sm")}<span class="text-xs limerence-header-label truncate max-w-[80px]">${s.authEmail}</span></span>`,
+              onClick: actions.onLogout,
+              title: t("auth.logout"),
+            })}`
+          : Button({
+              variant: "ghost",
+              size: "sm",
+              children: html`<span class="inline-flex items-center gap-1">${icon(Cloud, "sm")}<span class="text-xs limerence-header-label">${t("sync.login")}</span></span>`,
+              onClick: actions.onLoginClick,
+              title: t("sync.login"),
+            })
+        }
       </div>
     </div>
   `;

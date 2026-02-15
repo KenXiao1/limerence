@@ -1,4 +1,4 @@
-import type { Agent, AgentMessage } from "@mariozechner/pi-agent-core";
+import type { Agent } from "@mariozechner/pi-agent-core";
 import type { Usage } from "@mariozechner/pi-ai";
 import type { SwipeState } from "./controllers/message-actions";
 import type { RegexRule } from "./controllers/regex-rules";
@@ -18,11 +18,14 @@ import {
   SettingsStore,
   setAppStorage,
 } from "@mariozechner/pi-web-ui";
+import type { User } from "@supabase/supabase-js";
 import type { CharacterCard, Persona } from "./lib/character";
 import type { LorebookEntry } from "./lib/storage";
 import { MemoryIndex } from "./lib/memory";
 import { getLimerenceStoreConfigs, LimerenceStorage } from "./lib/storage";
 import type { FileOperation } from "./lib/tools";
+import { SyncEngine, type SyncStatus } from "./lib/sync-engine";
+import type { AuthTab } from "./views/auth-dialog";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -61,6 +64,8 @@ export const providerKeys = new ProviderKeysStore();
 export const sessions = new SessionsStore();
 export const customProviders = new CustomProvidersStore();
 
+export const SYNC_META_STORE = "limerence-sync-meta";
+
 export const backend = new IndexedDBStorageBackend({
   dbName: DB_NAME,
   version: DB_VERSION,
@@ -71,6 +76,7 @@ export const backend = new IndexedDBStorageBackend({
     customProviders.getConfig(),
     sessions.getConfig(),
     ...getLimerenceStoreConfigs(),
+    { name: SYNC_META_STORE },
   ],
 });
 
@@ -84,6 +90,7 @@ setAppStorage(storage);
 
 export const limerenceStorage = new LimerenceStorage(backend);
 export const memoryIndex = new MemoryIndex();
+export const syncEngine = new SyncEngine(backend);
 
 // ── Render callback (set by main.ts to break circular deps) ────────
 
@@ -194,6 +201,16 @@ const _rawState = {
   groupChat: { ...DEFAULT_GROUP_CONFIG } as GroupChatConfig,
   groupChatLastSpeakerId: null as string | null,
   groupChatManualPickOpen: false,
+
+  // auth & sync
+  authUser: null as User | null,
+  syncStatus: "idle" as SyncStatus,
+  authDialogOpen: false,
+  authDialogTab: "login" as AuthTab,
+  authDialogLoading: false,
+  authDialogError: "",
+  authSignupSuccess: false,
+  supabaseConfigDialogOpen: false,
 };
 
 export type AppState = typeof _rawState;

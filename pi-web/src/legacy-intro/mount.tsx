@@ -5,7 +5,14 @@ import "./index.css";
 let root: Root | null = null;
 let rootContainer: HTMLElement | null = null;
 
-export function mountLegacyIntro(container: HTMLElement, onStartChat: () => void) {
+export interface LegacyIntroOptions {
+  onStartChat: () => void;
+  onLogin?: () => void;
+  authEmail?: string | null;
+  onLogout?: () => void;
+}
+
+export function mountLegacyIntro(container: HTMLElement, onStartChat: () => void, options?: Omit<LegacyIntroOptions, "onStartChat">) {
   if (!root || rootContainer !== container) {
     if (root) {
       root.unmount();
@@ -14,7 +21,14 @@ export function mountLegacyIntro(container: HTMLElement, onStartChat: () => void
     rootContainer = container;
   }
 
-  root.render(<Landing onStartChat={onStartChat} />);
+  root.render(
+    <Landing
+      onStartChat={onStartChat}
+      onLogin={options?.onLogin}
+      authEmail={options?.authEmail}
+      onLogout={options?.onLogout}
+    />,
+  );
 }
 
 export function unmountLegacyIntro() {

@@ -19,6 +19,7 @@
     "@mariozechner/pi-agent-core": "^0.52.10",
     "@mariozechner/pi-ai": "^0.52.10",
     "@mariozechner/pi-web-ui": "^0.52.10",
+    "@supabase/supabase-js": "^2.95.3",
     "@tailwindcss/vite": "^4.1.17",
     "js-tiktoken": "^1.0.21",
     "lit": "^3.3.1",

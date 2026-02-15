@@ -3,7 +3,10 @@
  * All disposable resources (listeners, timers, observers) are tracked here.
  */
 
-import { state } from "./app-state";
+import { state, syncEngine, limerenceStorage } from "./app-state";
+import { getSessionUser, onAuthStateChange, touchActive } from "./lib/auth";
+import { isConfigured } from "./lib/supabase";
+import { doRenderCurrentView } from "./app-render";
 
 // ── Resource tracking ──────────────────────────────────────────
 
@@ -88,4 +91,64 @@ export function createAppContainers(): { chatHost: HTMLElement; introHost: HTMLE
   state.introHost = introHost;
 
   return { chatHost, introHost };
+}
+
+// ── Auth initialization ────────────────────────────────────────
+
+const TOUCH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+
+/**
+ * Initialize auth: check existing session, set up onAuthStateChange listener,
+ * wire up SyncEngine status callback, and start touchActive timer.
+ */
+export async function initAuth(): Promise<void> {
+  if (!isConfigured()) return;
+
+  // Wire sync engine status → app state
+  syncEngine.setStatusCallback((status) => {
+    state.syncStatus = status;
+  });
+  syncEngine.setRemoteChangeCallback(() => {
+    doRenderCurrentView();
+  });
+
+  // Wire storage sync hooks
+  limerenceStorage.setSyncHook({
+    onMemoryAdd: (entry) => { void syncEngine.pushMemory(entry); },
+    onNoteWrite: (key, content) => { void syncEngine.pushNoteData(key, content); },
+    onFileWrite: (path, content) => { void syncEngine.pushFileData(path, content); },
+    onCharactersSave: (chars) => { void syncEngine.pushCharacterData(chars); },
+    onCharacterRemove: (id) => { void syncEngine.pushCharacterRemove(id); },
+    onLorebookSave: (entries) => { void syncEngine.pushLorebookData(entries); },
+  });
+
+  // Check existing session
+  const user = await getSessionUser();
+  if (user) {
+    state.authUser = user;
+    void syncEngine.start(user.id);
+  }
+
+  // Listen for auth state changes
+  const unsub = onAuthStateChange((event, session) => {
+    if (event === "SIGNED_IN" && session?.user) {
+      state.authUser = session.user;
+      void syncEngine.start(session.user.id);
+    } else if (event === "SIGNED_OUT") {
+      syncEngine.stop();
+      state.authUser = null;
+      state.syncStatus = "idle";
+    }
+  });
+  if (unsub) onCleanup(unsub);
+
+  // touchActive timer (10 min)
+  addInterval(() => {
+    if (state.authUser) {
+      void touchActive();
+    }
+  }, TOUCH_INTERVAL_MS);
+
+  // Cleanup sync engine on app teardown
+  onCleanup(() => syncEngine.stop());
 }

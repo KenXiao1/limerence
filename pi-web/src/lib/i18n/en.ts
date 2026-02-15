@@ -241,6 +241,33 @@ const en: Record<string, string> = {
   // ── Language switcher ───────────────────────────────────
   "lang.switch": "中",
   "lang.tooltip": "切换到中文",
+
+  // ── Auth ───────────────────────────────────────────────────
+  "auth.login": "Login",
+  "auth.signup": "Sign up",
+  "auth.loginTitle": "Login",
+  "auth.signupTitle": "Sign up",
+  "auth.email": "Email",
+  "auth.password": "Password",
+  "auth.loading": "Processing...",
+  "auth.checkEmail": "Sign up successful! Please check your email and click the verification link to log in.",
+  "auth.signupHint": "Email verification required. Accounts inactive for 15 days are automatically deleted, but you can re-register with the same email.",
+  "auth.loggedInAs": "Logged in as: {0}",
+  "auth.logout": "Log out",
+
+  // ── Sync ──────────────────────────────────────────────────
+  "sync.idle": "Not synced",
+  "sync.syncing": "Syncing...",
+  "sync.synced": "Synced",
+  "sync.error": "Sync error",
+  "sync.login": "Login to sync",
+
+  // ── Supabase config ───────────────────────────────────────
+  "supabase.configTitle": "Configure Supabase",
+  "supabase.configHint": "Enter your Supabase project URL and anon key. These are public publishable keys stored in your browser. Before first use, execute the schema file in Supabase SQL Editor.",
+  "supabase.urlLabel": "Project URL",
+  "supabase.anonKeyLabel": "Anon Key",
+  "supabase.downloadSchema": "Download SQL Schema file",
 };
 
 export default en;

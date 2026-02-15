@@ -39,12 +39,11 @@ import {
   recordTurn,
   buildGroupSystemPrompt,
   deserializeGroupConfig,
-  serializeGroupConfig,
   GROUP_CHAT_KEY,
 } from "./controllers/group-chat";
 import type { RegexRule } from "./controllers/regex-rules";
 import type { GenerationPreset } from "./controllers/presets";
-import { PRESETS_SETTINGS_KEY, ACTIVE_PRESET_KEY, DEFAULT_PRESET } from "./controllers/presets";
+import { ACTIVE_PRESET_KEY } from "./controllers/presets";
 import { REGEX_RULES_KEY } from "./controllers/regex-rules";
 
 // ── Routing helpers ────────────────────────────────────────────

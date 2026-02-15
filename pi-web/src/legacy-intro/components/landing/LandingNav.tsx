@@ -4,9 +4,12 @@ interface LandingNavProps {
   isDark: boolean;
   onToggleTheme: () => void;
   onStartChat: () => void;
+  onLogin?: () => void;
+  authEmail?: string | null;
+  onLogout?: () => void;
 }
 
-export default function LandingNav({ isDark, onToggleTheme, onStartChat }: LandingNavProps) {
+export default function LandingNav({ isDark, onToggleTheme, onStartChat, onLogin, authEmail, onLogout }: LandingNavProps) {
   const { t, toggle } = useI18n();
 
   return (
@@ -65,6 +68,35 @@ export default function LandingNav({ isDark, onToggleTheme, onStartChat }: Landi
             </svg>
           )}
         </button>
+
+        {authEmail ? (
+          <div className="flex items-center gap-2">
+            <span className={`text-xs truncate max-w-[120px] ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>
+              {authEmail}
+            </span>
+            <button
+              onClick={onLogout}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                isDark
+                  ? "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                  : "text-zinc-500 hover:bg-zinc-200 hover:text-zinc-800"
+              }`}
+            >
+              {t("auth.logout")}
+            </button>
+          </div>
+        ) : onLogin ? (
+          <button
+            onClick={onLogin}
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+              isDark
+                ? "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                : "text-zinc-500 hover:bg-zinc-200 hover:text-zinc-800"
+            }`}
+          >
+            {t("auth.login")}
+          </button>
+        ) : null}
 
         <button
           onClick={onStartChat}

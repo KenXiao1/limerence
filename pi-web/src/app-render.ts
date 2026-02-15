@@ -4,8 +4,8 @@ import {
   SettingsDialog,
 } from "@mariozechner/pi-web-ui";
 import { html, render } from "lit";
-import { state, storage, limerenceStorage } from "./app-state";
-import { getDefaultModel, setProxyModeEnabled, setRoute, exportCurrentSession, createAgent } from "./app-agent";
+import { state, storage, limerenceStorage, syncEngine } from "./app-state";
+import { getDefaultModel, setProxyModeEnabled, setRoute, exportCurrentSession } from "./app-agent";
 import { ROOT_PATH } from "./app-state";
 import { loadSession, newSession } from "./app-session";
 import { renderWorkspacePanel, toggleWorkspacePanel } from "./app-workspace";
@@ -53,6 +53,10 @@ import {
 } from "./controllers/group-chat";
 import type { TurnStrategy } from "./controllers/group-chat";
 import { t } from "./lib/i18n";
+import { renderAuthDialog, type AuthDialogState, type AuthDialogActions, type AuthTab } from "./views/auth-dialog";
+import { renderSupabaseConfigDialog, type SupabaseConfigDialogState, type SupabaseConfigDialogActions } from "./views/supabase-config-dialog";
+import { isConfigured } from "./lib/supabase";
+import { signUp, signIn, signOut } from "./lib/auth";
 
 // ── Lit render helpers ─────────────────────────────────────────
 
@@ -116,6 +120,8 @@ export function renderChatView() {
     activeToolCalls: state.activeToolCalls,
     currentSessionId: state.currentSessionId,
     preferredTheme: getPreferredTheme(),
+    authEmail: state.authUser?.email ?? null,
+    syncStatus: state.syncStatus,
   };
 
   const headerActions: HeaderActions = {
@@ -157,6 +163,8 @@ export function renderChatView() {
     onOpenLimerenceSettings: () => { state.limerenceSettingsOpen = true; },
     onExportSession: () => { void exportCurrentSession(); },
     onImportSession: (file) => { void handleSessionImport(file); },
+    onLoginClick: () => { handleLoginClick(); },
+    onLogout: () => { void handleLogout(); },
   };
 
   const appHtml = html`
@@ -181,11 +189,100 @@ export function renderChatView() {
         ${state.workspacePanelOpen ? renderWorkspacePanel() : null}
       </div>
     </div>
+    </div>
     ${renderCharacterSelectorDialog()}
     ${renderLimerenceSettingsDialog()}
+    ${renderAuthDialogView()}
+    ${renderSupabaseConfigDialogView()}
   `;
 
   renderWithRecovery(appHtml, state.chatHost);
+}
+
+// ── Auth dialog ───────────────────────────────────────────────
+
+function renderAuthDialogView() {
+  const s: AuthDialogState = {
+    open: state.authDialogOpen,
+    tab: state.authDialogTab,
+    loading: state.authDialogLoading,
+    error: state.authDialogError,
+    signupSuccess: state.authSignupSuccess,
+  };
+
+  const actions: AuthDialogActions = {
+    onClose: () => {
+      state.authDialogOpen = false;
+      state.authDialogError = "";
+      state.authSignupSuccess = false;
+    },
+    onTabChange: (tab: AuthTab) => {
+      state.authDialogTab = tab;
+      state.authDialogError = "";
+      state.authSignupSuccess = false;
+    },
+    onSubmit: (email: string, password: string) => {
+      void handleAuthSubmit(email, password);
+    },
+  };
+
+  return renderAuthDialog(s, actions);
+}
+
+function renderSupabaseConfigDialogView() {
+  const s: SupabaseConfigDialogState = {
+    open: state.supabaseConfigDialogOpen,
+  };
+
+  const actions: SupabaseConfigDialogActions = {
+    onClose: () => { state.supabaseConfigDialogOpen = false; },
+    onSave: () => {
+      state.supabaseConfigDialogOpen = false;
+      // After configuring Supabase, open auth dialog
+      state.authDialogOpen = true;
+    },
+  };
+
+  return renderSupabaseConfigDialog(s, actions);
+}
+
+function handleLoginClick() {
+  if (!isConfigured()) {
+    state.supabaseConfigDialogOpen = true;
+  } else {
+    state.authDialogOpen = true;
+  }
+}
+
+async function handleAuthSubmit(email: string, password: string) {
+  state.authDialogLoading = true;
+  state.authDialogError = "";
+
+  if (state.authDialogTab === "signup") {
+    const result = await signUp(email, password);
+    state.authDialogLoading = false;
+    if (result.error) {
+      state.authDialogError = result.error;
+    } else {
+      state.authSignupSuccess = true;
+    }
+  } else {
+    const result = await signIn(email, password);
+    state.authDialogLoading = false;
+    if (result.error) {
+      state.authDialogError = result.error;
+    } else {
+      state.authDialogOpen = false;
+      // onAuthStateChange in main.ts will handle starting SyncEngine
+    }
+  }
+}
+
+async function handleLogout() {
+  syncEngine.stop();
+  state.authUser = null;
+  state.syncStatus = "idle";
+  await signOut();
 }
 
 // ── Message actions bar ───────────────────────────────────────
@@ -607,6 +704,10 @@ export function doRenderCurrentView() {
     state.introHost.style.display = "block";
     mountLegacyIntro(state.introHost, () => {
       void _showChatCallback(true);
+    }, {
+      onLogin: () => { handleLoginClick(); },
+      authEmail: state.authUser?.email ?? null,
+      onLogout: () => { void handleLogout(); },
     });
     return;
   }

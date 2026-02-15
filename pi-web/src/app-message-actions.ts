@@ -17,8 +17,6 @@ import {
   applySwipe,
   editUserMessage,
   editAssistantMessage,
-  deleteMessage,
-  deleteFromIndex,
   getMessageText,
   getMessageRole,
   type SwipeState,

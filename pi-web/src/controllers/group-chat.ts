@@ -84,7 +84,7 @@ function getActiveMembers(config: GroupChatConfig): GroupMember[] {
 export function selectNextSpeakers(
   config: GroupChatConfig,
   lastSpeakerId: string | null,
-  messages: AgentMessage[],
+  _messages: AgentMessage[],
 ): string[] {
   const active = getActiveMembers(config);
   if (active.length === 0) return [];

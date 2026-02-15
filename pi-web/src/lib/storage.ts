@@ -12,6 +12,15 @@ const MEMORY_KEY = "entries";
 const CHARACTERS_KEY = "list";
 const LOREBOOK_KEY = "entries";
 
+export type SyncHook = {
+  onMemoryAdd?: (entry: MemoryEntry) => void;
+  onNoteWrite?: (key: string, content: string) => void;
+  onFileWrite?: (path: string, content: string) => void;
+  onCharactersSave?: (characters: CharacterEntry[]) => void;
+  onCharacterRemove?: (id: string) => void;
+  onLorebookSave?: (entries: LorebookEntry[]) => void;
+};
+
 export function getLimerenceStoreConfigs(): StoreConfig[] {
   return [
     { name: MEMORY_STORE },
@@ -23,7 +32,13 @@ export function getLimerenceStoreConfigs(): StoreConfig[] {
 }
 
 export class LimerenceStorage {
+  private syncHook: SyncHook = {};
+
   constructor(private readonly backend: StorageBackend) {}
+
+  setSyncHook(hook: SyncHook) {
+    this.syncHook = hook;
+  }
 
   async loadMemoryEntries(): Promise<MemoryEntry[]> {
     return (await this.backend.get<MemoryEntry[]>(MEMORY_STORE, MEMORY_KEY)) ?? [];
@@ -33,16 +48,20 @@ export class LimerenceStorage {
     const entries = await this.loadMemoryEntries();
     entries.push(entry);
     await this.backend.set(MEMORY_STORE, MEMORY_KEY, entries);
+    this.syncHook.onMemoryAdd?.(entry);
   }
 
   async writeNote(title: string, content: string, append: boolean): Promise<string> {
     const key = this.noteKey(title);
     if (append) {
       const existing = (await this.backend.get<string>(NOTES_STORE, key)) ?? "";
-      await this.backend.set(NOTES_STORE, key, `${existing}${existing ? "\n" : ""}${content}`);
+      const merged = `${existing}${existing ? "\n" : ""}${content}`;
+      await this.backend.set(NOTES_STORE, key, merged);
+      this.syncHook.onNoteWrite?.(key, merged);
       return `已追加内容到笔记「${title}」`;
     }
     await this.backend.set(NOTES_STORE, key, content);
+    this.syncHook.onNoteWrite?.(key, content);
     return `已写入笔记「${title}」`;
   }
 
@@ -86,6 +105,7 @@ export class LimerenceStorage {
     if (!normalized) return "请提供文件路径。";
 
     await this.backend.set(FILES_STORE, normalized, content);
+    this.syncHook.onFileWrite?.(normalized, content);
     return `已写入文件：${path}`;
   }
 
@@ -142,6 +162,7 @@ export class LimerenceStorage {
 
   async saveCharacters(characters: CharacterEntry[]): Promise<void> {
     await this.backend.set(CHARACTERS_STORE, CHARACTERS_KEY, characters);
+    this.syncHook.onCharactersSave?.(characters);
   }
 
   async addCharacter(entry: CharacterEntry): Promise<void> {
@@ -157,6 +178,7 @@ export class LimerenceStorage {
       CHARACTERS_KEY,
       list.filter((c) => c.id !== id),
     );
+    this.syncHook.onCharacterRemove?.(id);
   }
 
   // ── Lorebook ───────────────────────────────────────────────
@@ -167,6 +189,7 @@ export class LimerenceStorage {
 
   async saveLorebookEntries(entries: LorebookEntry[]): Promise<void> {
     await this.backend.set(LOREBOOK_STORE, LOREBOOK_KEY, entries);
+    this.syncHook.onLorebookSave?.(entries);
   }
 
   // ── Session export/import ──────────────────────────────────

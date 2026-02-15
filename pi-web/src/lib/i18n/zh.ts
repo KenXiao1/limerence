@@ -241,6 +241,33 @@ const zh: Record<string, string> = {
   // ── Language switcher ───────────────────────────────────
   "lang.switch": "EN",
   "lang.tooltip": "Switch to English",
+
+  // ── Auth ───────────────────────────────────────────────────
+  "auth.login": "登录",
+  "auth.signup": "注册",
+  "auth.loginTitle": "登录",
+  "auth.signupTitle": "注册",
+  "auth.email": "邮箱",
+  "auth.password": "密码",
+  "auth.loading": "处理中...",
+  "auth.checkEmail": "注册成功！请查收验证邮件，点击链接后即可登录。",
+  "auth.signupHint": "注册后需要验证邮箱。15 天不活跃账号将被自动删除，但可用同一邮箱重新注册。",
+  "auth.loggedInAs": "已登录：{0}",
+  "auth.logout": "登出",
+
+  // ── Sync ──────────────────────────────────────────────────
+  "sync.idle": "未同步",
+  "sync.syncing": "同步中...",
+  "sync.synced": "已同步",
+  "sync.error": "同步出错",
+  "sync.login": "登录同步",
+
+  // ── Supabase config ───────────────────────────────────────
+  "supabase.configTitle": "配置 Supabase",
+  "supabase.configHint": "输入你的 Supabase 项目 URL 和 anon key。这些是公开的 publishable key，存储在本地浏览器中。首次使用前请先在 Supabase SQL Editor 中执行 schema 文件。",
+  "supabase.urlLabel": "项目 URL",
+  "supabase.anonKeyLabel": "Anon Key",
+  "supabase.downloadSchema": "下载 SQL Schema 文件",
 };
 
 export default zh;

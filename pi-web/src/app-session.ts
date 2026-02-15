@@ -1,5 +1,5 @@
 import type { AgentMessage } from "@mariozechner/pi-agent-core";
-import { state, storage, limerenceStorage, memoryIndex, defaultUsage } from "./app-state";
+import { state, storage, limerenceStorage, memoryIndex, defaultUsage, syncEngine } from "./app-state";
 import { createAgent, updateUrl } from "./app-agent";
 import { repairTranscript } from "./app-repair";
 import { resetSwipeData } from "./app-message-actions";
@@ -50,6 +50,14 @@ export async function saveSession() {
 
   const usage = summarizeUsage(agentState.messages, defaultUsage());
   await storage.sessions.save(sessionData, { ...metadata, usage });
+
+  // Push to sync engine if active
+  void syncEngine.pushSessionData(state.currentSessionId, sessionData, {
+    title: metadata.title,
+    createdAt: metadata.createdAt,
+    model: metadata.modelId ?? "",
+    messageCount: agentState.messages.length,
+  });
 }
 
 // ── Session CRUD ────────────────────────────────────────────────
