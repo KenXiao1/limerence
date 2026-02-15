@@ -116,6 +116,7 @@ const _rawState = {
   appRoot: null as HTMLElement | null,
   chatHost: null as HTMLElement | null,
   introHost: null as HTMLElement | null,
+  dialogHost: null as HTMLElement | null,
   appView: "intro" as ViewMode,
   chatRuntimeReady: false,
 

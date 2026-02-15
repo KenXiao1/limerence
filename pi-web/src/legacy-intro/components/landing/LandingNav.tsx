@@ -71,15 +71,18 @@ export default function LandingNav({ isDark, onToggleTheme, onStartChat, onLogin
 
         {authEmail ? (
           <div className="flex items-center gap-2">
-            <span className={`text-xs truncate max-w-[120px] ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>
-              {authEmail}
-            </span>
+            <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 ${isDark ? "bg-zinc-800/60" : "bg-zinc-100"}`}>
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" style={{ boxShadow: "0 0 4px rgba(16,185,129,0.4)" }} />
+              <span className={`text-xs truncate max-w-[120px] ${isDark ? "text-zinc-300" : "text-zinc-600"}`}>
+                {authEmail}
+              </span>
+            </div>
             <button
               onClick={onLogout}
-              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+              className={`rounded-lg px-2.5 py-1.5 text-xs transition-colors ${
                 isDark
-                  ? "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-                  : "text-zinc-500 hover:bg-zinc-200 hover:text-zinc-800"
+                  ? "text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
+                  : "text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700"
               }`}
             >
               {t("auth.logout")}
@@ -88,10 +91,10 @@ export default function LandingNav({ isDark, onToggleTheme, onStartChat, onLogin
         ) : onLogin ? (
           <button
             onClick={onLogin}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-all ${
               isDark
-                ? "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-                : "text-zinc-500 hover:bg-zinc-200 hover:text-zinc-800"
+                ? "border-zinc-700 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-800"
+                : "border-zinc-300 text-zinc-600 hover:border-zinc-400 hover:bg-zinc-100"
             }`}
           >
             {t("auth.login")}

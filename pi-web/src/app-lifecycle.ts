@@ -80,15 +80,17 @@ export function createAppContainers(): { chatHost: HTMLElement; introHost: HTMLE
 
   const chatHost = document.createElement("div");
   const introHost = document.createElement("div");
+  const dialogHost = document.createElement("div");
   chatHost.style.width = "100%";
   chatHost.style.height = "100%";
   introHost.style.width = "100%";
   introHost.style.height = "100%";
-  appRoot.append(chatHost, introHost);
+  appRoot.append(chatHost, introHost, dialogHost);
 
   state.appRoot = appRoot;
   state.chatHost = chatHost;
   state.introHost = introHost;
+  state.dialogHost = dialogHost;
 
   return { chatHost, introHost };
 }

@@ -192,8 +192,6 @@ export function renderChatView() {
     </div>
     ${renderCharacterSelectorDialog()}
     ${renderLimerenceSettingsDialog()}
-    ${renderAuthDialogView()}
-    ${renderSupabaseConfigDialogView()}
   `;
 
   renderWithRecovery(appHtml, state.chatHost);
@@ -714,10 +712,17 @@ export function doRenderCurrentView() {
       authEmail: state.authUser?.email ?? null,
       onLogout: () => { void handleLogout(); },
     });
-    return;
+  } else {
+    renderChatView();
   }
 
-  renderChatView();
+  // Always render auth dialogs into the dedicated dialog host (visible in both views)
+  if (state.dialogHost) {
+    renderWithRecovery(
+      html`${renderAuthDialogView()}${renderSupabaseConfigDialogView()}`,
+      state.dialogHost,
+    );
+  }
 }
 
 // showIntro is used by renderChatView's Intro button

@@ -660,3 +660,342 @@
 :root:not(.dark) .limerence-dialog-close:hover {
   background: #f0f0f5;
 }
+
+/* ── Auth dialog ─────────────────────────────────────────────── */
+
+.limerence-auth-dialog {
+  position: relative;
+  width: 90%;
+  max-width: 380px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.25), 0 4px 16px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  animation: authDialogIn 0.2s ease-out;
+}
+
+@keyframes authDialogIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.limerence-auth-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.limerence-auth-close:hover {
+  background: hsl(var(--accent));
+  color: hsl(var(--foreground));
+}
+
+.limerence-auth-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 24px 16px;
+}
+
+.limerence-auth-logo {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: hsl(var(--muted-foreground) / 0.15);
+  color: hsl(var(--foreground));
+  font-family: var(--font-serif, Georgia, serif);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  box-shadow: none;
+}
+
+.limerence-auth-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.limerence-auth-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 0 24px;
+  padding: 3px;
+  border-radius: 10px;
+  background: hsl(var(--accent) / 0.5);
+}
+
+.limerence-auth-tab {
+  flex: 1;
+  padding: 7px 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.limerence-auth-tab:hover {
+  color: hsl(var(--foreground));
+}
+
+.limerence-auth-tab.active {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.limerence-auth-body {
+  padding: 20px 24px 16px;
+}
+
+.limerence-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.limerence-auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.limerence-auth-field label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+}
+
+.limerence-auth-field input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: hsl(var(--muted-foreground) / 0.06);
+  color: hsl(var(--foreground));
+  font-size: 0.88rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+}
+
+.limerence-auth-field input:focus {
+  border-color: hsl(var(--foreground) / 0.35);
+  box-shadow: 0 0 0 3px hsl(var(--foreground) / 0.06);
+  background: hsl(var(--muted-foreground) / 0.03);
+}
+
+.limerence-auth-field input:disabled {
+  opacity: 0.5;
+}
+
+.limerence-auth-field input::placeholder {
+  color: hsl(var(--muted-foreground) / 0.5);
+}
+
+.limerence-auth-error {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: hsl(0 84% 60% / 0.08);
+  color: hsl(0 84% 60%);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.limerence-auth-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 0;
+  border: none;
+  border-radius: 10px;
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  margin-top: 4px;
+}
+
+.limerence-auth-submit:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.limerence-auth-submit:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.limerence-auth-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.limerence-auth-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: authSpin 0.6s linear infinite;
+}
+
+@keyframes authSpin {
+  to { transform: rotate(360deg); }
+}
+
+.limerence-auth-success {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: hsl(142 76% 36% / 0.08);
+  color: hsl(142 76% 36%);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.limerence-auth-success svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.limerence-auth-hint {
+  margin: 12px 0 0;
+  padding: 0;
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.5;
+}
+
+.limerence-auth-footer {
+  padding: 12px 24px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.limerence-auth-config-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.limerence-auth-config-link:hover {
+  color: hsl(var(--foreground));
+}
+
+/* ── Auth dialog — light mode ────────────────────────────────── */
+
+:root:not(.dark) .limerence-auth-dialog {
+  background: #fff;
+  border-color: #e0e0e0;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+:root:not(.dark) .limerence-auth-tabs {
+  background: #f3f3f5;
+}
+
+:root:not(.dark) .limerence-auth-tab.active {
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+:root:not(.dark) .limerence-auth-field input {
+  background: #f7f7f8;
+  border-color: #dcdce0;
+}
+
+:root:not(.dark) .limerence-auth-field input:focus {
+  background: #fff;
+  border-color: #a1a1aa;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.04);
+}
+
+:root:not(.dark) .limerence-auth-footer {
+  border-top-color: #e5e5e5;
+}
+
+:root:not(.dark) .limerence-auth-submit {
+  background: #18181b;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ── Auth dialog — dark mode ─────────────────────────────────── */
+
+.dark .limerence-dialog-overlay {
+  background: rgba(0, 0, 0, 0.7);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.dark .limerence-auth-dialog {
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.dark .limerence-auth-field input {
+  background: hsl(var(--muted-foreground) / 0.1);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.dark .limerence-auth-field input:focus {
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+  background: hsl(var(--muted-foreground) / 0.08);
+}
+
+.dark .limerence-auth-tabs {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.dark .limerence-auth-tab.active {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.dark .limerence-auth-submit {
+  background: #e4e4e7;
+  color: #18181b;
+}
+
+.dark .limerence-auth-spinner {
+  border-color: rgba(0, 0, 0, 0.2);
+  border-top-color: #18181b;
+}
