@@ -186,10 +186,13 @@ streaming-message-container > div > span.w-2.h-4.bg-muted-foreground.animate-pul
 /* ── Particle Lenia loader bubble ─────────────────────────────── */
 
 #lenia-loading-bubble {
+  max-width: 48rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 1rem 0.5rem;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 0 0.5rem;
   animation: lenia-bubble-enter 0.25s ease-out;
 }
 

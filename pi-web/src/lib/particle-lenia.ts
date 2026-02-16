@@ -314,28 +314,42 @@ const SIM_HEIGHT = 40;
 let _renderer: LeniaRenderer | null = null;
 let _raf = 0;
 let _bubbleEl: HTMLElement | null = null;
+let _scrollArea: HTMLElement | null = null;
 let _themeObserver: MutationObserver | null = null;
 
 /**
  * Show a Lenia loading bubble in the chat area.
  * Call this immediately when the user sends a message.
- * The bubble is styled to match the AI assistant message bubble.
+ *
+ * DOM structure of AgentInterface (light DOM):
+ *   agent-interface
+ *     div.flex.flex-col.h-full
+ *       div.flex-1.overflow-y-auto          ← scroll area
+ *         div.max-w-3xl.mx-auto.p-4.pb-0   ← Lit-managed content
+ *           div.flex.flex-col.gap-3
+ *             message-list
+ *             streaming-message-container
+ *       div.shrink-0                        ← input area
+ *
+ * We append the bubble to the scroll area (overflow-y-auto) as a
+ * sibling of the max-w-3xl div. This is outside Lit's template
+ * management so it won't be removed on re-render.
  */
 export function showLeniaBubble() {
-  // Already showing
   if (_bubbleEl) return;
 
-  // Find the scroll container inside agent-interface.
-  // DOM: agent-interface > div.flex.flex-col (scroll area) > message-list + streaming-message-container + message-editor
+  // Find the scroll area: the div with overflow-y-auto inside agent-interface
   const agentInterface = document.querySelector("agent-interface");
-  if (!agentInterface) return;
+  if (!agentInterface) {
+    console.warn("[Lenia] agent-interface not found");
+    return;
+  }
 
-  // The scroll area is the first div child with overflow
-  const scrollArea = agentInterface.querySelector(":scope > div");
-  if (!scrollArea) return;
-
-  // Find streaming-message-container to insert before it
-  const streamingContainer = agentInterface.querySelector("streaming-message-container");
+  const scrollArea = agentInterface.querySelector(".overflow-y-auto");
+  if (!scrollArea) {
+    console.warn("[Lenia] scroll area (.overflow-y-auto) not found");
+    return;
+  }
 
   // Create the bubble element
   const bubble = document.createElement("div");
@@ -349,14 +363,11 @@ export function showLeniaBubble() {
   canvas.setAttribute("aria-hidden", "true");
   bubble.appendChild(canvas);
 
-  // Insert into DOM
-  if (streamingContainer) {
-    streamingContainer.insertAdjacentElement("beforebegin", bubble);
-  } else {
-    scrollArea.appendChild(bubble);
-  }
+  // Append to scroll area — outside Lit's managed template tree
+  scrollArea.appendChild(bubble);
 
   _bubbleEl = bubble;
+  _scrollArea = scrollArea as HTMLElement;
 
   // Start renderer
   _renderer = new LeniaRenderer(canvas, SIM_WIDTH, SIM_HEIGHT);
@@ -401,7 +412,10 @@ export function hideLeniaBubble() {
     _renderer?.destroy();
     _renderer = null;
     el.remove();
-    if (_bubbleEl === el) _bubbleEl = null;
+    if (_bubbleEl === el) {
+      _bubbleEl = null;
+      _scrollArea = null;
+    }
   };
 
   // Remove after animation or immediately if reduced motion
