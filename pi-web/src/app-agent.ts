@@ -293,7 +293,9 @@ function continueGroupTurn(agent: Agent) {
 // ── Message queue ──────────────────────────────────────────────
 
 function isAgentBusy(agent: Agent): boolean {
-  return agent.state.isStreaming || agent.state.pendingToolCalls.size > 0;
+  // `pendingToolCalls` may transiently stay non-empty around UI/session boundaries.
+  // Gate queueing only on active streaming, otherwise prompts can be swallowed.
+  return agent.state.isStreaming;
 }
 
 function drainMessageQueue() {
