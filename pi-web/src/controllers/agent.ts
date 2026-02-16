@@ -7,6 +7,7 @@
 import { getModel, type AssistantMessage, type Model } from "@mariozechner/pi-ai";
 import type { Usage } from "@mariozechner/pi-ai";
 import type { CharacterCard } from "../lib/character";
+import { DEFAULT_FREE_MODEL_ID } from "./free-model-quota";
 
 // ── Chat commands ──────────────────────────────────────────────
 
@@ -31,8 +32,8 @@ export function parseChatCommand(text: string): ChatCommandResult {
 
 export function createProxyModel(): Model<"openai-completions"> {
   return {
-    id: "deepseek-chat",
-    name: "deepseek-chat (Netlify Proxy)",
+    id: DEFAULT_FREE_MODEL_ID,
+    name: `${DEFAULT_FREE_MODEL_ID} (Netlify Proxy)`,
     api: "openai-completions",
     provider: "limerence-proxy",
     baseUrl: "/api/llm/v1",

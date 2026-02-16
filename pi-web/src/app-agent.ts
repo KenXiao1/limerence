@@ -66,7 +66,7 @@ export function updateUrl(sessionId: string) {
 // ── Proxy mode ─────────────────────────────────────────────────
 
 export async function isProxyModeEnabled(): Promise<boolean> {
-  return (await storage.settings.get<boolean>(PROXY_MODE_KEY)) ?? false;
+  return (await storage.settings.get<boolean>(PROXY_MODE_KEY)) ?? true;
 }
 
 export async function setProxyModeEnabled(enabled: boolean): Promise<void> {
@@ -494,9 +494,9 @@ export async function ensureChatRuntime() {
     // Settings validation: ensure proxy mode is a boolean
     try {
       const raw = await storage.settings.get<unknown>(PROXY_MODE_KEY);
-      state.proxyModeEnabled = typeof raw === "boolean" ? raw : false;
+      state.proxyModeEnabled = typeof raw === "boolean" ? raw : true;
     } catch {
-      state.proxyModeEnabled = false;
+      state.proxyModeEnabled = true;
     }
 
     // Load lorebook entries

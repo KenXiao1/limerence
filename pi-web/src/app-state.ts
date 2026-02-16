@@ -142,7 +142,7 @@ const _rawState = {
   currentSessionCreatedAt: new Date().toISOString(),
   currentTitle: "",
   isEditingTitle: false,
-  proxyModeEnabled: false,
+  proxyModeEnabled: true,
   switchingToChat: false,
 
   // workspace

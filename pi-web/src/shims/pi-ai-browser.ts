@@ -19,13 +19,14 @@ import {
   streamOpenAIResponses,
   streamSimpleOpenAIResponses,
 } from "@mariozechner/pi-ai/dist/providers/openai-responses.js";
+import { DEFAULT_FREE_MODEL_ID } from "../controllers/free-model-quota";
 
 export { EventStream, Type, parseStreamingJson, validateToolArguments, StringEnum, modelsAreEqual, calculateCost, supportsXhigh };
 
 const PROXY_PROVIDER = "limerence-proxy";
 const PROXY_MODEL = {
-  id: "deepseek-chat",
-  name: "deepseek-chat (Netlify Proxy)",
+  id: DEFAULT_FREE_MODEL_ID,
+  name: `${DEFAULT_FREE_MODEL_ID} (Netlify Proxy)`,
   api: "openai-completions",
   provider: PROXY_PROVIDER,
   baseUrl: "/api/llm/v1",

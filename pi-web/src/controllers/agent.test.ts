@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { parseChatCommand, buildGreetingMessage, getToolLabel, buildRouteUrl } from "./agent";
+import {
+  parseChatCommand,
+  buildGreetingMessage,
+  getToolLabel,
+  buildRouteUrl,
+  createProxyModel,
+} from "./agent";
 
 // ── parseChatCommand ────────────────────────────────────────────
 
@@ -103,5 +109,16 @@ describe("buildRouteUrl", () => {
   it("removes session parameter when not provided", () => {
     const url = buildRouteUrl("http://localhost:3000/chat?session=old", "/chat");
     expect(url).not.toContain("session=");
+  });
+});
+
+// ── createProxyModel ────────────────────────────────────────────
+
+describe("createProxyModel", () => {
+  it("uses gemini-3-flash-preview as the default proxy model", () => {
+    const model = createProxyModel();
+    expect(model.id).toBe("gemini-3-flash-preview");
+    expect(model.provider).toBe("limerence-proxy");
+    expect(model.baseUrl).toBe("/api/llm/v1");
   });
 });
