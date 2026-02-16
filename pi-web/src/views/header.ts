@@ -19,6 +19,7 @@ export interface HeaderState {
   currentTitle: string;
   characterName: string;
   isEditingTitle: boolean;
+  isStreaming: boolean;
   focusMode: boolean;
   proxyModeEnabled: boolean;
   workspacePanelOpen: boolean;
@@ -104,6 +105,7 @@ export function renderHeader(s: HeaderState, actions: HeaderActions) {
               ${headerTitle}
             </button>`
         }
+        ${s.isStreaming ? html`<span class="limerence-typing-indicator">${t("tool.typing")}<span class="limerence-typing-dots"></span></span>` : null}
       </div>
 
       <div class="flex items-center gap-1 px-2">

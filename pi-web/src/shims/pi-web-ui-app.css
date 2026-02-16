@@ -186,8 +186,7 @@ streaming-message-container > div > span.w-2.h-4.bg-muted-foreground.animate-pul
 /* ── Particle Lenia loader ─────────────────────────────────────── */
 
 /* Hide default dot indicator when Lenia canvas is present */
-streaming-message-container > div > span.w-2.h-4.bg-muted-foreground.animate-pulse:has(~ .lenia-loader-canvas),
-streaming-message-container > div > span.animate-pulse:has(~ .lenia-loader-canvas) {
+streaming-message-container span.animate-pulse:has(~ .lenia-loader-canvas) {
   display: none !important;
 }
 
@@ -205,7 +204,54 @@ streaming-message-container > div > span.animate-pulse:has(~ .lenia-loader-canva
     display: none;
   }
   /* Restore dots when lenia is hidden by reduced-motion */
-  streaming-message-container > div > span.w-2.h-4.bg-muted-foreground.animate-pulse:has(~ .lenia-loader-canvas) {
-    display: block !important;
+  streaming-message-container span.animate-pulse:has(~ .lenia-loader-canvas) {
+    display: inline-block !important;
   }
+}
+
+/* ── Typing indicator (WeChat-style) ──────────────────────────── */
+
+.limerence-typing-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.7rem;
+  color: var(--chat-loader-dot);
+  opacity: 0.85;
+  white-space: nowrap;
+  animation: limerence-typing-fade-in 0.3s ease-out;
+}
+
+.limerence-typing-dots {
+  display: inline-flex;
+  gap: 1.5px;
+  margin-left: 1px;
+}
+
+.limerence-typing-dots::before,
+.limerence-typing-dots::after,
+.limerence-typing-dots {
+  line-height: 1;
+}
+
+.limerence-typing-dots::before {
+  content: "···";
+  letter-spacing: 0.5px;
+  animation: limerence-typing-ellipsis 1.4s steps(4, end) infinite;
+  overflow: hidden;
+  display: inline-block;
+  width: 0;
+}
+
+@keyframes limerence-typing-ellipsis {
+  0% { width: 0; }
+  25% { width: 0.4em; }
+  50% { width: 0.8em; }
+  75% { width: 1.2em; }
+  100% { width: 0; }
+}
+
+@keyframes limerence-typing-fade-in {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 0.85; transform: translateY(0); }
 }

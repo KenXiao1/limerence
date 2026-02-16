@@ -142,6 +142,7 @@ const zh: Record<string, string> = {
   "tool.fileRead": "读文件",
   "tool.fileWrite": "写文件",
   "tool.executing": "工具执行中",
+  "tool.typing": "对方正在输入",
 
   // ── Token usage ─────────────────────────────────────────
   "token.tooltip": "估算 token 用量 / 上下文窗口",

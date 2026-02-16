@@ -360,39 +360,58 @@ const SIM_HEIGHT = 36;
 /** Active loader instances keyed by the streaming container element */
 const activeLoaders = new Map<Element, { renderer: LeniaRenderer; raf: number }>();
 
+/** Per-container attribute observers (watches hidden class toggle) */
+const containerObservers = new Map<Element, MutationObserver>();
+
+function isContainerVisible(el: Element): boolean {
+  return !el.classList.contains("hidden");
+}
+
 function attachLoader(container: Element) {
   if (activeLoaders.has(container)) return;
 
-  // Find the dot indicator span
-  const dotSpan = container.querySelector(
-    ":scope > div > span.animate-pulse, :scope > div > span.bg-muted-foreground",
-  );
-  const parentDiv = dotSpan?.parentElement ?? container.querySelector(":scope > div");
-  if (!parentDiv) return;
+  // The loading span lives inside the streaming container's shadow/light DOM.
+  // Structure: streaming-message-container > div > span.animate-pulse
+  // We need to wait for the inner DOM to render, then find the span.
+  const tryAttach = () => {
+    if (activeLoaders.has(container)) return;
 
-  // Create canvas
-  const canvas = document.createElement("canvas");
-  canvas.className = CANVAS_CLASS;
-  canvas.setAttribute("aria-hidden", "true");
-  canvas.setAttribute("role", "presentation");
+    const dotSpan = container.querySelector(
+      "span.animate-pulse, span.bg-muted-foreground",
+    );
+    const parentDiv = dotSpan?.parentElement ?? container.querySelector(":scope > div");
+    if (!parentDiv) {
+      // Inner DOM not ready yet, retry
+      requestAnimationFrame(tryAttach);
+      return;
+    }
 
-  // Insert canvas
-  if (dotSpan) {
-    dotSpan.insertAdjacentElement("afterend", canvas);
-  } else {
-    parentDiv.appendChild(canvas);
-  }
+    // Create canvas
+    const canvas = document.createElement("canvas");
+    canvas.className = CANVAS_CLASS;
+    canvas.setAttribute("aria-hidden", "true");
+    canvas.setAttribute("role", "presentation");
 
-  const renderer = new LeniaRenderer(canvas, SIM_WIDTH, SIM_HEIGHT);
+    // Insert canvas next to the dot span (CSS will hide the span)
+    if (dotSpan) {
+      dotSpan.insertAdjacentElement("afterend", canvas);
+    } else {
+      parentDiv.appendChild(canvas);
+    }
 
-  let raf = 0;
-  const loop = (time: number) => {
-    renderer.frame(time);
+    const renderer = new LeniaRenderer(canvas, SIM_WIDTH, SIM_HEIGHT);
+
+    let raf = 0;
+    const loop = (time: number) => {
+      renderer.frame(time);
+      raf = requestAnimationFrame(loop);
+    };
     raf = requestAnimationFrame(loop);
-  };
-  raf = requestAnimationFrame(loop);
 
-  activeLoaders.set(container, { renderer, raf });
+    activeLoaders.set(container, { renderer, raf });
+  };
+
+  requestAnimationFrame(tryAttach);
 }
 
 function detachLoader(container: Element) {
@@ -408,59 +427,88 @@ function detachLoader(container: Element) {
   canvas?.remove();
 }
 
-/** Clean up all active loaders */
+/**
+ * Start watching a streaming-message-container for visibility changes.
+ * The container is toggled via the "hidden" CSS class by AgentInterface.
+ */
+function watchContainer(container: Element) {
+  if (containerObservers.has(container)) return;
+
+  // Check initial visibility
+  if (isContainerVisible(container)) {
+    attachLoader(container);
+  }
+
+  // Watch for class attribute changes (hidden ↔ visible)
+  const attrObserver = new MutationObserver(() => {
+    if (isContainerVisible(container)) {
+      attachLoader(container);
+    } else {
+      detachLoader(container);
+    }
+  });
+  attrObserver.observe(container, { attributes: true, attributeFilter: ["class"] });
+  containerObservers.set(container, attrObserver);
+}
+
+function unwatchContainer(container: Element) {
+  const obs = containerObservers.get(container);
+  if (obs) {
+    obs.disconnect();
+    containerObservers.delete(container);
+  }
+  detachLoader(container);
+}
+
+/** Clean up all active loaders and observers */
 function detachAll() {
-  for (const [container] of activeLoaders) {
-    detachLoader(container);
+  for (const [container] of containerObservers) {
+    unwatchContainer(container);
   }
 }
 
 // ── Public API ──────────────────────────────────────────────────
 
-let observer: MutationObserver | null = null;
+let childObserver: MutationObserver | null = null;
+let themeObserver: MutationObserver | null = null;
 
 /**
  * Initialize the Particle Lenia loader system.
- * Call once at app startup. Uses MutationObserver to automatically
- * detect streaming-message-container elements and attach/detach
- * the animation.
+ * Call once at app startup.
+ *
+ * Uses a two-phase MutationObserver strategy:
+ * 1. childList observer detects streaming-message-container entering the DOM
+ * 2. Per-element attribute observer detects hidden↔visible class toggle
  */
 export function initLeniaLoader() {
-  if (observer) return;
+  if (childObserver) return;
 
-  // Attach to any already-present containers
-  document.querySelectorAll("streaming-message-container").forEach(attachLoader);
+  // Phase 1: find any already-present containers
+  document.querySelectorAll("streaming-message-container").forEach(watchContainer);
 
-  observer = new MutationObserver((mutations) => {
+  // Phase 2: watch for new containers being added/removed
+  childObserver = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
-      // Check added nodes
       for (const node of mutation.addedNodes) {
         if (!(node instanceof Element)) continue;
         if (node.tagName === "STREAMING-MESSAGE-CONTAINER") {
-          // Small delay to let the inner DOM render
-          requestAnimationFrame(() => attachLoader(node));
+          watchContainer(node);
         }
-        // Also check descendants
-        node.querySelectorAll?.("streaming-message-container").forEach((el) => {
-          requestAnimationFrame(() => attachLoader(el));
-        });
+        node.querySelectorAll?.("streaming-message-container").forEach(watchContainer);
       }
-
-      // Check removed nodes
       for (const node of mutation.removedNodes) {
         if (!(node instanceof Element)) continue;
         if (node.tagName === "STREAMING-MESSAGE-CONTAINER") {
-          detachLoader(node);
+          unwatchContainer(node);
         }
-        node.querySelectorAll?.("streaming-message-container").forEach(detachLoader);
+        node.querySelectorAll?.("streaming-message-container").forEach(unwatchContainer);
       }
     }
   });
+  childObserver.observe(document.body, { childList: true, subtree: true });
 
-  observer.observe(document.body, { childList: true, subtree: true });
-
-  // Listen for theme changes to refresh colors
-  const themeObserver = new MutationObserver(() => {
+  // Listen for theme changes to refresh particle colors
+  themeObserver = new MutationObserver(() => {
     for (const [, entry] of activeLoaders) {
       entry.renderer.refreshColors();
     }
@@ -474,6 +522,8 @@ export function initLeniaLoader() {
 /** Tear down the loader system (for cleanup/HMR) */
 export function destroyLeniaLoader() {
   detachAll();
-  observer?.disconnect();
-  observer = null;
+  childObserver?.disconnect();
+  childObserver = null;
+  themeObserver?.disconnect();
+  themeObserver = null;
 }

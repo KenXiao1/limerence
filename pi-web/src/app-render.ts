@@ -121,6 +121,7 @@ export function renderChatView() {
     currentTitle: state.currentTitle,
     characterName: state.character?.data.name ?? "",
     isEditingTitle: state.isEditingTitle,
+    isStreaming: !!(state.agent?.state.isStreaming),
     focusMode: state.focusMode,
     proxyModeEnabled: state.proxyModeEnabled,
     workspacePanelOpen: state.workspacePanelOpen,

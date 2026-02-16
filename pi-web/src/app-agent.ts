@@ -536,6 +536,12 @@ export async function createAgent(initialState?: Partial<AgentState>) {
   }) as typeof agent.prompt;
 
   state.agentUnsubscribe = agent.subscribe((event) => {
+    if (event.type === "message_start") {
+      // Touch reactive state to trigger header re-render (typing indicator)
+      state.activeToolCalls = [...state.activeToolCalls];
+      return;
+    }
+
     if (event.type === "tool_execution_start") {
       state.activeToolCalls = [
         ...state.activeToolCalls,

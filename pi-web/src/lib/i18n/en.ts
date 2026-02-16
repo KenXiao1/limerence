@@ -142,6 +142,7 @@ const en: Record<string, string> = {
   "tool.fileRead": "Read file",
   "tool.fileWrite": "Write file",
   "tool.executing": "Tool executing",
+  "tool.typing": "typing",
 
   // ── Token usage ─────────────────────────────────────────
   "token.tooltip": "Estimated token usage / context window",
