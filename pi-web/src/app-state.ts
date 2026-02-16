@@ -8,7 +8,6 @@ import type { SettingsTab } from "./views/settings-panels";
 import type { PromptPresetConfig } from "./controllers/prompt-presets";
 import type { GroupChatConfig } from "./controllers/group-chat";
 import { DEFAULT_GROUP_CONFIG } from "./controllers/group-chat";
-import type { RegexScriptData, ScriptConfig } from "./iframe-runner";
 import {
   AppStorage,
   ChatPanel,
@@ -239,11 +238,6 @@ const _rawState = {
   authPasswordRecovery: false,
   authPasswordUpdateSuccess: false,
   supabaseConfigDialogOpen: false,
-
-  // iframe-runner (JS-Slash-Runner compatibility)
-  iframeRunnerEnabled: true,
-  iframeRunnerRegexScripts: [] as RegexScriptData[],
-  iframeRunnerPersistentScripts: [] as ScriptConfig[],
 };
 
 export type AppState = typeof _rawState;

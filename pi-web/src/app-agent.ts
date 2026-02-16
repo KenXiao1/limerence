@@ -47,7 +47,6 @@ import type { RegexRule } from "./controllers/regex-rules";
 import type { GenerationPreset } from "./controllers/presets";
 import { ACTIVE_PRESET_KEY } from "./controllers/presets";
 import { REGEX_RULES_KEY } from "./controllers/regex-rules";
-import { getEventBus, processRenderedMessage, tavern_events } from "./iframe-runner";
 
 // ── Routing helpers ────────────────────────────────────────────
 
@@ -368,11 +367,6 @@ export async function createAgent(initialState?: Partial<AgentState>) {
       message = applyRegexRules(message, state.regexRules, "input");
     }
 
-    // iframe-runner: emit generation started
-    if (state.iframeRunnerEnabled) {
-      void getEventBus().emit(tavern_events.GENERATION_STARTED, "normal", {});
-    }
-
     // Save draft for recovery on failure
     if (typeof message === "string") {
       try { sessionStorage.setItem(DRAFT_KEY, message); } catch {}
@@ -409,35 +403,10 @@ export async function createAgent(initialState?: Partial<AgentState>) {
     }
 
     if (event.type === "message_end") {
-      const role = (event.message as any).role;
-      const msgIndex = agent.state.messages.length - 1;
-
       // Apply regex rules to AI output
-      if (state.regexRules.length > 0 && role === "assistant") {
+      if (state.regexRules.length > 0 && (event.message as any).role === "assistant") {
         applyRegexToMessage(event.message);
       }
-
-      // iframe-runner: emit events + process message for iframe injection
-      if (state.iframeRunnerEnabled) {
-        const bus = getEventBus();
-        if (role === "user") {
-          void bus.emit(tavern_events.MESSAGE_SENT, msgIndex);
-          void bus.emit(tavern_events.USER_MESSAGE_RENDERED, msgIndex);
-        } else if (role === "assistant") {
-          void bus.emit(tavern_events.MESSAGE_RECEIVED, msgIndex, "normal");
-          void bus.emit(tavern_events.CHARACTER_MESSAGE_RENDERED, msgIndex);
-
-          // Extract text for iframe processing
-          const textBlock = Array.isArray(event.message.content)
-            ? event.message.content.find((b: any) => b?.type === "text") as { type: "text"; text: string } | undefined
-            : null;
-          const text = textBlock?.text ?? "";
-          if (text) {
-            processRenderedMessage(msgIndex, "assistant", text);
-          }
-        }
-      }
-
       void indexMessageIntoMemory(event.message);
       if (!state.currentTitle) {
         state.currentTitle = generateTitle(agent.state.messages);
@@ -451,12 +420,6 @@ export async function createAgent(initialState?: Partial<AgentState>) {
       state.estimatedTokens = estimateMessagesTokens(agent.state.messages);
       state.contextWindow = agent.state.model?.contextWindow ?? 128000;
       void saveSession();
-
-      // iframe-runner: emit generation ended
-      if (state.iframeRunnerEnabled) {
-        const lastIdx = agent.state.messages.length - 1;
-        void getEventBus().emit(tavern_events.GENERATION_ENDED, lastIdx);
-      }
 
       // Group chat: continue with next queued speaker before draining message queue
       if (_groupTurnQueue.length > 0) {

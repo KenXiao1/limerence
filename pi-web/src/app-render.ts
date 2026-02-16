@@ -53,13 +53,6 @@ import {
 } from "./controllers/group-chat";
 import type { TurnStrategy } from "./controllers/group-chat";
 import { t } from "./lib/i18n";
-import {
-  initIframeRunner,
-  destroyIframeRunner,
-  onCharacterChanged,
-  extractAllRegexScripts,
-  setRegexScripts,
-} from "./iframe-runner";
 import { renderAuthDialog, type AuthDialogState, type AuthDialogActions, type AuthTab } from "./views/auth-dialog";
 import { renderSupabaseConfigDialog, type SupabaseConfigDialogState, type SupabaseConfigDialogActions } from "./views/supabase-config-dialog";
 import { isConfigured } from "./lib/supabase";
@@ -114,11 +107,6 @@ export function renderChatView() {
   unmountLegacyIntro();
   state.introHost.style.display = "none";
   state.chatHost.style.display = "block";
-
-  // Initialize iframe-runner when entering chat view
-  if (state.iframeRunnerEnabled) {
-    initIframeRunner(state);
-  }
 
   // Listen for memory-file-click events from tool renderers
   document.addEventListener("memory-file-click", ((e: CustomEvent) => {
@@ -421,13 +409,6 @@ async function handleCharacterSelect(entry: import("./controllers/character").Ch
     state.character = entry.card;
   }
 
-  // iframe-runner: extract scripts from the new character
-  if (state.iframeRunnerEnabled && state.character) {
-    const result = onCharacterChanged(state.character);
-    state.iframeRunnerRegexScripts = extractAllRegexScripts(state.character);
-    state.iframeRunnerPersistentScripts = result.persistentScripts;
-  }
-
   // Start a new session with the selected character
   await newSession();
 }
@@ -531,11 +512,6 @@ function renderLimerenceSettingsDialog() {
     promptPresetImportError: state.promptPresetImportError,
     groupChat: state.groupChat,
     characterList: state.characterList,
-
-    // Scripts (iframe-runner)
-    iframeRunnerEnabled: state.iframeRunnerEnabled,
-    iframeRunnerRegexScripts: state.iframeRunnerRegexScripts,
-    iframeRunnerPersistentScripts: state.iframeRunnerPersistentScripts,
   };
 
   const settingsActions: LimerenceSettingsActions = {
@@ -584,11 +560,6 @@ function renderLimerenceSettingsDialog() {
     onGroupToggleMember: (memberId) => { void handleGroupToggleMember(memberId); },
     onGroupStrategyChange: (strategy) => { void handleGroupStrategyChange(strategy); },
     onGroupResponsesChange: (count) => { void handleGroupResponsesChange(count); },
-
-    // Scripts (iframe-runner)
-    onIframeRunnerToggle: () => { handleIframeRunnerToggle(); },
-    onRegexScriptToggle: (id) => { handleRegexScriptToggle(id); },
-    onPersistentScriptToggle: (id) => { handlePersistentScriptToggle(id); },
   };
 
   return renderLimerenceSettings(settingsState, settingsActions);
@@ -782,34 +753,6 @@ async function handleGroupStrategyChange(strategy: TurnStrategy) {
 async function handleGroupResponsesChange(count: number) {
   state.groupChat = { ...state.groupChat, responsesPerTurn: count };
   await storage.settings.set(GROUP_CHAT_KEY, serializeGroupConfig(state.groupChat));
-}
-
-// ── Scripts (iframe-runner) action handlers ──────────────────
-
-function handleIframeRunnerToggle() {
-  state.iframeRunnerEnabled = !state.iframeRunnerEnabled;
-  if (state.iframeRunnerEnabled && state.character) {
-    initIframeRunner(state);
-    onCharacterChanged(state.character);
-  } else {
-    destroyIframeRunner();
-  }
-}
-
-function handleRegexScriptToggle(id: string) {
-  state.iframeRunnerRegexScripts = state.iframeRunnerRegexScripts.map((s) =>
-    s.id === id ? { ...s, disabled: !s.disabled } : s,
-  );
-  // Update the active regex scripts in the message processor
-  if (state.iframeRunnerEnabled) {
-    setRegexScripts(state.iframeRunnerRegexScripts.filter((s) => !s.disabled));
-  }
-}
-
-function handlePersistentScriptToggle(id: string) {
-  state.iframeRunnerPersistentScripts = state.iframeRunnerPersistentScripts.map((s) =>
-    s.id === id ? { ...s, enabled: !s.enabled } : s,
-  );
 }
 
 // ── View dispatcher ────────────────────────────────────────────

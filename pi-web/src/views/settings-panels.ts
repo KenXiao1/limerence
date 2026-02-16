@@ -13,9 +13,8 @@ import type { GroupChatConfig, TurnStrategy } from "../controllers/group-chat";
 import type { CharacterEntry } from "../controllers/character";
 import type { Persona } from "../lib/character";
 import { BUILTIN_PRESETS } from "../controllers/presets";
-import type { RegexScriptData, ScriptConfig } from "../iframe-runner";
 
-export type SettingsTab = "persona" | "lorebook" | "presets" | "regex" | "prompt" | "group" | "scripts";
+export type SettingsTab = "persona" | "lorebook" | "presets" | "regex" | "prompt" | "group";
 
 export interface LimerenceSettingsState {
   isOpen: boolean;
@@ -49,11 +48,6 @@ export interface LimerenceSettingsState {
   // Group chat
   groupChat: GroupChatConfig;
   characterList: CharacterEntry[];
-
-  // Scripts (iframe-runner)
-  iframeRunnerEnabled: boolean;
-  iframeRunnerRegexScripts: RegexScriptData[];
-  iframeRunnerPersistentScripts: ScriptConfig[];
 }
 
 export interface LimerenceSettingsActions {
@@ -94,11 +88,6 @@ export interface LimerenceSettingsActions {
   onGroupToggleMember: (memberId: string) => void;
   onGroupStrategyChange: (strategy: TurnStrategy) => void;
   onGroupResponsesChange: (count: number) => void;
-
-  // Scripts (iframe-runner)
-  onIframeRunnerToggle: () => void;
-  onRegexScriptToggle: (id: string) => void;
-  onPersistentScriptToggle: (id: string) => void;
 }
 
 export function renderLimerenceSettings(
@@ -114,7 +103,6 @@ export function renderLimerenceSettings(
     { id: "regex", label: t("settings.regex") },
     { id: "prompt", label: t("settings.prompt") },
     { id: "group", label: t("settings.group") },
-    { id: "scripts", label: t("settings.scripts") },
   ];
 
   return html`
@@ -140,7 +128,6 @@ export function renderLimerenceSettings(
           ${s.activeTab === "regex" ? renderRegexTab(s, a) : null}
           ${s.activeTab === "prompt" ? renderPromptTab(s, a) : null}
           ${s.activeTab === "group" ? renderGroupTab(s, a) : null}
-          ${s.activeTab === "scripts" ? renderScriptsTab(s, a) : null}
         </div>
       </div>
     </div>
@@ -485,67 +472,6 @@ function renderGroupTab(s: LimerenceSettingsState, a: LimerenceSettingsActions):
           <div class="limerence-lorebook-content">${m.card.data.description?.slice(0, 80) || m.card.data.personality?.slice(0, 80) || t("group.noDesc")}</div>
         </div>
       `)}
-    </div>
-  `;
-}
-
-// ── Scripts tab (iframe-runner) ──────────────────────────────────
-
-function renderScriptsTab(s: LimerenceSettingsState, a: LimerenceSettingsActions): TemplateResult {
-  const regexScripts = s.iframeRunnerRegexScripts;
-  const persistentScripts = s.iframeRunnerPersistentScripts;
-  const hasScripts = regexScripts.length > 0 || persistentScripts.length > 0;
-
-  return html`
-    <div class="limerence-settings-section">
-      <p class="limerence-settings-hint">${t("scripts.hint")}</p>
-
-      <!-- Global toggle -->
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-        <button
-          class="limerence-btn-${s.iframeRunnerEnabled ? "primary" : "ghost"}"
-          @click=${a.onIframeRunnerToggle}
-        >${s.iframeRunnerEnabled ? t("scripts.enabled") : t("scripts.enable")}</button>
-      </div>
-
-      ${!hasScripts ? html`<p class="limerence-settings-empty">${t("scripts.noScripts")}</p>` : null}
-
-      <!-- Regex scripts from character card -->
-      ${regexScripts.length > 0 ? html`
-        <label class="limerence-settings-label">${t("scripts.regexLabel")}</label>
-        ${regexScripts.map((script) => html`
-          <div class="limerence-regex-entry ${script.disabled ? "disabled" : ""}">
-            <div class="limerence-regex-entry-header">
-              <span class="limerence-regex-name">${script.scriptName}</span>
-              <span class="limerence-regex-scope">${script.placement.includes(2) ? t("scripts.aiOutput") : t("scripts.userInput")}</span>
-              <div class="limerence-regex-entry-actions">
-                <button class="limerence-btn-icon" @click=${() => a.onRegexScriptToggle(script.id)} title="${script.disabled ? t("scripts.enableScript") : t("scripts.disableScript")}">
-                  ${script.disabled ? "○" : "●"}
-                </button>
-              </div>
-            </div>
-            <div class="limerence-regex-pattern">/${script.findRegex.length > 60 ? script.findRegex.slice(0, 60) + "..." : script.findRegex}/</div>
-          </div>
-        `)}
-      ` : null}
-
-      <!-- Persistent scripts -->
-      ${persistentScripts.length > 0 ? html`
-        <label class="limerence-settings-label" style="margin-top:12px">${t("scripts.persistentLabel")}</label>
-        ${persistentScripts.map((script) => html`
-          <div class="limerence-regex-entry ${script.enabled ? "" : "disabled"}">
-            <div class="limerence-regex-entry-header">
-              <span class="limerence-regex-name">${script.name}</span>
-              <span class="limerence-regex-scope">${script.source}</span>
-              <div class="limerence-regex-entry-actions">
-                <button class="limerence-btn-icon" @click=${() => a.onPersistentScriptToggle(script.id)} title="${script.enabled ? t("scripts.disableScript") : t("scripts.enableScript")}">
-                  ${script.enabled ? "●" : "○"}
-                </button>
-              </div>
-            </div>
-          </div>
-        `)}
-      ` : null}
     </div>
   `;
 }

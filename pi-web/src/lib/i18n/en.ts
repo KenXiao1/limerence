@@ -329,19 +329,6 @@ const en: Record<string, string> = {
   "landing.termLine8": "Has a cat named \"Bit\"",
   "landing.archMod5": "SQLite WASM Memory",
   "landing.archMod5Sub": "FTS5 · Persistence",
-
-  // ── Scripts (iframe-runner) ────────────────────────────────────
-  "settings.scripts": "Scripts",
-  "scripts.hint": "JS-Slash-Runner scripts embedded in the character card. When enabled, HTML content in AI replies is rendered in iframes.",
-  "scripts.enabled": "Scripts ON",
-  "scripts.enable": "Enable scripts",
-  "scripts.noScripts": "No scripts in current character card",
-  "scripts.regexLabel": "Regex replacement scripts",
-  "scripts.persistentLabel": "Persistent scripts",
-  "scripts.aiOutput": "AI output",
-  "scripts.userInput": "User input",
-  "scripts.enableScript": "Enable",
-  "scripts.disableScript": "Disable",
 };
 
 export default en;
