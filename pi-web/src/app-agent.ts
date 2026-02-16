@@ -308,6 +308,36 @@ function drainMessageQueue() {
   }
 }
 
+function normalizeModelBaseUrl(model: Model<any>): Model<any> {
+  const raw = model.baseUrl?.trim();
+  const trimmed = raw?.replace(/\/+$/, "");
+
+  // The OpenAI JS SDK (used by @mariozechner/pi-ai) requires an absolute baseURL.
+  // Additionally, sessions may persist the model object; keep the hosted proxy baseUrl
+  // pinned to the current origin so loading an exported session on another host works.
+  if (model.provider === "limerence-proxy") {
+    try {
+      const absolute = new URL("/api/llm/v1", window.location.origin).toString().replace(/\/+$/, "");
+      return absolute !== model.baseUrl ? { ...model, baseUrl: absolute } : model;
+    } catch {
+      // Fall through to best-effort normalization below.
+    }
+  }
+
+  if (!trimmed) return model;
+
+  if (trimmed.startsWith("/")) {
+    try {
+      const absolute = new URL(trimmed, window.location.origin).toString().replace(/\/+$/, "");
+      return { ...model, baseUrl: absolute };
+    } catch {
+      return model;
+    }
+  }
+
+  return trimmed !== model.baseUrl ? { ...model, baseUrl: trimmed } : model;
+}
+
 function installSafeSendMessagePatch(agentInterface: any) {
   if (!agentInterface || agentInterface.__limerenceSafeSendPatched) return;
   const originalSendMessage = agentInterface.sendMessage?.bind(agentInterface);
@@ -372,6 +402,43 @@ function installSafeSendMessagePatch(agentInterface: any) {
   agentInterface.__limerenceSafeSendPatched = true;
 }
 
+function unshadowLitReactiveProperty(el: any, prop: string) {
+  if (!el || !Object.prototype.hasOwnProperty.call(el, prop)) return;
+  const value = el[prop];
+  try {
+    // Remove instance field created via `useDefineForClassFields` which shadows Lit's accessor.
+    // Re-assigning after delete will go through the accessor and schedule a render.
+    delete el[prop];
+  } catch {
+    return;
+  }
+  try {
+    el[prop] = value;
+  } catch {
+    // ignore
+  }
+}
+
+function ensureMessageListReactivity(agentInterface: any) {
+  if (!agentInterface || agentInterface.__limerenceMessageListReactivityPatched) return;
+  agentInterface.__limerenceMessageListReactivityPatched = true;
+
+  const props = ["messages", "tools", "pendingToolCalls", "isStreaming", "onCostClick"];
+
+  const tryFix = () => {
+    const messageList = agentInterface.querySelector?.("message-list") as any;
+    if (!messageList) {
+      requestAnimationFrame(tryFix);
+      return;
+    }
+    if (messageList.__limerenceUnshadowed) return;
+    for (const p of props) unshadowLitReactiveProperty(messageList, p);
+    messageList.__limerenceUnshadowed = true;
+  };
+
+  tryFix();
+}
+
 // ── Agent creation ─────────────────────────────────────────────
 
 export async function createAgent(initialState?: Partial<AgentState>) {
@@ -385,6 +452,7 @@ export async function createAgent(initialState?: Partial<AgentState>) {
   if (!hasDirectKey && model.provider !== "limerence-proxy") {
     model = createProxyModel();
   }
+  model = normalizeModelBaseUrl(model);
   const messages = initialState?.messages ?? createInitialMessages(model);
 
   const agent = new Agent({
@@ -545,6 +613,7 @@ export async function createAgent(initialState?: Partial<AgentState>) {
     agentInterface.enableAttachments = true;
     agentInterface.enableModelSelector = shouldEnableModelSelector(hasDirectKey);
     installSafeSendMessagePatch(agentInterface as any);
+    ensureMessageListReactivity(agentInterface as any);
   }
 }
 
