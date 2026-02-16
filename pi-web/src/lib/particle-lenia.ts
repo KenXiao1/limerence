@@ -338,16 +338,17 @@ let _themeObserver: MutationObserver | null = null;
 export function showLeniaBubble() {
   if (_bubbleEl) return;
 
-  // Find the scroll area: the div with overflow-y-auto inside agent-interface
-  const agentInterface = document.querySelector("agent-interface");
+  // Find the scroll area inside agent-interface (supports light DOM and shadow DOM)
+  const agentInterface = document.querySelector("agent-interface") as HTMLElement | null;
   if (!agentInterface) {
     console.warn("[Lenia] agent-interface not found");
     return;
   }
 
-  const scrollArea = agentInterface.querySelector(".overflow-y-auto");
+  const scrollArea =
+    findScrollArea(agentInterface) ?? (agentInterface.shadowRoot ? findScrollArea(agentInterface.shadowRoot) : null);
   if (!scrollArea) {
-    console.warn("[Lenia] scroll area (.overflow-y-auto) not found");
+    console.warn("[Lenia] scroll area (.overflow-y-auto/.overflow-y-scroll) not found");
     return;
   }
 
@@ -393,6 +394,16 @@ export function showLeniaBubble() {
       attributeFilter: ["class", "data-theme"],
     });
   }
+}
+
+function findScrollArea(root: ParentNode): HTMLElement | null {
+  const direct = root.querySelector?.(".overflow-y-auto, .overflow-y-scroll") as HTMLElement | null;
+  if (direct) return direct;
+
+  const messageList = root.querySelector?.("message-list") as HTMLElement | null;
+  if (!messageList) return null;
+
+  return (messageList.closest?.(".overflow-y-auto, .overflow-y-scroll") as HTMLElement | null) ?? null;
 }
 
 /**

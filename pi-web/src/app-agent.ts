@@ -485,59 +485,64 @@ export async function createAgent(initialState?: Partial<AgentState>) {
       return Promise.resolve();
     }
 
-    // Smart compaction: try lossless strategies before lossy
-    const contextWindow = agent.state.model?.contextWindow ?? 128000;
-    const systemTokens = estimateMessagesTokens([]);
-    const smartResult = smartCompact(agent.state.messages, contextWindow, systemTokens);
-    if (smartResult) {
-      agent.replaceMessages(smartResult);
-    } else {
-      // Fall back to simple compaction
-      const compacted = compactMessages(agent.state.messages, contextWindow);
-      if (compacted) {
-        agent.replaceMessages(compacted);
-      }
-    }
-
-    // Memory + lorebook injection: update system prompt with PROFILE.md, MEMORY.md, and lorebook
-    void injectContextIntoPrompt(agent);
-
-    // Group chat: set up turn queue and swap system prompt to first speaker
-    const groupMember = setupGroupTurn();
-    if (groupMember) {
-      agent.state.systemPrompt = buildGroupSystemPrompt(groupMember, state.groupChat.members, state.persona);
-      state.groupChatLastSpeakerId = groupMember.id;
-      state.groupChat = recordTurn(state.groupChat, groupMember.id);
-    }
-
-    // Apply regex rules to user input if configured
-    if (typeof message === "string" && state.regexRules.length > 0) {
-      message = applyRegexRules(message, state.regexRules, "input");
-    }
-
-    // Save draft for recovery on failure
-    if (typeof message === "string") {
-      try { sessionStorage.setItem(DRAFT_KEY, message); } catch {}
-    }
-
     // Show Lenia loading bubble immediately so user sees feedback
     showLeniaBubble();
 
-    return originalPrompt(message, images).then(
-      (result: any) => {
-        try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
-        return result;
-      },
-      (err: any) => {
-        hideLeniaBubble();
-        const draft = sessionStorage.getItem(DRAFT_KEY);
-        if (draft && state.chatPanel?.agentInterface) {
-          state.chatPanel.agentInterface.setInput(draft);
+    try {
+      // Smart compaction: try lossless strategies before lossy
+      const contextWindow = agent.state.model?.contextWindow ?? 128000;
+      const systemTokens = estimateMessagesTokens([]);
+      const smartResult = smartCompact(agent.state.messages, contextWindow, systemTokens);
+      if (smartResult) {
+        agent.replaceMessages(smartResult);
+      } else {
+        // Fall back to simple compaction
+        const compacted = compactMessages(agent.state.messages, contextWindow);
+        if (compacted) {
+          agent.replaceMessages(compacted);
         }
-        try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
-        throw err;
-      },
-    );
+      }
+
+      // Memory + lorebook injection: update system prompt with PROFILE.md, MEMORY.md, and lorebook
+      void injectContextIntoPrompt(agent);
+
+      // Group chat: set up turn queue and swap system prompt to first speaker
+      const groupMember = setupGroupTurn();
+      if (groupMember) {
+        agent.state.systemPrompt = buildGroupSystemPrompt(groupMember, state.groupChat.members, state.persona);
+        state.groupChatLastSpeakerId = groupMember.id;
+        state.groupChat = recordTurn(state.groupChat, groupMember.id);
+      }
+
+      // Apply regex rules to user input if configured
+      if (typeof message === "string" && state.regexRules.length > 0) {
+        message = applyRegexRules(message, state.regexRules, "input");
+      }
+
+      // Save draft for recovery on failure
+      if (typeof message === "string") {
+        try { sessionStorage.setItem(DRAFT_KEY, message); } catch {}
+      }
+
+      return originalPrompt(message, images).then(
+        (result: any) => {
+          try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
+          return result;
+        },
+        (err: any) => {
+          hideLeniaBubble();
+          const draft = sessionStorage.getItem(DRAFT_KEY);
+          if (draft && state.chatPanel?.agentInterface) {
+            state.chatPanel.agentInterface.setInput(draft);
+          }
+          try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
+          throw err;
+        },
+      );
+    } catch (err) {
+      hideLeniaBubble();
+      throw err;
+    }
   }) as typeof agent.prompt;
 
   state.agentUnsubscribe = agent.subscribe((event) => {

@@ -8,7 +8,7 @@ import {
 
 const DEFAULT_QUOTA_COOKIE_NAME = "limerence_free_quota";
 
-export default async function handler(req: Request, _context: Context) {
+export default async function handler(req: Request, context: Context) {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders() });
   }
@@ -78,10 +78,78 @@ export default async function handler(req: Request, _context: Context) {
       model: requestedModel,
     };
 
+    const stream = body.stream !== false;
+    if (stream) {
+      const encoder = new TextEncoder();
+      const upstreamAbort = new AbortController();
+      const upstreamTimeoutMs = resolveUpstreamTimeoutMs(Deno.env.get("LLM_UPSTREAM_TIMEOUT_MS"));
+      const upstreamTimeout = upstreamTimeoutMs > 0
+        ? setTimeout(() => upstreamAbort.abort(new Error("Upstream request timed out")), upstreamTimeoutMs)
+        : null;
+
+      const upstreamFetch = fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "text/event-stream",
+          Authorization: `Bearer ${upstreamKey}`,
+        },
+        body: JSON.stringify(payload),
+        signal: upstreamAbort.signal,
+      });
+
+      const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
+      const writer = writable.getWriter();
+
+      context.waitUntil((async () => {
+        try {
+          // Flush an initial comment so clients see the connection as established.
+          await safeWrite(writer, encoder.encode(": limerence-proxy\n\n"), upstreamAbort);
+
+          const resp = await upstreamFetch;
+          if (!resp.ok) {
+            const text = await readResponseText(resp);
+            await writeSseError(
+              writer,
+              encoder,
+              upstreamAbort,
+              `${resp.status}: ${text || resp.statusText || "Upstream error"}`,
+            );
+            return;
+          }
+
+          if (!resp.body) {
+            await writeSseError(writer, encoder, upstreamAbort, "Upstream response had no body");
+            return;
+          }
+
+          await pipeResponseBody(resp.body, writer, upstreamAbort);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          await writeSseError(writer, encoder, upstreamAbort, message);
+        } finally {
+          if (upstreamTimeout !== null) clearTimeout(upstreamTimeout);
+          try { await writer.close(); } catch { /* ignore */ }
+        }
+      })());
+
+      return new Response(readable, {
+        status: 200,
+        headers: {
+          ...corsHeaders(),
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+          ...(setCookieHeader ? { "Set-Cookie": setCookieHeader } : {}),
+        },
+      });
+    }
+
     const resp = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Accept: "application/json",
         Authorization: `Bearer ${upstreamKey}`,
       },
       body: JSON.stringify(payload),
@@ -91,20 +159,6 @@ export default async function handler(req: Request, _context: Context) {
       const text = await resp.text();
       return jsonResponse({ error: `${resp.status}: ${text}` }, resp.status, {
         "Set-Cookie": setCookieHeader,
-      });
-    }
-
-    const stream = body.stream !== false;
-    if (stream) {
-      return new Response(resp.body, {
-        status: 200,
-        headers: {
-          ...corsHeaders(),
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-          Connection: "keep-alive",
-          ...(setCookieHeader ? { "Set-Cookie": setCookieHeader } : {}),
-        },
       });
     }
 
@@ -154,6 +208,69 @@ function sanitizeHeaders(headers?: Record<string, string | undefined>): Record<s
 function resolveQuotaCookieName(raw: string | null | undefined): string {
   const trimmed = raw?.trim();
   return trimmed ? trimmed : DEFAULT_QUOTA_COOKIE_NAME;
+}
+
+function resolveUpstreamTimeoutMs(raw: string | null | undefined): number {
+  const trimmed = raw?.trim();
+  if (!trimmed) return 0;
+  const value = Number.parseInt(trimmed, 10);
+  if (!Number.isFinite(value) || value <= 0) return 0;
+  return value;
+}
+
+async function readResponseText(resp: Response): Promise<string> {
+  try {
+    const text = await resp.text();
+    return text.length > 4000 ? `${text.slice(0, 4000)}…` : text;
+  } catch {
+    return "";
+  }
+}
+
+async function safeWrite(
+  writer: WritableStreamDefaultWriter<Uint8Array>,
+  chunk: Uint8Array,
+  abort: AbortController,
+): Promise<boolean> {
+  try {
+    await writer.write(chunk);
+    return true;
+  } catch {
+    // Client disconnected; stop upstream work.
+    try { abort.abort(); } catch { /* ignore */ }
+    return false;
+  }
+}
+
+async function pipeResponseBody(
+  body: ReadableStream<Uint8Array>,
+  writer: WritableStreamDefaultWriter<Uint8Array>,
+  abort: AbortController,
+): Promise<void> {
+  const reader = body.getReader();
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        const ok = await safeWrite(writer, value, abort);
+        if (!ok) break;
+      }
+    }
+  } finally {
+    try { reader.releaseLock(); } catch { /* ignore */ }
+  }
+}
+
+async function writeSseError(
+  writer: WritableStreamDefaultWriter<Uint8Array>,
+  encoder: TextEncoder,
+  abort: AbortController,
+  message: string,
+): Promise<void> {
+  const payload = JSON.stringify({ error: { message, type: "proxy_error" } });
+  await safeWrite(writer, encoder.encode(`data: ${payload}\n\n`), abort);
+  await safeWrite(writer, encoder.encode("data: [DONE]\n\n"), abort);
 }
 
 function getCookie(cookieHeader: string | null, name: string): string | null {
