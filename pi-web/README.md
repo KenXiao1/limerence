@@ -55,6 +55,15 @@ npm run static
    - `LLM_API_KEY`
    - `LLM_BASE_URL`
    - `LLM_MODEL_ID`
+   - `FREE_MODEL_ID`
+
+推荐（OpenRouter DeepSeek R1 免费模型）：
+
+```env
+LLM_BASE_URL=https://openrouter.ai/api/v1
+LLM_MODEL_ID=deepseek/deepseek-r1-0528:free
+FREE_MODEL_ID=deepseek/deepseek-r1-0528:free
+```
 
 如果配置了 `LLM_API_KEY`，可在页面右上角切换 `Proxy` 模式，前端将通过 Netlify 代理调用模型。
 

@@ -1,4 +1,4 @@
-export const DEFAULT_FREE_MODEL_ID = "gemini-3-flash-preview";
+export const DEFAULT_FREE_MODEL_ID = "deepseek/deepseek-r1-0528:free";
 export const DEFAULT_DAILY_FREE_MODEL_LIMIT = 25;
 
 export type DailyQuotaRecord = {

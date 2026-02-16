@@ -70,7 +70,15 @@ The current web mainline (`pi-web`) can be deployed to Netlify:
 1. Fork this repository
 2. Create a new site on Netlify and link the repo
 3. Use the repository root `netlify.toml` (already pointing to `pi-web`)
-4. (Optional) Set `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL_ID` in Netlify environment variables to enable server-side proxy mode
+4. (Optional) Set `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL_ID`, and `FREE_MODEL_ID` in Netlify environment variables to enable server-side proxy mode
+
+Recommended (OpenRouter DeepSeek R1 free model):
+
+```env
+LLM_BASE_URL=https://openrouter.ai/api/v1
+LLM_MODEL_ID=deepseek/deepseek-r1-0528:free
+FREE_MODEL_ID=deepseek/deepseek-r1-0528:free
+```
 
 Web architecture:
 

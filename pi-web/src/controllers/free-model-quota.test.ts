@@ -10,7 +10,7 @@ import {
 
 describe("free model quota helpers", () => {
   it("uses expected defaults", () => {
-    expect(DEFAULT_FREE_MODEL_ID).toBe("gemini-3-flash-preview");
+    expect(DEFAULT_FREE_MODEL_ID).toBe("deepseek/deepseek-r1-0528:free");
     expect(DEFAULT_DAILY_FREE_MODEL_LIMIT).toBe(25);
   });
 
