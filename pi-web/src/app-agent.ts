@@ -345,6 +345,16 @@ function installSafeSendMessagePatch(agentInterface: any) {
   if (typeof originalSendMessage !== "function") return;
 
   agentInterface.sendMessage = async (input: string, attachments?: any[]) => {
+    const session = agentInterface.session as Agent | undefined;
+    const text = typeof input === "string" ? input : "";
+    const files = Array.isArray(attachments) ? attachments : [];
+    const shouldShowBubble = Boolean(
+      session &&
+        !session.state.isStreaming &&
+        (text.trim().length > 0 || files.length > 0),
+    );
+    if (shouldShowBubble) showLeniaBubble();
+
     try {
       await originalSendMessage(input, attachments);
       return;
@@ -353,50 +363,57 @@ function installSafeSendMessagePatch(agentInterface: any) {
       const isEditorRefError =
         error instanceof TypeError && message.includes("Cannot set properties of undefined");
       if (!isEditorRefError) {
+        if (shouldShowBubble) hideLeniaBubble();
         throw error;
       }
     }
 
-    const session = agentInterface.session as Agent | undefined;
-    const text = typeof input === "string" ? input : "";
-    const files = Array.isArray(attachments) ? attachments : [];
-    if ((!text.trim() && files.length === 0) || session?.state.isStreaming) return;
-    if (!session) throw new Error("No session set on AgentInterface");
-    if (!session.state.model) throw new Error("No model set on AgentInterface");
+    try {
+      if ((!text.trim() && files.length === 0) || session?.state.isStreaming) return;
+      if (!session) throw new Error("No session set on AgentInterface");
+      if (!session.state.model) throw new Error("No model set on AgentInterface");
 
-    const provider = session.state.model.provider;
-    const apiKey = await storage.providerKeys.get(provider);
-    if (!apiKey) {
-      if (!agentInterface.onApiKeyRequired) {
-        console.error("No API key configured and no onApiKeyRequired handler set");
-        return;
+      const provider = session.state.model.provider;
+      const apiKey = await storage.providerKeys.get(provider);
+      if (!apiKey) {
+        if (!agentInterface.onApiKeyRequired) {
+          console.error("No API key configured and no onApiKeyRequired handler set");
+          hideLeniaBubble();
+          return;
+        }
+        const success = await agentInterface.onApiKeyRequired(provider);
+        if (!success) {
+          hideLeniaBubble();
+          return;
+        }
       }
-      const success = await agentInterface.onApiKeyRequired(provider);
-      if (!success) return;
-    }
 
-    if (agentInterface.onBeforeSend) {
-      await agentInterface.onBeforeSend();
-    }
+      if (agentInterface.onBeforeSend) {
+        await agentInterface.onBeforeSend();
+      }
 
-    const editor = agentInterface.querySelector?.("message-editor") as
-      | { value: string; attachments: any[] }
-      | null;
-    if (editor) {
-      editor.value = "";
-      editor.attachments = [];
-    }
-    agentInterface._autoScroll = true;
+      const editor = agentInterface.querySelector?.("message-editor") as
+        | { value: string; attachments: any[] }
+        | null;
+      if (editor) {
+        editor.value = "";
+        editor.attachments = [];
+      }
+      agentInterface._autoScroll = true;
 
-    if (files.length > 0) {
-      await session.prompt({
-        role: "user-with-attachments",
-        content: text,
-        attachments: files,
-        timestamp: Date.now(),
-      } as any);
-    } else {
-      await session.prompt(text);
+      if (files.length > 0) {
+        await session.prompt({
+          role: "user-with-attachments",
+          content: text,
+          attachments: files,
+          timestamp: Date.now(),
+        } as any);
+      } else {
+        await session.prompt(text);
+      }
+    } catch (error) {
+      hideLeniaBubble();
+      throw error;
     }
   };
 
@@ -548,7 +565,7 @@ export async function createAgent(initialState?: Partial<AgentState>) {
   state.agentUnsubscribe = agent.subscribe((event) => {
     if (event.type === "message_start") {
       // Hide Lenia loading bubble — actual streaming content is arriving
-      hideLeniaBubble();
+      hideLeniaBubble({ force: true });
       // Touch reactive state to trigger header re-render (typing indicator)
       state.activeToolCalls = [...state.activeToolCalls];
       return;

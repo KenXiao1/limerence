@@ -82,56 +82,128 @@ export default async function handler(req: Request, context: Context) {
     if (stream) {
       const encoder = new TextEncoder();
       const upstreamAbort = new AbortController();
+      const timeoutError = new Error("Upstream request timed out");
       const upstreamTimeoutMs = resolveUpstreamTimeoutMs(Deno.env.get("LLM_UPSTREAM_TIMEOUT_MS"));
-      const upstreamTimeout = upstreamTimeoutMs > 0
-        ? setTimeout(() => upstreamAbort.abort(new Error("Upstream request timed out")), upstreamTimeoutMs)
-        : null;
+      const keepaliveMs = 15_000;
 
-      const upstreamFetch = fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "text/event-stream",
-          Authorization: `Bearer ${upstreamKey}`,
-        },
-        body: JSON.stringify(payload),
-        signal: upstreamAbort.signal,
-      });
+      let keepaliveTimer: number | null = null;
+      let upstreamTimeout: number | null = null;
 
-      const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
-      const writer = writable.getWriter();
+      const readable = new ReadableStream<Uint8Array>({
+        start(controller) {
+          let closed = false;
 
-      context.waitUntil((async () => {
-        try {
+          const enqueue = (chunk: Uint8Array): boolean => {
+            if (closed) return false;
+            try {
+              controller.enqueue(chunk);
+              return true;
+            } catch {
+              closed = true;
+              try { upstreamAbort.abort(); } catch { /* ignore */ }
+              return false;
+            }
+          };
+
+          const writeSseError = (message: string) => {
+            const payload = JSON.stringify({ error: { message, type: "proxy_error" } });
+            enqueue(encoder.encode(`data: ${payload}\n\n`));
+            enqueue(encoder.encode("data: [DONE]\n\n"));
+          };
+
+          const cleanup = () => {
+            if (keepaliveTimer !== null) {
+              clearInterval(keepaliveTimer);
+              keepaliveTimer = null;
+            }
+            if (upstreamTimeout !== null) {
+              clearTimeout(upstreamTimeout);
+              upstreamTimeout = null;
+            }
+          };
+
           // Flush an initial comment so clients see the connection as established.
-          await safeWrite(writer, encoder.encode(": limerence-proxy\n\n"), upstreamAbort);
+          enqueue(encoder.encode(": limerence-proxy\n\n"));
 
-          const resp = await upstreamFetch;
-          if (!resp.ok) {
-            const text = await readResponseText(resp);
-            await writeSseError(
-              writer,
-              encoder,
-              upstreamAbort,
-              `${resp.status}: ${text || resp.statusText || "Upstream error"}`,
-            );
-            return;
+          // Keepalive comments while waiting for upstream (stop before relaying upstream bytes).
+          keepaliveTimer = setInterval(() => {
+            enqueue(encoder.encode(": keepalive\n\n"));
+          }, keepaliveMs);
+
+          if (upstreamTimeoutMs > 0) {
+            upstreamTimeout = setTimeout(() => upstreamAbort.abort(timeoutError), upstreamTimeoutMs);
           }
 
-          if (!resp.body) {
-            await writeSseError(writer, encoder, upstreamAbort, "Upstream response had no body");
-            return;
-          }
+          (async () => {
+            try {
+              const resp = await fetch(url, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Accept: "text/event-stream",
+                  Authorization: `Bearer ${upstreamKey}`,
+                },
+                body: JSON.stringify(payload),
+                signal: upstreamAbort.signal,
+              });
 
-          await pipeResponseBody(resp.body, writer, upstreamAbort);
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          await writeSseError(writer, encoder, upstreamAbort, message);
-        } finally {
-          if (upstreamTimeout !== null) clearTimeout(upstreamTimeout);
-          try { await writer.close(); } catch { /* ignore */ }
-        }
-      })());
+              if (!resp.ok) {
+                const text = await readResponseText(resp);
+                writeSseError(`${resp.status}: ${text || resp.statusText || "Upstream error"}`);
+                return;
+              }
+
+              if (!resp.body) {
+                writeSseError("Upstream response had no body");
+                return;
+              }
+
+              const reader = resp.body.getReader();
+              let sawFirstChunk = false;
+              try {
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+                  if (!value || value.length === 0) continue;
+
+                  if (!sawFirstChunk) {
+                    sawFirstChunk = true;
+                    if (keepaliveTimer !== null) {
+                      clearInterval(keepaliveTimer);
+                      keepaliveTimer = null;
+                    }
+                  }
+
+                  const ok = enqueue(value);
+                  if (!ok) break;
+                }
+              } finally {
+                try { reader.releaseLock(); } catch { /* ignore */ }
+              }
+            } catch (error) {
+              const reason = upstreamAbort.signal.aborted ? (upstreamAbort.signal as any).reason : null;
+              const message =
+                reason instanceof Error ? reason.message : error instanceof Error ? error.message : String(error);
+              writeSseError(message);
+            } finally {
+              cleanup();
+              closed = true;
+              try { controller.close(); } catch { /* ignore */ }
+            }
+          })();
+        },
+        cancel() {
+          try { upstreamAbort.abort(); } catch { /* ignore */ }
+          if (keepaliveTimer !== null) {
+            clearInterval(keepaliveTimer);
+            keepaliveTimer = null;
+          }
+          if (upstreamTimeout !== null) {
+            clearTimeout(upstreamTimeout);
+            upstreamTimeout = null;
+          }
+        },
+      });
 
       return new Response(readable, {
         status: 200,
@@ -225,52 +297,6 @@ async function readResponseText(resp: Response): Promise<string> {
   } catch {
     return "";
   }
-}
-
-async function safeWrite(
-  writer: WritableStreamDefaultWriter<Uint8Array>,
-  chunk: Uint8Array,
-  abort: AbortController,
-): Promise<boolean> {
-  try {
-    await writer.write(chunk);
-    return true;
-  } catch {
-    // Client disconnected; stop upstream work.
-    try { abort.abort(); } catch { /* ignore */ }
-    return false;
-  }
-}
-
-async function pipeResponseBody(
-  body: ReadableStream<Uint8Array>,
-  writer: WritableStreamDefaultWriter<Uint8Array>,
-  abort: AbortController,
-): Promise<void> {
-  const reader = body.getReader();
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (value) {
-        const ok = await safeWrite(writer, value, abort);
-        if (!ok) break;
-      }
-    }
-  } finally {
-    try { reader.releaseLock(); } catch { /* ignore */ }
-  }
-}
-
-async function writeSseError(
-  writer: WritableStreamDefaultWriter<Uint8Array>,
-  encoder: TextEncoder,
-  abort: AbortController,
-  message: string,
-): Promise<void> {
-  const payload = JSON.stringify({ error: { message, type: "proxy_error" } });
-  await safeWrite(writer, encoder.encode(`data: ${payload}\n\n`), abort);
-  await safeWrite(writer, encoder.encode("data: [DONE]\n\n"), abort);
 }
 
 function getCookie(cookieHeader: string | null, name: string): string | null {

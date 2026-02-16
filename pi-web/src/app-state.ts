@@ -60,7 +60,7 @@ export type MemoryOp = {
 // ── Constants ──────────────────────────────────────────────────────
 
 export const DB_NAME = "limerence-pi-web";
-export const DB_VERSION = 3;
+export const DB_VERSION = 4;
 export const PROXY_MODE_KEY = "limerence.proxy_mode";
 export const ROOT_PATH = "/";
 export const CHAT_PATH = "/chat";

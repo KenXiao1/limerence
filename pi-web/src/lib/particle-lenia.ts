@@ -316,6 +316,11 @@ let _raf = 0;
 let _bubbleEl: HTMLElement | null = null;
 let _scrollArea: HTMLElement | null = null;
 let _themeObserver: MutationObserver | null = null;
+let _shownAt = 0;
+let _hideTimer = 0;
+let _cleanupTimer = 0;
+
+const MIN_VISIBLE_MS = 120;
 
 /**
  * Show a Lenia loading bubble in the chat area.
@@ -336,7 +341,24 @@ let _themeObserver: MutationObserver | null = null;
  * management so it won't be removed on re-render.
  */
 export function showLeniaBubble() {
-  if (_bubbleEl) return;
+  if (_bubbleEl && !_bubbleEl.isConnected) {
+    _bubbleEl = null;
+    _scrollArea = null;
+  }
+
+  if (_bubbleEl) {
+    _shownAt = nowMs();
+    if (_hideTimer) {
+      clearTimeout(_hideTimer);
+      _hideTimer = 0;
+    }
+    if (_cleanupTimer) {
+      clearTimeout(_cleanupTimer);
+      _cleanupTimer = 0;
+    }
+    _bubbleEl.classList.remove("lenia-bubble-exit");
+    return;
+  }
 
   // Find the scroll area inside agent-interface (supports light DOM and shadow DOM)
   const agentInterface = document.querySelector("agent-interface") as HTMLElement | null;
@@ -369,6 +391,7 @@ export function showLeniaBubble() {
 
   _bubbleEl = bubble;
   _scrollArea = scrollArea as HTMLElement;
+  _shownAt = nowMs();
 
   // Start renderer
   _renderer = new LeniaRenderer(canvas, SIM_WIDTH, SIM_HEIGHT);
@@ -410,11 +433,39 @@ function findScrollArea(root: ParentNode): HTMLElement | null {
  * Hide and remove the Lenia loading bubble.
  * Call this when the first streaming token arrives (message_start event).
  */
-export function hideLeniaBubble() {
+export function hideLeniaBubble(options?: { force?: boolean }) {
+  if (_bubbleEl && !_bubbleEl.isConnected) {
+    _bubbleEl = null;
+    _scrollArea = null;
+  }
   if (!_bubbleEl) return;
 
+  if (options?.force) {
+    if (_hideTimer) {
+      clearTimeout(_hideTimer);
+      _hideTimer = 0;
+    }
+  } else {
+    const elapsed = nowMs() - _shownAt;
+    if (elapsed < MIN_VISIBLE_MS) {
+      if (_hideTimer) return;
+      _hideTimer = window.setTimeout(() => {
+        _hideTimer = 0;
+        hideLeniaBubble(options);
+      }, Math.max(0, Math.ceil(MIN_VISIBLE_MS - elapsed)));
+      return;
+    }
+  }
+
+  if (_hideTimer) {
+    clearTimeout(_hideTimer);
+    _hideTimer = 0;
+  }
+
   // Fade out
-  _bubbleEl.classList.add("lenia-bubble-exit");
+  if (!options?.force) {
+    _bubbleEl.classList.add("lenia-bubble-exit");
+  }
 
   const el = _bubbleEl;
   const cleanup = () => {
@@ -427,20 +478,35 @@ export function hideLeniaBubble() {
       _bubbleEl = null;
       _scrollArea = null;
     }
+    if (_cleanupTimer) {
+      clearTimeout(_cleanupTimer);
+      _cleanupTimer = 0;
+    }
   };
 
   // Remove after animation or immediately if reduced motion
   const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (prefersReduced) {
+  if (options?.force || prefersReduced) {
     cleanup();
   } else {
-    setTimeout(cleanup, 200);
+    if (_cleanupTimer) return;
+    _cleanupTimer = window.setTimeout(() => {
+      _cleanupTimer = 0;
+      cleanup();
+    }, 200);
   }
 }
 
 /** Clean up everything (for HMR / unmount) */
 export function destroyLeniaLoader() {
-  hideLeniaBubble();
+  hideLeniaBubble({ force: true });
   _themeObserver?.disconnect();
   _themeObserver = null;
+}
+
+function nowMs(): number {
+  if (typeof performance !== "undefined" && typeof performance.now === "function") {
+    return performance.now();
+  }
+  return Date.now();
 }
