@@ -13,6 +13,7 @@ pi-mono/
 openclaw/
 clawra/
 JS-Slash-Runner/
+openclaw-memory/
 *.epub
 
 # Local Netlify folder
