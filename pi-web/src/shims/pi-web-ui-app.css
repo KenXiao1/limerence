@@ -183,29 +183,45 @@ streaming-message-container > div > span.w-2.h-4.bg-muted-foreground.animate-pul
   }
 }
 
-/* ── Particle Lenia loader ─────────────────────────────────────── */
+/* ── Particle Lenia loader bubble ─────────────────────────────── */
 
-/* Hide default dot indicator when Lenia canvas is present */
-streaming-message-container span.animate-pulse:has(~ .lenia-loader-canvas) {
-  display: none !important;
+#lenia-loading-bubble {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0 0.5rem;
+  animation: lenia-bubble-enter 0.25s ease-out;
 }
 
-.lenia-loader-canvas {
+#lenia-loading-bubble .lenia-loader-canvas {
   display: block;
-  margin-left: 1.15rem;
-  margin-top: 2px;
-  margin-bottom: 2px;
-  border-radius: 8px;
+  margin-left: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 16px 16px 16px 6px;
+  border: 1px solid var(--chat-ai-border);
+  background: var(--chat-ai-bg);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.1);
   pointer-events: none;
 }
 
+#lenia-loading-bubble.lenia-bubble-exit {
+  animation: lenia-bubble-exit 0.2s ease-in forwards;
+}
+
+@keyframes lenia-bubble-enter {
+  from { opacity: 0; transform: translateY(6px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes lenia-bubble-exit {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.92); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .lenia-loader-canvas {
-    display: none;
-  }
-  /* Restore dots when lenia is hidden by reduced-motion */
-  streaming-message-container span.animate-pulse:has(~ .lenia-loader-canvas) {
-    display: inline-block !important;
+  #lenia-loading-bubble,
+  #lenia-loading-bubble.lenia-bubble-exit {
+    animation: none;
   }
 }
 

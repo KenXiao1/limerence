@@ -39,6 +39,7 @@ import { scanLorebook, buildLorebookInjection, extractRecentText } from "./contr
 import { applyRegexRules } from "./controllers/regex-rules";
 import { smartCompact } from "./controllers/context-budget";
 import { buildExportData, downloadJson } from "./controllers/session-io";
+import { showLeniaBubble, hideLeniaBubble } from "./lib/particle-lenia";
 import {
   selectNextSpeakers,
   recordTurn,
@@ -519,12 +520,16 @@ export async function createAgent(initialState?: Partial<AgentState>) {
       try { sessionStorage.setItem(DRAFT_KEY, message); } catch {}
     }
 
+    // Show Lenia loading bubble immediately so user sees feedback
+    showLeniaBubble();
+
     return originalPrompt(message, images).then(
       (result: any) => {
         try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
         return result;
       },
       (err: any) => {
+        hideLeniaBubble();
         const draft = sessionStorage.getItem(DRAFT_KEY);
         if (draft && state.chatPanel?.agentInterface) {
           state.chatPanel.agentInterface.setInput(draft);
@@ -537,6 +542,8 @@ export async function createAgent(initialState?: Partial<AgentState>) {
 
   state.agentUnsubscribe = agent.subscribe((event) => {
     if (event.type === "message_start") {
+      // Hide Lenia loading bubble — actual streaming content is arriving
+      hideLeniaBubble();
       // Touch reactive state to trigger header re-render (typing indicator)
       state.activeToolCalls = [...state.activeToolCalls];
       return;
@@ -569,6 +576,7 @@ export async function createAgent(initialState?: Partial<AgentState>) {
     }
 
     if (event.type === "agent_end") {
+      hideLeniaBubble();
       state.activeToolCalls = [];
       state.estimatedTokens = estimateMessagesTokens(agent.state.messages);
       state.contextWindow = agent.state.model?.contextWindow ?? 128000;
