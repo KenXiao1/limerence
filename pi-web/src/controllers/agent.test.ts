@@ -118,9 +118,9 @@ describe("buildRouteUrl", () => {
 // ── createProxyModel ────────────────────────────────────────────
 
 describe("createProxyModel", () => {
-  it("uses deepseek/deepseek-r1-0528:free as the default proxy model", () => {
+  it("uses gemini-3-flash-preview as the default proxy model", () => {
     const model = createProxyModel();
-    expect(model.id).toBe("deepseek/deepseek-r1-0528:free");
+    expect(model.id).toBe("gemini-3-flash-preview");
     expect(model.provider).toBe("limerence-proxy");
     expect(model.baseUrl).toBe("/api/llm/v1");
   });

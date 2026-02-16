@@ -70,7 +70,7 @@ export default async function handler(req: Request, context: Context) {
       );
     }
 
-    const baseUrl = (Deno.env.get("LLM_BASE_URL") || "https://openrouter.ai/api/v1").replace(/\/+$/, "");
+    const baseUrl = (Deno.env.get("LLM_BASE_URL") || "https://api.deepseek.com/v1").replace(/\/+$/, "");
     const url = `${baseUrl}/chat/completions`;
 
     const payload = {

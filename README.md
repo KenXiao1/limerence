@@ -69,15 +69,7 @@ npm run dev
 1. Fork 本仓库
 2. 在 Netlify 创建新站点，关联仓库
 3. 使用仓库根目录 `netlify.toml`（已默认指向 `pi-web`）
-4. （可选）在 Netlify 环境变量中设置 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL_ID`、`FREE_MODEL_ID` 以启用服务端代理模式
-
-推荐（OpenRouter DeepSeek R1 免费模型）：
-
-```env
-LLM_BASE_URL=https://openrouter.ai/api/v1
-LLM_MODEL_ID=deepseek/deepseek-r1-0528:free
-FREE_MODEL_ID=deepseek/deepseek-r1-0528:free
-```
+4. （可选）在 Netlify 环境变量中设置 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL_ID` 以启用服务端代理模式
 
 Web 版架构：
 
