@@ -5,6 +5,9 @@ import {
   getToolLabel,
   buildRouteUrl,
   createProxyModel,
+  hasDirectProviderKeys,
+  shouldUseProxyModel,
+  shouldEnableModelSelector,
 } from "./agent";
 
 // ── parseChatCommand ────────────────────────────────────────────
@@ -120,5 +123,44 @@ describe("createProxyModel", () => {
     expect(model.id).toBe("gemini-3-flash-preview");
     expect(model.provider).toBe("limerence-proxy");
     expect(model.baseUrl).toBe("/api/llm/v1");
+  });
+});
+
+// ── Provider key / model gating helpers ────────────────────────
+
+describe("hasDirectProviderKeys", () => {
+  it("returns false when no providers are configured", () => {
+    expect(hasDirectProviderKeys([])).toBe(false);
+  });
+
+  it("returns false when only proxy sentinel key exists", () => {
+    expect(hasDirectProviderKeys(["limerence-proxy"])).toBe(false);
+  });
+
+  it("returns true when at least one direct provider key exists", () => {
+    expect(hasDirectProviderKeys(["limerence-proxy", "openai"])).toBe(true);
+    expect(hasDirectProviderKeys(["anthropic"])).toBe(true);
+  });
+});
+
+describe("shouldUseProxyModel", () => {
+  it("always uses proxy model when user has no direct provider keys", () => {
+    expect(shouldUseProxyModel(true, false)).toBe(true);
+    expect(shouldUseProxyModel(false, false)).toBe(true);
+  });
+
+  it("follows proxy mode switch when direct provider keys are available", () => {
+    expect(shouldUseProxyModel(true, true)).toBe(true);
+    expect(shouldUseProxyModel(false, true)).toBe(false);
+  });
+});
+
+describe("shouldEnableModelSelector", () => {
+  it("disables model selector without direct provider keys", () => {
+    expect(shouldEnableModelSelector(false)).toBe(false);
+  });
+
+  it("enables model selector when direct provider keys exist", () => {
+    expect(shouldEnableModelSelector(true)).toBe(true);
   });
 });

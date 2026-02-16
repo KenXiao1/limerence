@@ -5,7 +5,7 @@ import {
 } from "@mariozechner/pi-web-ui";
 import { html, render } from "lit";
 import { state, storage, limerenceStorage, syncEngine } from "./app-state";
-import { getDefaultModel, setProxyModeEnabled, setRoute, exportCurrentSession } from "./app-agent";
+import { getDefaultModel, setProxyModeEnabled, setRoute, exportCurrentSession, hasDirectProviderKeyConfigured } from "./app-agent";
 import { ROOT_PATH } from "./app-state";
 import { loadSession, newSession } from "./app-session";
 import { renderWorkspacePanel, toggleWorkspacePanel, openWorkspaceFile } from "./app-workspace";
@@ -151,12 +151,27 @@ export function renderChatView() {
     },
     onStartEditTitle: () => { state.isEditingTitle = true; },
     onToggleProxy: async () => {
+      const hasDirectKey = await hasDirectProviderKeyConfigured();
+      if (!hasDirectKey) {
+        state.proxyModeEnabled = true;
+        await setProxyModeEnabled(true);
+        await storage.providerKeys.set("limerence-proxy", "__PROXY__");
+        state.agent!.setModel(await getDefaultModel());
+        if (state.chatPanel?.agentInterface) {
+          state.chatPanel.agentInterface.enableModelSelector = false;
+        }
+        return;
+      }
+
       state.proxyModeEnabled = !state.proxyModeEnabled;
       await setProxyModeEnabled(state.proxyModeEnabled);
       if (state.proxyModeEnabled) {
         await storage.providerKeys.set("limerence-proxy", "__PROXY__");
       }
       state.agent!.setModel(await getDefaultModel());
+      if (state.chatPanel?.agentInterface) {
+        state.chatPanel.agentInterface.enableModelSelector = true;
+      }
     },
     onToggleWorkspace: () => { void toggleWorkspacePanel(); },
     onToggleTheme: (e) => {

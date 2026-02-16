@@ -30,6 +30,9 @@ import {
   buildGreetingMessage,
   getToolLabel,
   buildRouteUrl,
+  hasDirectProviderKeys,
+  shouldUseProxyModel,
+  shouldEnableModelSelector,
 } from "./controllers/agent";
 import { parseSlashCommand } from "./controllers/slash-commands";
 import { scanLorebook, buildLorebookInjection, extractRecentText } from "./controllers/lorebook";
@@ -77,9 +80,15 @@ export async function setProxyModeEnabled(enabled: boolean): Promise<void> {
 
 export { createProxyModel, createDirectModel } from "./controllers/agent";
 
+export async function hasDirectProviderKeyConfigured(): Promise<boolean> {
+  const providers = await storage.providerKeys.list();
+  return hasDirectProviderKeys(providers);
+}
+
 export async function getDefaultModel(): Promise<Model<any>> {
+  const hasDirectKey = await hasDirectProviderKeyConfigured();
   const proxyMode = await isProxyModeEnabled();
-  return proxyMode ? createProxyModel() : createDirectModel();
+  return shouldUseProxyModel(proxyMode, hasDirectKey) ? createProxyModel() : createDirectModel();
 }
 
 // ── Initial messages ───────────────────────────────────────────
@@ -297,6 +306,70 @@ function drainMessageQueue() {
   }
 }
 
+function installSafeSendMessagePatch(agentInterface: any) {
+  if (!agentInterface || agentInterface.__limerenceSafeSendPatched) return;
+  const originalSendMessage = agentInterface.sendMessage?.bind(agentInterface);
+  if (typeof originalSendMessage !== "function") return;
+
+  agentInterface.sendMessage = async (input: string, attachments?: any[]) => {
+    try {
+      await originalSendMessage(input, attachments);
+      return;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const isEditorRefError =
+        error instanceof TypeError && message.includes("Cannot set properties of undefined");
+      if (!isEditorRefError) {
+        throw error;
+      }
+    }
+
+    const session = agentInterface.session as Agent | undefined;
+    const text = typeof input === "string" ? input : "";
+    const files = Array.isArray(attachments) ? attachments : [];
+    if ((!text.trim() && files.length === 0) || session?.state.isStreaming) return;
+    if (!session) throw new Error("No session set on AgentInterface");
+    if (!session.state.model) throw new Error("No model set on AgentInterface");
+
+    const provider = session.state.model.provider;
+    const apiKey = await storage.providerKeys.get(provider);
+    if (!apiKey) {
+      if (!agentInterface.onApiKeyRequired) {
+        console.error("No API key configured and no onApiKeyRequired handler set");
+        return;
+      }
+      const success = await agentInterface.onApiKeyRequired(provider);
+      if (!success) return;
+    }
+
+    if (agentInterface.onBeforeSend) {
+      await agentInterface.onBeforeSend();
+    }
+
+    const editor = agentInterface.querySelector?.("message-editor") as
+      | { value: string; attachments: any[] }
+      | null;
+    if (editor) {
+      editor.value = "";
+      editor.attachments = [];
+    }
+    agentInterface._autoScroll = true;
+
+    if (files.length > 0) {
+      await session.prompt({
+        role: "user-with-attachments",
+        content: text,
+        attachments: files,
+        timestamp: Date.now(),
+      } as any);
+    } else {
+      await session.prompt(text);
+    }
+  };
+
+  agentInterface.__limerenceSafeSendPatched = true;
+}
+
 // ── Agent creation ─────────────────────────────────────────────
 
 export async function createAgent(initialState?: Partial<AgentState>) {
@@ -305,7 +378,11 @@ export async function createAgent(initialState?: Partial<AgentState>) {
     state.agentUnsubscribe = undefined;
   }
 
-  const model = initialState?.model ?? (await getDefaultModel());
+  const hasDirectKey = await hasDirectProviderKeyConfigured();
+  let model = initialState?.model ?? (await getDefaultModel());
+  if (!hasDirectKey && model.provider !== "limerence-proxy") {
+    model = createProxyModel();
+  }
   const messages = initialState?.messages ?? createInitialMessages(model);
 
   const agent = new Agent({
@@ -436,8 +513,7 @@ export async function createAgent(initialState?: Partial<AgentState>) {
 
   await state.chatPanel!.setAgent(agent, {
     onApiKeyRequired: async (provider: string) => {
-      const proxyMode = await isProxyModeEnabled();
-      if (proxyMode && provider === "limerence-proxy") {
+      if (provider === "limerence-proxy") {
         await storage.providerKeys.set("limerence-proxy", "__PROXY__");
         return true;
       }
@@ -463,7 +539,10 @@ export async function createAgent(initialState?: Partial<AgentState>) {
 
   // Enable image paste/drag attachments
   if (state.chatPanel!.agentInterface) {
-    state.chatPanel!.agentInterface.enableAttachments = true;
+    const agentInterface = state.chatPanel!.agentInterface;
+    agentInterface.enableAttachments = true;
+    agentInterface.enableModelSelector = shouldEnableModelSelector(hasDirectKey);
+    installSafeSendMessagePatch(agentInterface as any);
   }
 }
 
@@ -497,6 +576,13 @@ export async function ensureChatRuntime() {
       state.proxyModeEnabled = typeof raw === "boolean" ? raw : true;
     } catch {
       state.proxyModeEnabled = true;
+    }
+
+    // If user has no direct provider keys, always force hosted proxy mode.
+    if (!(await hasDirectProviderKeyConfigured())) {
+      state.proxyModeEnabled = true;
+      await setProxyModeEnabled(true);
+      await storage.providerKeys.set("limerence-proxy", "__PROXY__");
     }
 
     // Load lorebook entries

@@ -53,6 +53,30 @@ export function createDirectModel(): Model<any> {
   }
 }
 
+/**
+ * Whether at least one direct (user-provided) model provider key exists.
+ * We treat `limerence-proxy` as hosted free-model sentinel, not a direct key.
+ */
+export function hasDirectProviderKeys(providers: string[]): boolean {
+  return providers.some((provider) => provider !== "limerence-proxy");
+}
+
+/**
+ * When no direct key is configured, we always force proxy model.
+ * If direct keys exist, follow the proxy mode switch.
+ */
+export function shouldUseProxyModel(proxyModeEnabled: boolean, hasDirectKey: boolean): boolean {
+  if (!hasDirectKey) return true;
+  return proxyModeEnabled;
+}
+
+/**
+ * Model selector is only meaningful when user configured direct providers.
+ */
+export function shouldEnableModelSelector(hasDirectKey: boolean): boolean {
+  return hasDirectKey;
+}
+
 // ── Greeting message ───────────────────────────────────────────
 
 export function buildGreetingMessage(
