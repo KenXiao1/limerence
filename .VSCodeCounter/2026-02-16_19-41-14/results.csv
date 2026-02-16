@@ -1,0 +1,178 @@
+"filename", "language", "JSON", "Markdown", "JavaScript", "TypeScript", "JSON with Comments", "PostCSS", "TypeScript JSX", "TOML", "MS SQL", "HTML", "Rust", "YAML", "WebAssembly Text Format", "comment", "blank", "total"
+"d:\limerence\.claude\settings.local.json", "JSON", 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 16
+"d:\limerence\.github\workflows\pi-web-static-analysis.yml", "YAML", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 29, 0, 0, 6, 35
+"d:\limerence\AGENTS.md", "Markdown", 0, 42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 49
+"d:\limerence\CLAUDE.md", "Markdown", 0, 89, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 31, 120
+"d:\limerence\Cargo.lock", "TOML", 0, 0, 0, 0, 0, 0, 0, 2287, 0, 0, 0, 0, 0, 2, 265, 2554
+"d:\limerence\Cargo.toml", "TOML", 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 2, 9
+"d:\limerence\README.md", "Markdown", 0, 150, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 44, 194
+"d:\limerence\README_en.md", "Markdown", 0, 151, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 44, 195
+"d:\limerence\config\default_character.json", "JSON", 19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19
+"d:\limerence\crates\limerence-ai\Cargo.toml", "TOML", 0, 0, 0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 2, 13
+"d:\limerence\crates\limerence-ai\src\client.rs", "Rust", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 248, 0, 0, 10, 44, 302
+"d:\limerence\crates\limerence-ai\src\lib.rs", "Rust", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 2, 7
+"d:\limerence\crates\limerence-ai\src\stream.rs", "Rust", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 79, 0, 0, 8, 17, 104
+"d:\limerence\crates\limerence-ai\src\types.rs", "Rust", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 173, 0, 0, 6, 23, 202
+"d:\limerence\crates\limerence-core\Cargo.toml", "TOML", 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 2, 17
+"d:\limerence\crates\limerence-core\src\agent.rs", "Rust", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 154, 0, 0, 23, 31, 208
+"d:\limerence\crates\limerence-core\src\character.rs", "Rust", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 78, 0, 0, 4, 12, 94
+"d:\limerence\crates\limerence-core\src\config.rs", "Rust", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 94, 0, 0, 2, 15, 111
+"d:\limerence\crates\limerence-core\src\file_os.rs", "Rust", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 77, 0, 0, 9, 18, 104
+"d:\limerence\crates\limerence-core\src\lib.rs", "Rust", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0, 0, 0, 2, 13
+"d:\limerence\crates\limerence-core\src\memory.rs", "Rust", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 183, 0, 0, 13, 34, 230
+"d:\limerence\crates\limerence-core\src\notes.rs", "Rust", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 52, 0, 0, 4, 10, 66
+"d:\limerence\crates\limerence-core\src\session.rs", "Rust", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 116, 0, 0, 1, 18, 135
+"d:\limerence\crates\limerence-core\src\tool.rs", "Rust", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 385, 0, 0, 11, 34, 430
+"d:\limerence\crates\limerence-tui\Cargo.toml", "TOML", 0, 0, 0, 0, 0, 0, 0, 14, 0, 0, 0, 0, 0, 0, 3, 17
+"d:\limerence\crates\limerence-tui\src\app.rs", "Rust", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 198, 0, 0, 10, 30, 238
+"d:\limerence\crates\limerence-tui\src\input.rs", "Rust", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 85, 0, 0, 12, 2, 99
+"d:\limerence\crates\limerence-tui\src\main.rs", "Rust", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25, 0, 0, 2, 10, 37
+"d:\limerence\crates\limerence-tui\src\ui.rs", "Rust", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 224, 0, 0, 1, 22, 247
+"d:\limerence\legacy-web\README.md", "Markdown", 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 7
+"d:\limerence\legacy-web\index.html", "HTML", 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 1, 17
+"d:\limerence\legacy-web\netlify.toml", "TOML", 0, 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 5, 22
+"d:\limerence\legacy-web\netlify\edge-functions\chat-proxy.ts", "TypeScript", 0, 0, 0, 72, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 14, 93
+"d:\limerence\legacy-web\netlify\edge-functions\models-proxy.ts", "TypeScript", 0, 0, 0, 51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 12, 69
+"d:\limerence\legacy-web\netlify\edge-functions\web-search.ts", "TypeScript", 0, 0, 0, 120, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 21, 150
+"d:\limerence\legacy-web\package-lock.json", "JSON", 2489, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2490
+"d:\limerence\legacy-web\package.json", "JSON", 26, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 27
+"d:\limerence\legacy-web\public\default_character.json", "JSON", 19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19
+"d:\limerence\legacy-web\src\App.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 2, 13
+"d:\limerence\legacy-web\src\components\FourierHeart.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 155, 0, 0, 0, 0, 0, 0, 28, 20, 203
+"d:\limerence\legacy-web\src\components\InputBar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 80, 0, 0, 0, 0, 0, 0, 0, 7, 87
+"d:\limerence\legacy-web\src\components\MessageBubble.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 81, 0, 0, 0, 0, 0, 0, 2, 8, 91
+"d:\limerence\legacy-web\src\components\MessageList.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0, 0, 2, 9, 61
+"d:\limerence\legacy-web\src\components\ParticleLenia.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 207, 0, 0, 0, 0, 0, 0, 40, 44, 291
+"d:\limerence\legacy-web\src\components\SettingsDialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 280, 0, 0, 0, 0, 0, 0, 5, 23, 308
+"d:\limerence\legacy-web\src\components\Sidebar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 119, 0, 0, 0, 0, 0, 0, 4, 7, 130
+"d:\limerence\legacy-web\src\hooks\useAgent.ts", "TypeScript", 0, 0, 0, 170, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 20, 200
+"d:\limerence\legacy-web\src\hooks\useSettings.ts", "TypeScript", 0, 0, 0, 54, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 10, 65
+"d:\limerence\legacy-web\src\hooks\useTheme.ts", "TypeScript", 0, 0, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 27
+"d:\limerence\legacy-web\src\index.css", "PostCSS", 0, 0, 0, 0, 0, 42, 0, 0, 0, 0, 0, 0, 0, 3, 5, 50
+"d:\limerence\legacy-web\src\lib\agent.ts", "TypeScript", 0, 0, 0, 119, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 26, 162
+"d:\limerence\legacy-web\src\lib\character.ts", "TypeScript", 0, 0, 0, 28, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 8, 38
+"d:\limerence\legacy-web\src\lib\llm.ts", "TypeScript", 0, 0, 0, 198, 0, 0, 0, 0, 0, 0, 0, 0, 0, 31, 39, 268
+"d:\limerence\legacy-web\src\lib\memory.ts", "TypeScript", 0, 0, 0, 130, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 26, 159
+"d:\limerence\legacy-web\src\lib\storage.ts", "TypeScript", 0, 0, 0, 109, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 24, 137
+"d:\limerence\legacy-web\src\lib\tools.ts", "TypeScript", 0, 0, 0, 163, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 12, 177
+"d:\limerence\legacy-web\src\lib\types.ts", "TypeScript", 0, 0, 0, 80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 22, 111
+"d:\limerence\legacy-web\src\main.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 2, 14
+"d:\limerence\legacy-web\src\pages\Chat.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 106, 0, 0, 0, 0, 0, 0, 6, 11, 123
+"d:\limerence\legacy-web\src\pages\Landing.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 505, 0, 0, 0, 0, 0, 0, 29, 29, 563
+"d:\limerence\legacy-web\tsconfig.json", "JSON with Comments", 0, 0, 0, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 22
+"d:\limerence\legacy-web\tsconfig.tsbuildinfo", "JSON", 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+"d:\limerence\legacy-web\vite.config.ts", "TypeScript", 0, 0, 0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 16
+"d:\limerence\netlify.toml", "TOML", 0, 0, 0, 0, 0, 0, 0, 14, 0, 0, 0, 0, 0, 0, 4, 18
+"d:\limerence\openclaw\.agent\workflows\update_clawdbot.md", "Markdown", 0, 259, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 122, 381
+"d:\limerence\openclaw\vendor\a2ui\renderers\lit\src\0.8\schemas\server_to_client_with_standard_catalog.json", "JSON", 827, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 827
+"d:\limerence\package-lock.json", "JSON", 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7
+"d:\limerence\pi-web\README.md", "Markdown", 0, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 62
+"d:\limerence\pi-web\index.html", "HTML", 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 1, 20
+"d:\limerence\pi-web\netlify.toml", "TOML", 0, 0, 0, 0, 0, 0, 0, 14, 0, 0, 0, 0, 0, 0, 4, 18
+"d:\limerence\pi-web\netlify\edge-functions\chat-proxy.ts", "TypeScript", 0, 0, 0, 235, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 271
+"d:\limerence\pi-web\netlify\edge-functions\web-search.ts", "TypeScript", 0, 0, 0, 115, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23, 138
+"d:\limerence\pi-web\oxlintrc.json", "JSON", 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7
+"d:\limerence\pi-web\package-lock.json", "JSON", 6731, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 6732
+"d:\limerence\pi-web\package.json", "JSON", 40, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 41
+"d:\limerence\pi-web\public\default_character.json", "JSON", 19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19
+"d:\limerence\pi-web\public\sql-wasm.wasm", "WebAssembly Text Format", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14685, 0, 163, 14848
+"d:\limerence\pi-web\public\supabase-schema.sql", "MS SQL", 0, 0, 0, 0, 0, 0, 0, 0, 168, 0, 0, 0, 0, 18, 46, 232
+"d:\limerence\pi-web\scripts\check-loc.mjs", "JavaScript", 0, 0, 42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 9, 56
+"d:\limerence\pi-web\src\app-agent.ts", "TypeScript", 0, 0, 0, 566, 0, 0, 0, 0, 0, 0, 0, 0, 0, 69, 105, 740
+"d:\limerence\pi-web\src\app-compaction.test.ts", "TypeScript", 0, 0, 0, 37, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 46
+"d:\limerence\pi-web\src\app-compaction.ts", "TypeScript", 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 2, 13
+"d:\limerence\pi-web\src\app-lifecycle.ts", "TypeScript", 0, 0, 0, 101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 38, 25, 164
+"d:\limerence\pi-web\src\app-message-actions.ts", "TypeScript", 0, 0, 0, 182, 0, 0, 0, 0, 0, 0, 0, 0, 0, 29, 52, 263
+"d:\limerence\pi-web\src\app-render.ts", "TypeScript", 0, 0, 0, 686, 0, 0, 0, 0, 0, 0, 0, 0, 0, 35, 96, 817
+"d:\limerence\pi-web\src\app-repair.ts", "TypeScript", 0, 0, 0, 65, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 12, 91
+"d:\limerence\pi-web\src\app-session.ts", "TypeScript", 0, 0, 0, 72, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 20, 97
+"d:\limerence\pi-web\src\app-state.ts", "TypeScript", 0, 0, 0, 211, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22, 40, 273
+"d:\limerence\pi-web\src\app-workspace.ts", "TypeScript", 0, 0, 0, 360, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 40, 406
+"d:\limerence\pi-web\src\app.css", "PostCSS", 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 2, 9
+"d:\limerence\pi-web\src\components\resizable-divider.ts", "TypeScript", 0, 0, 0, 38, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 9, 62
+"d:\limerence\pi-web\src\controllers\agent.test.ts", "TypeScript", 0, 0, 0, 130, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 31, 167
+"d:\limerence\pi-web\src\controllers\agent.ts", "TypeScript", 0, 0, 0, 88, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25, 20, 133
+"d:\limerence\pi-web\src\controllers\character-png.test.ts", "TypeScript", 0, 0, 0, 132, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 151
+"d:\limerence\pi-web\src\controllers\character-png.ts", "TypeScript", 0, 0, 0, 229, 0, 0, 0, 0, 0, 0, 0, 0, 0, 28, 43, 300
+"d:\limerence\pi-web\src\controllers\character.test.ts", "TypeScript", 0, 0, 0, 57, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 66
+"d:\limerence\pi-web\src\controllers\character.ts", "TypeScript", 0, 0, 0, 104, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 19, 142
+"d:\limerence\pi-web\src\controllers\compaction.test.ts", "TypeScript", 0, 0, 0, 111, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 24, 145
+"d:\limerence\pi-web\src\controllers\compaction.ts", "TypeScript", 0, 0, 0, 79, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 19, 110
+"d:\limerence\pi-web\src\controllers\context-budget.ts", "TypeScript", 0, 0, 0, 180, 0, 0, 0, 0, 0, 0, 0, 0, 0, 42, 39, 261
+"d:\limerence\pi-web\src\controllers\free-model-quota.test.ts", "TypeScript", 0, 0, 0, 55, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 63
+"d:\limerence\pi-web\src\controllers\free-model-quota.ts", "TypeScript", 0, 0, 0, 52, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 62
+"d:\limerence\pi-web\src\controllers\group-chat.ts", "TypeScript", 0, 0, 0, 156, 0, 0, 0, 0, 0, 0, 0, 0, 0, 35, 36, 227
+"d:\limerence\pi-web\src\controllers\lorebook.ts", "TypeScript", 0, 0, 0, 57, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 12, 88
+"d:\limerence\pi-web\src\controllers\message-actions.ts", "TypeScript", 0, 0, 0, 188, 0, 0, 0, 0, 0, 0, 0, 0, 0, 80, 43, 311
+"d:\limerence\pi-web\src\controllers\presets.ts", "TypeScript", 0, 0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 9, 83
+"d:\limerence\pi-web\src\controllers\prompt-presets.ts", "TypeScript", 0, 0, 0, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25, 23, 162
+"d:\limerence\pi-web\src\controllers\regex-io.ts", "TypeScript", 0, 0, 0, 49, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 18, 84
+"d:\limerence\pi-web\src\controllers\regex-rules.ts", "TypeScript", 0, 0, 0, 52, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 9, 76
+"d:\limerence\pi-web\src\controllers\session-io.ts", "TypeScript", 0, 0, 0, 78, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 11, 107
+"d:\limerence\pi-web\src\controllers\session.test.ts", "TypeScript", 0, 0, 0, 167, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 36, 209
+"d:\limerence\pi-web\src\controllers\session.ts", "TypeScript", 0, 0, 0, 136, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 34, 183
+"d:\limerence\pi-web\src\controllers\slash-commands.ts", "TypeScript", 0, 0, 0, 36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 6, 50
+"d:\limerence\pi-web\src\controllers\workspace.test.ts", "TypeScript", 0, 0, 0, 123, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 25, 155
+"d:\limerence\pi-web\src\controllers\workspace.ts", "TypeScript", 0, 0, 0, 122, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 26, 157
+"d:\limerence\pi-web\src\legacy-intro\components\FourierHeart.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 153, 0, 0, 0, 0, 0, 0, 28, 20, 201
+"d:\limerence\pi-web\src\legacy-intro\components\ParticleLenia.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 207, 0, 0, 0, 0, 0, 0, 40, 44, 291
+"d:\limerence\pi-web\src\legacy-intro\components\landing\LandingArchitecture.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 248, 0, 0, 0, 0, 0, 0, 0, 16, 264
+"d:\limerence\pi-web\src\legacy-intro\components\landing\LandingFeatures.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 58, 0, 0, 0, 0, 0, 0, 0, 6, 64
+"d:\limerence\pi-web\src\legacy-intro\components\landing\LandingFooter.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 25, 0, 0, 0, 0, 0, 0, 0, 2, 27
+"d:\limerence\pi-web\src\legacy-intro\components\landing\LandingHero.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 81, 0, 0, 0, 0, 0, 0, 0, 6, 87
+"d:\limerence\pi-web\src\legacy-intro\components\landing\LandingMemoryShowcase.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 158, 0, 0, 0, 0, 0, 0, 5, 11, 174
+"d:\limerence\pi-web\src\legacy-intro\components\landing\LandingNav.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 121, 0, 0, 0, 0, 0, 0, 0, 9, 130
+"d:\limerence\pi-web\src\legacy-intro\components\landing\landing-data.ts", "TypeScript", 0, 0, 0, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 67
+"d:\limerence\pi-web\src\legacy-intro\hooks\useI18n.ts", "TypeScript", 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 17
+"d:\limerence\pi-web\src\legacy-intro\hooks\useTheme.ts", "TypeScript", 0, 0, 0, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 29
+"d:\limerence\pi-web\src\legacy-intro\index.css", "PostCSS", 0, 0, 0, 0, 0, 82, 0, 0, 0, 0, 0, 0, 0, 3, 8, 93
+"d:\limerence\pi-web\src\legacy-intro\mount.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 37, 0, 0, 0, 0, 0, 0, 0, 6, 43
+"d:\limerence\pi-web\src\legacy-intro\pages\Landing.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 4, 44
+"d:\limerence\pi-web\src\lib\auth.ts", "TypeScript", 0, 0, 0, 59, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 11, 74
+"d:\limerence\pi-web\src\lib\character.ts", "TypeScript", 0, 0, 0, 191, 0, 0, 0, 0, 0, 0, 0, 0, 0, 24, 39, 254
+"d:\limerence\pi-web\src\lib\i18n.ts", "TypeScript", 0, 0, 0, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 13, 71
+"d:\limerence\pi-web\src\lib\i18n\en.ts", "TypeScript", 0, 0, 0, 307, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 13, 335
+"d:\limerence\pi-web\src\lib\i18n\zh.ts", "TypeScript", 0, 0, 0, 307, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 13, 335
+"d:\limerence\pi-web\src\lib\memory-db.ts", "TypeScript", 0, 0, 0, 551, 0, 0, 0, 0, 0, 0, 0, 0, 0, 82, 91, 724
+"d:\limerence\pi-web\src\lib\memory-embedding.ts", "TypeScript", 0, 0, 0, 71, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 13, 87
+"d:\limerence\pi-web\src\lib\memory.test.ts", "TypeScript", 0, 0, 0, 49, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 57
+"d:\limerence\pi-web\src\lib\memory.ts", "TypeScript", 0, 0, 0, 130, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25, 155
+"d:\limerence\pi-web\src\lib\mini-lit-zh.ts", "TypeScript", 0, 0, 0, 182, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22, 19, 223
+"d:\limerence\pi-web\src\lib\storage.test.ts", "TypeScript", 0, 0, 0, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 33
+"d:\limerence\pi-web\src\lib\storage.ts", "TypeScript", 0, 0, 0, 206, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 47, 259
+"d:\limerence\pi-web\src\lib\supabase.ts", "TypeScript", 0, 0, 0, 42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 14, 67
+"d:\limerence\pi-web\src\lib\sync-engine.ts", "TypeScript", 0, 0, 0, 270, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 28, 310
+"d:\limerence\pi-web\src\lib\sync-realtime.ts", "TypeScript", 0, 0, 0, 52, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 12, 68
+"d:\limerence\pi-web\src\lib\sync-tables.ts", "TypeScript", 0, 0, 0, 431, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 69, 517
+"d:\limerence\pi-web\src\lib\tokenizer.ts", "TypeScript", 0, 0, 0, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 11, 62
+"d:\limerence\pi-web\src\lib\tools.ts", "TypeScript", 0, 0, 0, 374, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 63, 455
+"d:\limerence\pi-web\src\main.ts", "TypeScript", 0, 0, 0, 105, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 28, 145
+"d:\limerence\pi-web\src\renderers\memory-renderers.ts", "TypeScript", 0, 0, 0, 216, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 37, 267
+"d:\limerence\pi-web\src\shims\env-api-keys.ts", "TypeScript", 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4
+"d:\limerence\pi-web\src\shims\lmstudio-sdk.ts", "TypeScript", 0, 0, 0, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 77
+"d:\limerence\pi-web\src\shims\pi-ai-browser.ts", "TypeScript", 0, 0, 0, 90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 101
+"d:\limerence\pi-web\src\shims\pi-web-ui-app.css", "PostCSS", 0, 0, 0, 0, 0, 154, 0, 0, 0, 0, 0, 0, 0, 5, 26, 185
+"d:\limerence\pi-web\src\styles\dialogs.css", "PostCSS", 0, 0, 0, 0, 0, 837, 0, 0, 0, 0, 0, 0, 0, 29, 152, 1018
+"d:\limerence\pi-web\src\styles\layout.css", "PostCSS", 0, 0, 0, 0, 0, 53, 0, 0, 0, 0, 0, 0, 0, 6, 13, 72
+"d:\limerence\pi-web\src\styles\message-actions.css", "PostCSS", 0, 0, 0, 0, 0, 140, 0, 0, 0, 0, 0, 0, 0, 8, 28, 176
+"d:\limerence\pi-web\src\styles\mobile.css", "PostCSS", 0, 0, 0, 0, 0, 74, 0, 0, 0, 0, 0, 0, 0, 13, 20, 107
+"d:\limerence\pi-web\src\styles\tokens.css", "PostCSS", 0, 0, 0, 0, 0, 45, 0, 0, 0, 0, 0, 0, 0, 13, 9, 67
+"d:\limerence\pi-web\src\styles\workspace.css", "PostCSS", 0, 0, 0, 0, 0, 429, 0, 0, 0, 0, 0, 0, 0, 15, 83, 527
+"d:\limerence\pi-web\src\theme-transition.ts", "TypeScript", 0, 0, 0, 38, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 9, 55
+"d:\limerence\pi-web\src\views\auth-dialog.ts", "TypeScript", 0, 0, 0, 302, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 22, 334
+"d:\limerence\pi-web\src\views\character-selector.ts", "TypeScript", 0, 0, 0, 97, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 6, 107
+"d:\limerence\pi-web\src\views\header.ts", "TypeScript", 0, 0, 0, 205, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 21, 230
+"d:\limerence\pi-web\src\views\message-actions.ts", "TypeScript", 0, 0, 0, 148, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 13, 174
+"d:\limerence\pi-web\src\views\settings-panels.ts", "TypeScript", 0, 0, 0, 424, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 36, 478
+"d:\limerence\pi-web\src\views\supabase-config-dialog.ts", "TypeScript", 0, 0, 0, 93, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 8, 105
+"d:\limerence\pi-web\src\views\token-usage.ts", "TypeScript", 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 21
+"d:\limerence\pi-web\src\views\tool-calls.ts", "TypeScript", 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 4, 17
+"d:\limerence\pi-web\src\views\workspace-memory.ts", "TypeScript", 0, 0, 0, 110, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 11, 126
+"d:\limerence\pi-web\src\vite-env.d.ts", "TypeScript", 0, 0, 0, 26, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7, 34
+"d:\limerence\pi-web\tsconfig.json", "JSON with Comments", 0, 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 18
+"d:\limerence\pi-web\vite.config.ts", "TypeScript", 0, 0, 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 36
+"d:\limerence\角色卡示例\json\奥琪-魔20260205224838481.json", "JSON", 673, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 673
+"d:\limerence\预设example\正则\正则三删除多余内容.json", "JSON", 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+"d:\limerence\预设example\正则\正则二部分仅保留总结.json", "JSON", 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+"d:\limerence\预设example\预设\久久预设 FOR Claude.json", "JSON", 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+"Total", "-", 10874, 742, 42, 11964, 38, 1863, 2734, 2379, 168, 35, 2187, 29, 14685, 1529, 3731, 53000

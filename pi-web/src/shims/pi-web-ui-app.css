@@ -182,3 +182,30 @@ streaming-message-container > div > span.w-2.h-4.bg-muted-foreground.animate-pul
     transform: none;
   }
 }
+
+/* ── Particle Lenia loader ─────────────────────────────────────── */
+
+/* Hide default dot indicator when Lenia canvas is present */
+streaming-message-container > div > span.w-2.h-4.bg-muted-foreground.animate-pulse:has(~ .lenia-loader-canvas),
+streaming-message-container > div > span.animate-pulse:has(~ .lenia-loader-canvas) {
+  display: none !important;
+}
+
+.lenia-loader-canvas {
+  display: block;
+  margin-left: 1.15rem;
+  margin-top: 2px;
+  margin-bottom: 2px;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lenia-loader-canvas {
+    display: none;
+  }
+  /* Restore dots when lenia is hidden by reduced-motion */
+  streaming-message-container > div > span.w-2.h-4.bg-muted-foreground.animate-pulse:has(~ .lenia-loader-canvas) {
+    display: block !important;
+  }
+}

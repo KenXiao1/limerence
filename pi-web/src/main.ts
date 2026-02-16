@@ -17,6 +17,7 @@ import { getLocale, onLocaleChange } from "./lib/i18n";
 import { setTranslations, defaultEnglish } from "@mariozechner/mini-lit";
 import { miniLitChinese } from "./lib/mini-lit-zh";
 import { registerMemoryRenderers } from "./renderers/memory-renderers";
+import { initLeniaLoader } from "./lib/particle-lenia";
 
 // ── Register custom tool renderers ───────────────────────────────
 registerMemoryRenderers();
@@ -137,6 +138,9 @@ async function initApp() {
       state.focusMode = false;
     }
   });
+
+  // Initialize Particle Lenia streaming loader
+  initLeniaLoader();
 
   await routeByLocation();
 }

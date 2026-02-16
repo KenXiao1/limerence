@@ -1,0 +1,277 @@
+Date : 2026-02-16 19:41:14
+Directory : d:\limerence
+Total : 176 files,  47740 codes, 1529 comments, 3731 blanks, all 53000 lines
+
+Languages
++-------------------------+------------+------------+------------+------------+------------+
+| language                | files      | code       | comment    | blank      | total      |
++-------------------------+------------+------------+------------+------------+------------+
+| WebAssembly Text Format |          1 |     14,685 |          0 |        163 |     14,848 |
+| TypeScript              |         89 |     11,964 |      1,104 |      1,987 |     15,055 |
+| JSON                    |         16 |     10,874 |          0 |          7 |     10,881 |
+| TypeScript JSX          |         21 |      2,734 |        189 |        286 |      3,209 |
+| TOML                    |          8 |      2,379 |          2 |        287 |      2,668 |
+| Rust                    |         17 |      2,187 |        116 |        324 |      2,627 |
+| PostCSS                 |         10 |      1,863 |         95 |        346 |      2,304 |
+| Markdown                |          7 |        742 |          0 |        266 |      1,008 |
+| MS SQL                  |          1 |        168 |         18 |         46 |        232 |
+| JavaScript              |          1 |         42 |          5 |          9 |         56 |
+| JSON with Comments      |          2 |         38 |          0 |          2 |         40 |
+| HTML                    |          2 |         35 |          0 |          2 |         37 |
+| YAML                    |          1 |         29 |          0 |          6 |         35 |
++-------------------------+------------+------------+------------+------------+------------+
+
+Directories
++-------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                        | files      | code       | comment    | blank      | total      |
++-------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                           |        176 |     47,740 |      1,529 |      3,731 |     53,000 |
+| . (Files)                                                                                                   |          8 |      2,746 |          2 |        398 |      3,146 |
+| .claude                                                                                                     |          1 |         15 |          0 |          1 |         16 |
+| .github                                                                                                     |          1 |         29 |          0 |          6 |         35 |
+| .github\workflows                                                                                           |          1 |         29 |          0 |          6 |         35 |
+| config                                                                                                      |          1 |         19 |          0 |          0 |         19 |
+| crates                                                                                                      |         20 |      2,227 |        116 |        331 |      2,674 |
+| crates\limerence-ai                                                                                         |          5 |        516 |         24 |         88 |        628 |
+| crates\limerence-ai (Files)                                                                                 |          1 |         11 |          0 |          2 |         13 |
+| crates\limerence-ai\src                                                                                     |          4 |        505 |         24 |         86 |        615 |
+| crates\limerence-core                                                                                       |         10 |      1,165 |         67 |        176 |      1,408 |
+| crates\limerence-core (Files)                                                                               |          1 |         15 |          0 |          2 |         17 |
+| crates\limerence-core\src                                                                                   |          9 |      1,150 |         67 |        174 |      1,391 |
+| crates\limerence-tui                                                                                        |          5 |        546 |         25 |         67 |        638 |
+| crates\limerence-tui (Files)                                                                                |          1 |         14 |          0 |          3 |         17 |
+| crates\limerence-tui\src                                                                                    |          4 |        532 |         25 |         64 |        621 |
+| legacy-web                                                                                                  |         34 |      5,570 |        220 |        421 |      6,211 |
+| legacy-web (Files)                                                                                          |          8 |      2,588 |          0 |         14 |      2,602 |
+| legacy-web\netlify                                                                                          |          3 |        243 |         22 |         47 |        312 |
+| legacy-web\netlify\edge-functions                                                                           |          3 |        243 |         22 |         47 |        312 |
+| legacy-web\public                                                                                           |          1 |         19 |          0 |          0 |         19 |
+| legacy-web\src                                                                                              |         22 |      2,720 |        198 |        360 |      3,278 |
+| legacy-web\src (Files)                                                                                      |          3 |         65 |          3 |          9 |         77 |
+| legacy-web\src\components                                                                                   |          7 |        972 |         81 |        118 |      1,171 |
+| legacy-web\src\hooks                                                                                        |          3 |        245 |         11 |         36 |        292 |
+| legacy-web\src\lib                                                                                          |          7 |        827 |         68 |        157 |      1,052 |
+| legacy-web\src\pages                                                                                        |          2 |        611 |         35 |         40 |        686 |
+| openclaw                                                                                                    |          2 |      1,086 |          0 |        122 |      1,208 |
+| openclaw\.agent                                                                                             |          1 |        259 |          0 |        122 |        381 |
+| openclaw\.agent\workflows                                                                                   |          1 |        259 |          0 |        122 |        381 |
+| openclaw\vendor                                                                                             |          1 |        827 |          0 |          0 |        827 |
+| openclaw\vendor\a2ui                                                                                        |          1 |        827 |          0 |          0 |        827 |
+| openclaw\vendor\a2ui\renderers                                                                              |          1 |        827 |          0 |          0 |        827 |
+| openclaw\vendor\a2ui\renderers\lit                                                                          |          1 |        827 |          0 |          0 |        827 |
+| openclaw\vendor\a2ui\renderers\lit\src                                                                      |          1 |        827 |          0 |          0 |        827 |
+| openclaw\vendor\a2ui\renderers\lit\src\0.8                                                                  |          1 |        827 |          0 |          0 |        827 |
+| openclaw\vendor\a2ui\renderers\lit\src\0.8\schemas                                                          |          1 |        827 |          0 |          0 |        827 |
+| pi-web                                                                                                      |        105 |     35,372 |      1,191 |      2,452 |     39,015 |
+| pi-web (Files)                                                                                              |          8 |      6,906 |          2 |         26 |      6,934 |
+| pi-web\netlify                                                                                              |          2 |        350 |          0 |         59 |        409 |
+| pi-web\netlify\edge-functions                                                                               |          2 |        350 |          0 |         59 |        409 |
+| pi-web\public                                                                                               |          3 |     14,872 |         18 |        209 |     15,099 |
+| pi-web\scripts                                                                                              |          1 |         42 |          5 |          9 |         56 |
+| pi-web\src                                                                                                  |         91 |     13,202 |      1,166 |      2,149 |     16,517 |
+| pi-web\src (Files)                                                                                          |         14 |      2,463 |        243 |        447 |      3,153 |
+| pi-web\src\components                                                                                       |          1 |         38 |         15 |          9 |         62 |
+| pi-web\src\controllers                                                                                      |         24 |      2,559 |        404 |        529 |      3,492 |
+| pi-web\src\legacy-intro                                                                                     |         14 |      1,305 |         76 |        150 |      1,531 |
+| pi-web\src\legacy-intro (Files)                                                                             |          2 |        119 |          3 |         14 |        136 |
+| pi-web\src\legacy-intro\components                                                                          |          9 |      1,111 |         73 |        121 |      1,305 |
+| pi-web\src\legacy-intro\components (Files)                                                                  |          2 |        360 |         68 |         64 |        492 |
+| pi-web\src\legacy-intro\components\landing                                                                  |          7 |        751 |          5 |         57 |        813 |
+| pi-web\src\legacy-intro\hooks                                                                               |          2 |         35 |          0 |         11 |         46 |
+| pi-web\src\legacy-intro\pages                                                                               |          1 |         40 |          0 |          4 |         44 |
+| pi-web\src\lib                                                                                              |         18 |      3,328 |        261 |        497 |      4,086 |
+| pi-web\src\lib (Files)                                                                                      |         16 |      2,714 |        231 |        471 |      3,416 |
+| pi-web\src\lib\i18n                                                                                         |          2 |        614 |         30 |         26 |        670 |
+| pi-web\src\renderers                                                                                        |          1 |        216 |         14 |         37 |        267 |
+| pi-web\src\shims                                                                                            |          4 |        313 |          5 |         49 |        367 |
+| pi-web\src\styles                                                                                           |          6 |      1,578 |         84 |        305 |      1,967 |
+| pi-web\src\views                                                                                            |          9 |      1,402 |         64 |        126 |      1,592 |
+| 角色卡示例                                                                                                       |          1 |        673 |          0 |          0 |        673 |
+| 角色卡示例\json                                                                                                  |          1 |        673 |          0 |          0 |        673 |
+| 预设example                                                                                                   |          3 |          3 |          0 |          0 |          3 |
+| 预设example\正则                                                                                                |          2 |          2 |          0 |          0 |          2 |
+| 预设example\预设                                                                                                |          1 |          1 |          0 |          0 |          1 |
++-------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++-------------------------------------------------------------------------------------------------------------+-------------------------+------------+------------+------------+------------+
+| filename                                                                                                    | language                | code       | comment    | blank      | total      |
++-------------------------------------------------------------------------------------------------------------+-------------------------+------------+------------+------------+------------+
+| d:\limerence\.claude\settings.local.json                                                                    | JSON                    |         15 |          0 |          1 |         16 |
+| d:\limerence\.github\workflows\pi-web-static-analysis.yml                                                   | YAML                    |         29 |          0 |          6 |         35 |
+| d:\limerence\AGENTS.md                                                                                      | Markdown                |         42 |          0 |          7 |         49 |
+| d:\limerence\CLAUDE.md                                                                                      | Markdown                |         89 |          0 |         31 |        120 |
+| d:\limerence\Cargo.lock                                                                                     | TOML                    |      2,287 |          2 |        265 |      2,554 |
+| d:\limerence\Cargo.toml                                                                                     | TOML                    |          7 |          0 |          2 |          9 |
+| d:\limerence\README.md                                                                                      | Markdown                |        150 |          0 |         44 |        194 |
+| d:\limerence\README_en.md                                                                                   | Markdown                |        151 |          0 |         44 |        195 |
+| d:\limerence\config\default_character.json                                                                  | JSON                    |         19 |          0 |          0 |         19 |
+| d:\limerence\crates\limerence-ai\Cargo.toml                                                                 | TOML                    |         11 |          0 |          2 |         13 |
+| d:\limerence\crates\limerence-ai\src\client.rs                                                              | Rust                    |        248 |         10 |         44 |        302 |
+| d:\limerence\crates\limerence-ai\src\lib.rs                                                                 | Rust                    |          5 |          0 |          2 |          7 |
+| d:\limerence\crates\limerence-ai\src\stream.rs                                                              | Rust                    |         79 |          8 |         17 |        104 |
+| d:\limerence\crates\limerence-ai\src\types.rs                                                               | Rust                    |        173 |          6 |         23 |        202 |
+| d:\limerence\crates\limerence-core\Cargo.toml                                                               | TOML                    |         15 |          0 |          2 |         17 |
+| d:\limerence\crates\limerence-core\src\agent.rs                                                             | Rust                    |        154 |         23 |         31 |        208 |
+| d:\limerence\crates\limerence-core\src\character.rs                                                         | Rust                    |         78 |          4 |         12 |         94 |
+| d:\limerence\crates\limerence-core\src\config.rs                                                            | Rust                    |         94 |          2 |         15 |        111 |
+| d:\limerence\crates\limerence-core\src\file_os.rs                                                           | Rust                    |         77 |          9 |         18 |        104 |
+| d:\limerence\crates\limerence-core\src\lib.rs                                                               | Rust                    |         11 |          0 |          2 |         13 |
+| d:\limerence\crates\limerence-core\src\memory.rs                                                            | Rust                    |        183 |         13 |         34 |        230 |
+| d:\limerence\crates\limerence-core\src\notes.rs                                                             | Rust                    |         52 |          4 |         10 |         66 |
+| d:\limerence\crates\limerence-core\src\session.rs                                                           | Rust                    |        116 |          1 |         18 |        135 |
+| d:\limerence\crates\limerence-core\src\tool.rs                                                              | Rust                    |        385 |         11 |         34 |        430 |
+| d:\limerence\crates\limerence-tui\Cargo.toml                                                                | TOML                    |         14 |          0 |          3 |         17 |
+| d:\limerence\crates\limerence-tui\src\app.rs                                                                | Rust                    |        198 |         10 |         30 |        238 |
+| d:\limerence\crates\limerence-tui\src\input.rs                                                              | Rust                    |         85 |         12 |          2 |         99 |
+| d:\limerence\crates\limerence-tui\src\main.rs                                                               | Rust                    |         25 |          2 |         10 |         37 |
+| d:\limerence\crates\limerence-tui\src\ui.rs                                                                 | Rust                    |        224 |          1 |         22 |        247 |
+| d:\limerence\legacy-web\README.md                                                                           | Markdown                |          4 |          0 |          3 |          7 |
+| d:\limerence\legacy-web\index.html                                                                          | HTML                    |         16 |          0 |          1 |         17 |
+| d:\limerence\legacy-web\netlify.toml                                                                        | TOML                    |         17 |          0 |          5 |         22 |
+| d:\limerence\legacy-web\netlify\edge-functions\chat-proxy.ts                                                | TypeScript              |         72 |          7 |         14 |         93 |
+| d:\limerence\legacy-web\netlify\edge-functions\models-proxy.ts                                              | TypeScript              |         51 |          6 |         12 |         69 |
+| d:\limerence\legacy-web\netlify\edge-functions\web-search.ts                                                | TypeScript              |        120 |          9 |         21 |        150 |
+| d:\limerence\legacy-web\package-lock.json                                                                   | JSON                    |      2,489 |          0 |          1 |      2,490 |
+| d:\limerence\legacy-web\package.json                                                                        | JSON                    |         26 |          0 |          1 |         27 |
+| d:\limerence\legacy-web\public\default_character.json                                                       | JSON                    |         19 |          0 |          0 |         19 |
+| d:\limerence\legacy-web\src\App.tsx                                                                         | TypeScript JSX          |         11 |          0 |          2 |         13 |
+| d:\limerence\legacy-web\src\components\FourierHeart.tsx                                                     | TypeScript JSX          |        155 |         28 |         20 |        203 |
+| d:\limerence\legacy-web\src\components\InputBar.tsx                                                         | TypeScript JSX          |         80 |          0 |          7 |         87 |
+| d:\limerence\legacy-web\src\components\MessageBubble.tsx                                                    | TypeScript JSX          |         81 |          2 |          8 |         91 |
+| d:\limerence\legacy-web\src\components\MessageList.tsx                                                      | TypeScript JSX          |         50 |          2 |          9 |         61 |
+| d:\limerence\legacy-web\src\components\ParticleLenia.tsx                                                    | TypeScript JSX          |        207 |         40 |         44 |        291 |
+| d:\limerence\legacy-web\src\components\SettingsDialog.tsx                                                   | TypeScript JSX          |        280 |          5 |         23 |        308 |
+| d:\limerence\legacy-web\src\components\Sidebar.tsx                                                          | TypeScript JSX          |        119 |          4 |          7 |        130 |
+| d:\limerence\legacy-web\src\hooks\useAgent.ts                                                               | TypeScript              |        170 |         10 |         20 |        200 |
+| d:\limerence\legacy-web\src\hooks\useSettings.ts                                                            | TypeScript              |         54 |          1 |         10 |         65 |
+| d:\limerence\legacy-web\src\hooks\useTheme.ts                                                               | TypeScript              |         21 |          0 |          6 |         27 |
+| d:\limerence\legacy-web\src\index.css                                                                       | PostCSS                 |         42 |          3 |          5 |         50 |
+| d:\limerence\legacy-web\src\lib\agent.ts                                                                    | TypeScript              |        119 |         17 |         26 |        162 |
+| d:\limerence\legacy-web\src\lib\character.ts                                                                | TypeScript              |         28 |          2 |          8 |         38 |
+| d:\limerence\legacy-web\src\lib\llm.ts                                                                      | TypeScript              |        198 |         31 |         39 |        268 |
+| d:\limerence\legacy-web\src\lib\memory.ts                                                                   | TypeScript              |        130 |          3 |         26 |        159 |
+| d:\limerence\legacy-web\src\lib\storage.ts                                                                  | TypeScript              |        109 |          4 |         24 |        137 |
+| d:\limerence\legacy-web\src\lib\tools.ts                                                                    | TypeScript              |        163 |          2 |         12 |        177 |
+| d:\limerence\legacy-web\src\lib\types.ts                                                                    | TypeScript              |         80 |          9 |         22 |        111 |
+| d:\limerence\legacy-web\src\main.tsx                                                                        | TypeScript JSX          |         12 |          0 |          2 |         14 |
+| d:\limerence\legacy-web\src\pages\Chat.tsx                                                                  | TypeScript JSX          |        106 |          6 |         11 |        123 |
+| d:\limerence\legacy-web\src\pages\Landing.tsx                                                               | TypeScript JSX          |        505 |         29 |         29 |        563 |
+| d:\limerence\legacy-web\tsconfig.json                                                                       | JSON with Comments      |         21 |          0 |          1 |         22 |
+| d:\limerence\legacy-web\tsconfig.tsbuildinfo                                                                | JSON                    |          1 |          0 |          0 |          1 |
+| d:\limerence\legacy-web\vite.config.ts                                                                      | TypeScript              |         14 |          0 |          2 |         16 |
+| d:\limerence\netlify.toml                                                                                   | TOML                    |         14 |          0 |          4 |         18 |
+| d:\limerence\openclaw\.agent\workflows\update_clawdbot.md                                                   | Markdown                |        259 |          0 |        122 |        381 |
+| d:\limerence\openclaw\vendor\a2ui\renderers\lit\src\0.8\schemas\server_to_client_with_standard_catalog.json | JSON                    |        827 |          0 |          0 |        827 |
+| d:\limerence\package-lock.json                                                                              | JSON                    |          6 |          0 |          1 |          7 |
+| d:\limerence\pi-web\README.md                                                                               | Markdown                |         47 |          0 |         15 |         62 |
+| d:\limerence\pi-web\index.html                                                                              | HTML                    |         19 |          0 |          1 |         20 |
+| d:\limerence\pi-web\netlify.toml                                                                            | TOML                    |         14 |          0 |          4 |         18 |
+| d:\limerence\pi-web\netlify\edge-functions\chat-proxy.ts                                                    | TypeScript              |        235 |          0 |         36 |        271 |
+| d:\limerence\pi-web\netlify\edge-functions\web-search.ts                                                    | TypeScript              |        115 |          0 |         23 |        138 |
+| d:\limerence\pi-web\oxlintrc.json                                                                           | JSON                    |          6 |          0 |          1 |          7 |
+| d:\limerence\pi-web\package-lock.json                                                                       | JSON                    |      6,731 |          0 |          1 |      6,732 |
+| d:\limerence\pi-web\package.json                                                                            | JSON                    |         40 |          0 |          1 |         41 |
+| d:\limerence\pi-web\public\default_character.json                                                           | JSON                    |         19 |          0 |          0 |         19 |
+| d:\limerence\pi-web\public\sql-wasm.wasm                                                                    | WebAssembly Text Format |     14,685 |          0 |        163 |     14,848 |
+| d:\limerence\pi-web\public\supabase-schema.sql                                                              | MS SQL                  |        168 |         18 |         46 |        232 |
+| d:\limerence\pi-web\scripts\check-loc.mjs                                                                   | JavaScript              |         42 |          5 |          9 |         56 |
+| d:\limerence\pi-web\src\app-agent.ts                                                                        | TypeScript              |        566 |         69 |        105 |        740 |
+| d:\limerence\pi-web\src\app-compaction.test.ts                                                              | TypeScript              |         37 |          0 |          9 |         46 |
+| d:\limerence\pi-web\src\app-compaction.ts                                                                   | TypeScript              |          7 |          4 |          2 |         13 |
+| d:\limerence\pi-web\src\app-lifecycle.ts                                                                    | TypeScript              |        101 |         38 |         25 |        164 |
+| d:\limerence\pi-web\src\app-message-actions.ts                                                              | TypeScript              |        182 |         29 |         52 |        263 |
+| d:\limerence\pi-web\src\app-render.ts                                                                       | TypeScript              |        686 |         35 |         96 |        817 |
+| d:\limerence\pi-web\src\app-repair.ts                                                                       | TypeScript              |         65 |         14 |         12 |         91 |
+| d:\limerence\pi-web\src\app-session.ts                                                                      | TypeScript              |         72 |          5 |         20 |         97 |
+| d:\limerence\pi-web\src\app-state.ts                                                                        | TypeScript              |        211 |         22 |         40 |        273 |
+| d:\limerence\pi-web\src\app-workspace.ts                                                                    | TypeScript              |        360 |          6 |         40 |        406 |
+| d:\limerence\pi-web\src\app.css                                                                             | PostCSS                 |          7 |          0 |          2 |          9 |
+| d:\limerence\pi-web\src\components\resizable-divider.ts                                                     | TypeScript              |         38 |         15 |          9 |         62 |
+| d:\limerence\pi-web\src\controllers\agent.test.ts                                                           | TypeScript              |        130 |          6 |         31 |        167 |
+| d:\limerence\pi-web\src\controllers\agent.ts                                                                | TypeScript              |         88 |         25 |         20 |        133 |
+| d:\limerence\pi-web\src\controllers\character-png.test.ts                                                   | TypeScript              |        132 |          0 |         19 |        151 |
+| d:\limerence\pi-web\src\controllers\character-png.ts                                                        | TypeScript              |        229 |         28 |         43 |        300 |
+| d:\limerence\pi-web\src\controllers\character.test.ts                                                       | TypeScript              |         57 |          0 |          9 |         66 |
+| d:\limerence\pi-web\src\controllers\character.ts                                                            | TypeScript              |        104 |         19 |         19 |        142 |
+| d:\limerence\pi-web\src\controllers\compaction.test.ts                                                      | TypeScript              |        111 |         10 |         24 |        145 |
+| d:\limerence\pi-web\src\controllers\compaction.ts                                                           | TypeScript              |         79 |         12 |         19 |        110 |
+| d:\limerence\pi-web\src\controllers\context-budget.ts                                                       | TypeScript              |        180 |         42 |         39 |        261 |
+| d:\limerence\pi-web\src\controllers\free-model-quota.test.ts                                                | TypeScript              |         55 |          0 |          8 |         63 |
+| d:\limerence\pi-web\src\controllers\free-model-quota.ts                                                     | TypeScript              |         52 |          0 |         10 |         62 |
+| d:\limerence\pi-web\src\controllers\group-chat.ts                                                           | TypeScript              |        156 |         35 |         36 |        227 |
+| d:\limerence\pi-web\src\controllers\lorebook.ts                                                             | TypeScript              |         57 |         19 |         12 |         88 |
+| d:\limerence\pi-web\src\controllers\message-actions.ts                                                      | TypeScript              |        188 |         80 |         43 |        311 |
+| d:\limerence\pi-web\src\controllers\presets.ts                                                              | TypeScript              |         64 |         10 |          9 |         83 |
+| d:\limerence\pi-web\src\controllers\prompt-presets.ts                                                       | TypeScript              |        114 |         25 |         23 |        162 |
+| d:\limerence\pi-web\src\controllers\regex-io.ts                                                             | TypeScript              |         49 |         17 |         18 |         84 |
+| d:\limerence\pi-web\src\controllers\regex-rules.ts                                                          | TypeScript              |         52 |         15 |          9 |         76 |
+| d:\limerence\pi-web\src\controllers\session-io.ts                                                           | TypeScript              |         78 |         18 |         11 |        107 |
+| d:\limerence\pi-web\src\controllers\session.test.ts                                                         | TypeScript              |        167 |          6 |         36 |        209 |
+| d:\limerence\pi-web\src\controllers\session.ts                                                              | TypeScript              |        136 |         13 |         34 |        183 |
+| d:\limerence\pi-web\src\controllers\slash-commands.ts                                                       | TypeScript              |         36 |          8 |          6 |         50 |
+| d:\limerence\pi-web\src\controllers\workspace.test.ts                                                       | TypeScript              |        123 |          7 |         25 |        155 |
+| d:\limerence\pi-web\src\controllers\workspace.ts                                                            | TypeScript              |        122 |          9 |         26 |        157 |
+| d:\limerence\pi-web\src\legacy-intro\components\FourierHeart.tsx                                            | TypeScript JSX          |        153 |         28 |         20 |        201 |
+| d:\limerence\pi-web\src\legacy-intro\components\ParticleLenia.tsx                                           | TypeScript JSX          |        207 |         40 |         44 |        291 |
+| d:\limerence\pi-web\src\legacy-intro\components\landing\LandingArchitecture.tsx                             | TypeScript JSX          |        248 |          0 |         16 |        264 |
+| d:\limerence\pi-web\src\legacy-intro\components\landing\LandingFeatures.tsx                                 | TypeScript JSX          |         58 |          0 |          6 |         64 |
+| d:\limerence\pi-web\src\legacy-intro\components\landing\LandingFooter.tsx                                   | TypeScript JSX          |         25 |          0 |          2 |         27 |
+| d:\limerence\pi-web\src\legacy-intro\components\landing\LandingHero.tsx                                     | TypeScript JSX          |         81 |          0 |          6 |         87 |
+| d:\limerence\pi-web\src\legacy-intro\components\landing\LandingMemoryShowcase.tsx                           | TypeScript JSX          |        158 |          5 |         11 |        174 |
+| d:\limerence\pi-web\src\legacy-intro\components\landing\LandingNav.tsx                                      | TypeScript JSX          |        121 |          0 |          9 |        130 |
+| d:\limerence\pi-web\src\legacy-intro\components\landing\landing-data.ts                                     | TypeScript              |         60 |          0 |          7 |         67 |
+| d:\limerence\pi-web\src\legacy-intro\hooks\useI18n.ts                                                       | TypeScript              |         12 |          0 |          5 |         17 |
+| d:\limerence\pi-web\src\legacy-intro\hooks\useTheme.ts                                                      | TypeScript              |         23 |          0 |          6 |         29 |
+| d:\limerence\pi-web\src\legacy-intro\index.css                                                              | PostCSS                 |         82 |          3 |          8 |         93 |
+| d:\limerence\pi-web\src\legacy-intro\mount.tsx                                                              | TypeScript JSX          |         37 |          0 |          6 |         43 |
+| d:\limerence\pi-web\src\legacy-intro\pages\Landing.tsx                                                      | TypeScript JSX          |         40 |          0 |          4 |         44 |
+| d:\limerence\pi-web\src\lib\auth.ts                                                                         | TypeScript              |         59 |          4 |         11 |         74 |
+| d:\limerence\pi-web\src\lib\character.ts                                                                    | TypeScript              |        191 |         24 |         39 |        254 |
+| d:\limerence\pi-web\src\lib\i18n.ts                                                                         | TypeScript              |         47 |         11 |         13 |         71 |
+| d:\limerence\pi-web\src\lib\i18n\en.ts                                                                      | TypeScript              |        307 |         15 |         13 |        335 |
+| d:\limerence\pi-web\src\lib\i18n\zh.ts                                                                      | TypeScript              |        307 |         15 |         13 |        335 |
+| d:\limerence\pi-web\src\lib\memory-db.ts                                                                    | TypeScript              |        551 |         82 |         91 |        724 |
+| d:\limerence\pi-web\src\lib\memory-embedding.ts                                                             | TypeScript              |         71 |          3 |         13 |         87 |
+| d:\limerence\pi-web\src\lib\memory.test.ts                                                                  | TypeScript              |         49 |          0 |          8 |         57 |
+| d:\limerence\pi-web\src\lib\memory.ts                                                                       | TypeScript              |        130 |          0 |         25 |        155 |
+| d:\limerence\pi-web\src\lib\mini-lit-zh.ts                                                                  | TypeScript              |        182 |         22 |         19 |        223 |
+| d:\limerence\pi-web\src\lib\storage.test.ts                                                                 | TypeScript              |         25 |          0 |          8 |         33 |
+| d:\limerence\pi-web\src\lib\storage.ts                                                                      | TypeScript              |        206 |          6 |         47 |        259 |
+| d:\limerence\pi-web\src\lib\supabase.ts                                                                     | TypeScript              |         42 |         11 |         14 |         67 |
+| d:\limerence\pi-web\src\lib\sync-engine.ts                                                                  | TypeScript              |        270 |         12 |         28 |        310 |
+| d:\limerence\pi-web\src\lib\sync-realtime.ts                                                                | TypeScript              |         52 |          4 |         12 |         68 |
+| d:\limerence\pi-web\src\lib\sync-tables.ts                                                                  | TypeScript              |        431 |         17 |         69 |        517 |
+| d:\limerence\pi-web\src\lib\tokenizer.ts                                                                    | TypeScript              |         34 |         17 |         11 |         62 |
+| d:\limerence\pi-web\src\lib\tools.ts                                                                        | TypeScript              |        374 |         18 |         63 |        455 |
+| d:\limerence\pi-web\src\main.ts                                                                             | TypeScript              |        105 |         12 |         28 |        145 |
+| d:\limerence\pi-web\src\renderers\memory-renderers.ts                                                       | TypeScript              |        216 |         14 |         37 |        267 |
+| d:\limerence\pi-web\src\shims\env-api-keys.ts                                                               | TypeScript              |          3 |          0 |          1 |          4 |
+| d:\limerence\pi-web\src\shims\lmstudio-sdk.ts                                                               | TypeScript              |         66 |          0 |         11 |         77 |
+| d:\limerence\pi-web\src\shims\pi-ai-browser.ts                                                              | TypeScript              |         90 |          0 |         11 |        101 |
+| d:\limerence\pi-web\src\shims\pi-web-ui-app.css                                                             | PostCSS                 |        154 |          5 |         26 |        185 |
+| d:\limerence\pi-web\src\styles\dialogs.css                                                                  | PostCSS                 |        837 |         29 |        152 |      1,018 |
+| d:\limerence\pi-web\src\styles\layout.css                                                                   | PostCSS                 |         53 |          6 |         13 |         72 |
+| d:\limerence\pi-web\src\styles\message-actions.css                                                          | PostCSS                 |        140 |          8 |         28 |        176 |
+| d:\limerence\pi-web\src\styles\mobile.css                                                                   | PostCSS                 |         74 |         13 |         20 |        107 |
+| d:\limerence\pi-web\src\styles\tokens.css                                                                   | PostCSS                 |         45 |         13 |          9 |         67 |
+| d:\limerence\pi-web\src\styles\workspace.css                                                                | PostCSS                 |        429 |         15 |         83 |        527 |
+| d:\limerence\pi-web\src\theme-transition.ts                                                                 | TypeScript              |         38 |          8 |          9 |         55 |
+| d:\limerence\pi-web\src\views\auth-dialog.ts                                                                | TypeScript              |        302 |         10 |         22 |        334 |
+| d:\limerence\pi-web\src\views\character-selector.ts                                                         | TypeScript              |         97 |          4 |          6 |        107 |
+| d:\limerence\pi-web\src\views\header.ts                                                                     | TypeScript              |        205 |          4 |         21 |        230 |
+| d:\limerence\pi-web\src\views\message-actions.ts                                                            | TypeScript              |        148 |         13 |         13 |        174 |
+| d:\limerence\pi-web\src\views\settings-panels.ts                                                            | TypeScript              |        424 |         18 |         36 |        478 |
+| d:\limerence\pi-web\src\views\supabase-config-dialog.ts                                                     | TypeScript              |         93 |          4 |          8 |        105 |
+| d:\limerence\pi-web\src\views\token-usage.ts                                                                | TypeScript              |         13 |          3 |          5 |         21 |
+| d:\limerence\pi-web\src\views\tool-calls.ts                                                                 | TypeScript              |         10 |          3 |          4 |         17 |
+| d:\limerence\pi-web\src\views\workspace-memory.ts                                                           | TypeScript              |        110 |          5 |         11 |        126 |
+| d:\limerence\pi-web\src\vite-env.d.ts                                                                       | TypeScript              |         26 |          1 |          7 |         34 |
+| d:\limerence\pi-web\tsconfig.json                                                                           | JSON with Comments      |         17 |          0 |          1 |         18 |
+| d:\limerence\pi-web\vite.config.ts                                                                          | TypeScript              |         32 |          2 |          2 |         36 |
+| d:\limerence\角色卡示例\json\奥琪-魔20260205224838481.json                                                          | JSON                    |        673 |          0 |          0 |        673 |
+| d:\limerence\预设example\正则\正则三删除多余内容.json                                                                    | JSON                    |          1 |          0 |          0 |          1 |
+| d:\limerence\预设example\正则\正则二部分仅保留总结.json                                                                   | JSON                    |          1 |          0 |          0 |          1 |
+| d:\limerence\预设example\预设\久久预设 FOR Claude.json                                                              | JSON                    |          1 |          0 |          0 |          1 |
+| Total                                                                                                       |                         |     47,740 |      1,529 |      3,731 |     53,000 |
++-------------------------------------------------------------------------------------------------------------+-------------------------+------------+------------+------------+------------+
