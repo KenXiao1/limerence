@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+@theme {
+  --color-magenta: #e040a0;
+  --color-magenta-light: #f472c8;
+  --color-magenta-dark: #a02070;
+  --color-cyan: #22d3ee;
+  --color-cyan-light: #67e8f9;
+  --color-cyan-dark: #0891b2;
+}
+
 @import "./styles/tokens.css";
 @import "./styles/layout.css";
 @import "./styles/workspace.css";
