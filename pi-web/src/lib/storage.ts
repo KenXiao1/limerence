@@ -1,4 +1,4 @@
-import type { StoreConfig, StorageBackend } from "@mariozechner/pi-web-ui";
+import type { StoreConfig, StorageBackend } from "./indexed-db";
 import type { MemoryEntry } from "./memory";
 import type { CharacterEntry } from "../controllers/character";
 

@@ -4,8 +4,23 @@
  * No global state references.
  */
 
-import type { DiffLine, DiffPreview, WorkspaceEvent } from "../app-state";
 import type { FileOperation } from "../lib/tools";
+
+export type WorkspaceEventSource = "agent" | "user";
+export type WorkspaceEvent = FileOperation & {
+  id: string;
+  source: WorkspaceEventSource;
+};
+export type DiffLine = {
+  type: "added" | "removed";
+  text: string;
+};
+export type DiffPreview = {
+  lines: DiffLine[];
+  added: number;
+  removed: number;
+  truncated: boolean;
+};
 
 // ── Constants ─────────────────────────────────────────────────
 

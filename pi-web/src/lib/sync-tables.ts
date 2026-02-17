@@ -3,7 +3,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { StorageBackend } from "@mariozechner/pi-web-ui";
+import type { StorageBackend } from "./indexed-db";
 import type { MemoryEntry } from "./memory";
 import type { CharacterEntry } from "../controllers/character";
 import type { LorebookEntry } from "./storage";

@@ -3,7 +3,7 @@
  * Implements smarter compaction with lossless strategies before lossy compression.
  */
 
-import type { AgentMessage } from "@mariozechner/pi-agent-core";
+import type { AgentMessage } from "../runtime/message-converter";
 import { estimateTokens } from "./compaction";
 
 // ── Types ──────────────────────────────────────────────────────

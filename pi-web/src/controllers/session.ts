@@ -3,7 +3,7 @@
  * No global state references; all dependencies passed as parameters.
  */
 
-import type { AgentMessage } from "@mariozechner/pi-agent-core";
+import type { AgentMessage } from "../runtime/message-converter";
 import type { Usage } from "@mariozechner/pi-ai";
 
 // ── Title generation ───────────────────────────────────────────

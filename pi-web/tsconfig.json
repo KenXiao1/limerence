@@ -13,5 +13,22 @@
     "jsx": "react-jsx",
     "types": ["vite/client"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
+  "exclude": [
+    "src/main.ts",
+    "src/app-state.ts",
+    "src/app-agent.ts",
+    "src/app-render.ts",
+    "src/app-session.ts",
+    "src/app-lifecycle.ts",
+    "src/app-workspace.ts",
+    "src/app-message-actions.ts",
+    "src/app-compaction.ts",
+    "src/app-repair.ts",
+    "src/theme-transition.ts",
+    "src/views/**",
+    "src/renderers/**",
+    "src/components/resizable-divider.ts",
+    "src/lib/mini-lit-zh.ts"
+  ]
 }

@@ -129,6 +129,26 @@ export function createCharacterEntry(card: CharacterCard): CharacterEntry {
 }
 
 /**
+ * Load a character card from a JSON file.
+ * Reads the file, validates, and returns a CharacterEntry or null.
+ */
+export async function loadCharacterFromFile(file: File): Promise<CharacterEntry | null> {
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    const { card, error } = validateCharacterCard(data);
+    if (error || !card) {
+      console.error("[CharImport]", error);
+      return null;
+    }
+    return createCharacterEntry(card);
+  } catch (err) {
+    console.error("[CharImport] Failed to read file:", err);
+    return null;
+  }
+}
+
+/**
  * Extract a short preview from a character card.
  */
 export function characterPreview(card: CharacterCard): string {

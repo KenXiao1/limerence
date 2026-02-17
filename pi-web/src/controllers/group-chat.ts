@@ -6,7 +6,7 @@
 
 import type { CharacterCard, Persona } from "../lib/character";
 import { buildSystemPrompt } from "../lib/character";
-import type { AgentMessage } from "@mariozechner/pi-agent-core";
+import type { AgentMessage } from "../runtime/message-converter";
 
 // ── Types ──────────────────────────────────────────────────────
 

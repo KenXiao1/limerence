@@ -7,7 +7,7 @@
  *   onLocalChange(table, key, value) → push to Supabase
  */
 
-import type { StorageBackend } from "@mariozechner/pi-web-ui";
+import type { StorageBackend } from "./indexed-db";
 import { getSupabase } from "./supabase";
 import { subscribeRealtime, unsubscribeRealtime, type RealtimeHandler } from "./sync-realtime";
 import {

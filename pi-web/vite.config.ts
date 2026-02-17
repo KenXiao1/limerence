@@ -6,14 +6,8 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
-    // Force package export resolution away from development bundles.
-    // Lit dev bundle throws on class-field-shadowing in third-party components.
-    conditions: ["browser", "module", "import", "default"],
     alias: [
-      {
-        find: /^@mariozechner\/pi-web-ui\/app\.css$/,
-        replacement: path.resolve(__dirname, "src/shims/pi-web-ui-app.css"),
-      },
+      // pi-ai browser shim (LLM streaming communication)
       {
         find: /^@mariozechner\/pi-ai$/,
         replacement: path.resolve(__dirname, "src/shims/pi-ai-browser.ts"),

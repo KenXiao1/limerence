@@ -3,7 +3,7 @@
  * No global state references.
  */
 
-import type { AgentMessage } from "@mariozechner/pi-agent-core";
+import type { AgentMessage } from "../runtime/message-converter";
 import { t } from "../lib/i18n";
 
 export interface ExportedSession {

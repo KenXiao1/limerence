@@ -1,9 +1,23 @@
-import type { AgentTool } from "@mariozechner/pi-agent-core";
-import { Type, type Static } from "@mariozechner/pi-ai";
+import { Type, type Static, type TSchema } from "@sinclair/typebox";
 import { MemoryIndex } from "./memory";
 import { MemoryDB, type SearchResult as MemoryDBSearchResult } from "./memory-db";
 import { LimerenceStorage, normalizePath } from "./storage";
 import { t } from "./i18n";
+
+// ── AgentTool interface (replaces @mariozechner/pi-agent-core) ───
+
+export interface ToolResult {
+  content: Array<{ type: string; text: string }>;
+  details?: unknown;
+}
+
+export interface AgentTool<TParams extends TSchema = TSchema, TDetails = unknown> {
+  label: string;
+  name: string;
+  description: string;
+  parameters: TParams;
+  execute(toolCallId: string, args: Static<TParams>): Promise<ToolResult & { details?: TDetails }>;
+}
 
 // ── Schemas ─────────────────────────────────────────────────────
 

@@ -6,7 +6,7 @@ import {
   createDiffPreview,
   pushEvent,
 } from "./workspace";
-import type { WorkspaceEvent } from "../app-state";
+import type { WorkspaceEvent } from "./workspace";
 
 // ── isMarkdownPath ──────────────────────────────────────────────
 
