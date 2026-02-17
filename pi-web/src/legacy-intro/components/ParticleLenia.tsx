@@ -54,9 +54,9 @@ interface Species {
 // Three species with parameters tuned for organic self-organization.
 // mu_g / sigma_g control the "sweet spot" density each species prefers.
 const SPECIES: Species[] = [
-  { R: 90, mu_k: 0.5, sigma_k: 0.15, mu_g: 0.32, sigma_g: 0.06, color_d: [224, 64, 160], color_l: [180, 30, 120] },
-  { R: 70, mu_k: 0.45, sigma_k: 0.14, mu_g: 0.28, sigma_g: 0.05, color_d: [34, 211, 238], color_l: [8, 145, 178] },
-  { R: 80, mu_k: 0.55, sigma_k: 0.16, mu_g: 0.35, sigma_g: 0.07, color_d: [168, 85, 247], color_l: [126, 34, 206] },
+  { R: 90, mu_k: 0.5, sigma_k: 0.15, mu_g: 0.32, sigma_g: 0.06, color_d: [255, 130, 200], color_l: [180, 30, 120] },
+  { R: 70, mu_k: 0.45, sigma_k: 0.14, mu_g: 0.28, sigma_g: 0.05, color_d: [120, 240, 255], color_l: [8, 145, 178] },
+  { R: 80, mu_k: 0.55, sigma_k: 0.16, mu_g: 0.35, sigma_g: 0.07, color_d: [210, 150, 255], color_l: [126, 34, 206] },
 ];
 
 // Asymmetric inter-species influence weights w[i][j]
@@ -254,14 +254,18 @@ export default function ParticleLenia({ theme }: Props) {
         const sp = SPECIES[p.species];
         const [r, g, b] = isDark ? sp.color_d : sp.color_l;
         const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-        const alpha = Math.min(0.2 + speed * 0.4, 0.9);
+        const alpha = isDark
+          ? Math.min(0.4 + speed * 0.4, 1.0)
+          : Math.min(0.2 + speed * 0.4, 0.9);
         const radius = 1.8 + speed * 0.6;
 
         // Outer glow
         const glowR = radius * 5;
         const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowR);
-        grad.addColorStop(0, `rgba(${r},${g},${b},${alpha * 0.5})`);
-        grad.addColorStop(0.3, `rgba(${r},${g},${b},${alpha * 0.12})`);
+        const glowCore = isDark ? alpha * 0.7 : alpha * 0.5;
+        const glowMid = isDark ? alpha * 0.22 : alpha * 0.12;
+        grad.addColorStop(0, `rgba(${r},${g},${b},${glowCore})`);
+        grad.addColorStop(0.3, `rgba(${r},${g},${b},${glowMid})`);
         grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
         ctx.fillStyle = grad;
         ctx.fillRect(p.x - glowR, p.y - glowR, glowR * 2, glowR * 2);
@@ -284,7 +288,7 @@ export default function ParticleLenia({ theme }: Props) {
     <canvas
       ref={canvasRef}
       className="absolute inset-0 h-full w-full"
-      style={{ opacity: theme === "dark" ? 0.6 : 0.4 }}
+      style={{ opacity: theme === "dark" ? 0.85 : 0.4 }}
     />
   );
 }
