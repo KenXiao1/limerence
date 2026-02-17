@@ -36,7 +36,7 @@ export default function LandingNav({
           rel="noopener noreferrer"
           className={`rounded-full p-2 transition-colors ${
             isDark
-              ? "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+              ? "text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
               : "text-zinc-500 hover:bg-zinc-200 hover:text-zinc-800"
           }`}
           aria-label="GitHub"
@@ -50,7 +50,7 @@ export default function LandingNav({
           onClick={toggle}
           className={`rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors ${
             isDark
-              ? "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+              ? "text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
               : "text-zinc-500 hover:bg-zinc-200 hover:text-zinc-800"
           }`}
           aria-label={t("lang.tooltip")}
@@ -62,7 +62,7 @@ export default function LandingNav({
           onClick={onToggleTheme}
           className={`rounded-full p-2 transition-colors ${
             isDark
-              ? "text-zinc-400 hover:bg-zinc-800 hover:text-amber-300"
+              ? "text-zinc-300 hover:bg-zinc-800 hover:text-amber-300"
               : "text-zinc-500 hover:bg-zinc-200 hover:text-indigo-600"
           }`}
           aria-label={isDark ? t("landing.themeLight") : t("landing.themeDark")}
@@ -80,7 +80,7 @@ export default function LandingNav({
 
         {authEmail ? (
           <div className="flex items-center gap-2">
-            <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 ${isDark ? "bg-zinc-800/60" : "bg-zinc-100"}`}>
+            <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 ${isDark ? "bg-zinc-800/80" : "bg-zinc-100"}`}>
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" style={{ boxShadow: "0 0 4px rgba(16,185,129,0.4)" }} />
               <span className={`text-xs truncate max-w-[120px] ${isDark ? "text-zinc-300" : "text-zinc-600"}`}>
                 {authEmail}
@@ -90,7 +90,7 @@ export default function LandingNav({
               onClick={onLogout}
               className={`rounded-lg px-2.5 py-1.5 text-xs transition-colors ${
                 isDark
-                  ? "text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
+                  ? "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
                   : "text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700"
               }`}
             >
@@ -102,7 +102,7 @@ export default function LandingNav({
             onClick={onLogin}
             className={`rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-all ${
               isDark
-                ? "border-zinc-700 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-800"
+                ? "border-zinc-600 text-zinc-200 hover:border-zinc-500 hover:bg-zinc-800"
                 : "border-zinc-300 text-zinc-600 hover:border-zinc-400 hover:bg-zinc-100"
             }`}
           >
@@ -117,7 +117,7 @@ export default function LandingNav({
             startingChat ? "cursor-not-allowed opacity-70" : ""
           } ${
             isDark
-              ? "bg-magenta/15 text-magenta-light hover:bg-magenta/25"
+              ? "bg-magenta/20 text-magenta-light hover:bg-magenta/30"
               : "bg-magenta-dark/10 text-magenta-dark hover:bg-magenta-dark/20"
           }`}
         >

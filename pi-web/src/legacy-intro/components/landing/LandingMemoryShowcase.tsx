@@ -38,7 +38,7 @@ export default function LandingMemoryShowcase({ isDark }: LandingMemoryShowcaseP
         <h2 className="font-serif text-2xl font-bold tracking-tight sm:text-3xl">
           {t("landing.memoryTitle")}
         </h2>
-        <p className="mt-2 text-sm text-zinc-500">
+        <p className={`mt-2 text-sm ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>
           {t("landing.memorySubtitle")}
         </p>
       </div>
@@ -49,7 +49,7 @@ export default function LandingMemoryShowcase({ isDark }: LandingMemoryShowcaseP
           <div
             className={`relative overflow-hidden rounded-2xl border p-6 ${
               isDark
-                ? "border-zinc-800/80 bg-zinc-900/40 backdrop-blur-sm"
+                ? "border-zinc-700/80 bg-zinc-900/60 backdrop-blur-sm"
                 : "border-zinc-200 bg-white/60 backdrop-blur-sm"
             }`}
           >
@@ -70,7 +70,7 @@ export default function LandingMemoryShowcase({ isDark }: LandingMemoryShowcaseP
                     <span className="text-base">{step.icon}</span>
                     <span
                       className={`text-xs font-medium ${
-                        isDark ? "text-zinc-300" : "text-zinc-700"
+                        isDark ? "text-zinc-200" : "text-zinc-700"
                       }`}
                     >
                       {step.label}
@@ -79,7 +79,7 @@ export default function LandingMemoryShowcase({ isDark }: LandingMemoryShowcaseP
                   {i < flowSteps.length - 1 && (
                     <div
                       className={`my-1 h-4 border-l border-dashed ${
-                        isDark ? "border-zinc-600" : "border-zinc-300"
+                        isDark ? "border-zinc-500" : "border-zinc-300"
                       }`}
                     />
                   )}
@@ -94,7 +94,7 @@ export default function LandingMemoryShowcase({ isDark }: LandingMemoryShowcaseP
           <div
             className={`relative overflow-hidden rounded-2xl border ${
               isDark
-                ? "border-zinc-800/80 bg-zinc-950/80"
+                ? "border-zinc-700/80 bg-zinc-950/80"
                 : "border-zinc-200 bg-zinc-900/95"
             }`}
           >
@@ -115,7 +115,7 @@ export default function LandingMemoryShowcase({ isDark }: LandingMemoryShowcaseP
               <pre className="font-mono text-xs leading-relaxed">
                 {terminalLines.map((line, i) => (
                   <div key={i} className="flex">
-                    <span className="mr-3 select-none text-zinc-600">
+                    <span className="mr-3 select-none text-zinc-500">
                       {String(i + 1).padStart(2, " ")}
                     </span>
                     <span
@@ -124,7 +124,7 @@ export default function LandingMemoryShowcase({ isDark }: LandingMemoryShowcaseP
                           ? "font-semibold text-magenta"
                           : line.startsWith("-")
                             ? "text-cyan-light"
-                            : "text-zinc-400"
+                            : "text-zinc-300"
                       }
                     >
                       {line || "\u00A0"}
@@ -153,7 +153,7 @@ export default function LandingMemoryShowcase({ isDark }: LandingMemoryShowcaseP
             key={stat.title}
             className={`rounded-xl border px-4 py-3 text-center ${
               isDark
-                ? "border-zinc-800/80 bg-zinc-900/40"
+                ? "border-zinc-700/80 bg-zinc-900/60"
                 : "border-zinc-200 bg-white/60"
             }`}
           >
@@ -164,7 +164,7 @@ export default function LandingMemoryShowcase({ isDark }: LandingMemoryShowcaseP
             >
               {stat.title}
             </div>
-            <div className="mt-0.5 text-[11px] text-zinc-500">{stat.desc}</div>
+            <div className={`mt-0.5 text-[11px] ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>{stat.desc}</div>
           </div>
         ))}
       </div>

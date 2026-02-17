@@ -30,7 +30,7 @@ export default function LandingHero({ isDark, theme, onStartChat, startingChat =
         <div className="max-w-2xl">
           <p
             className={`mb-4 font-mono text-xs uppercase tracking-[0.3em] ${
-              isDark ? "text-magenta/70" : "text-magenta-dark/60"
+              isDark ? "text-magenta/90" : "text-magenta-dark/60"
             }`}
           >
             {t("landing.tagline")}
@@ -44,7 +44,7 @@ export default function LandingHero({ isDark, theme, onStartChat, startingChat =
           </h1>
           <p
             className={`mt-6 max-w-lg text-base leading-relaxed sm:text-lg ${
-              isDark ? "text-zinc-400" : "text-zinc-600"
+              isDark ? "text-zinc-300" : "text-zinc-600"
             }`}
           >
             {t("landing.heroDesc")}
@@ -69,7 +69,7 @@ export default function LandingHero({ isDark, theme, onStartChat, startingChat =
               rel="noopener noreferrer"
               className={`inline-flex items-center gap-2 rounded-xl border px-5 py-3.5 text-sm transition-colors ${
                 isDark
-                  ? "border-zinc-700 text-zinc-300 hover:border-zinc-500 hover:text-zinc-100"
+                  ? "border-zinc-600 text-zinc-200 hover:border-zinc-500 hover:text-zinc-100"
                   : "border-zinc-300 text-zinc-600 hover:border-zinc-500 hover:text-zinc-900"
               }`}
             >

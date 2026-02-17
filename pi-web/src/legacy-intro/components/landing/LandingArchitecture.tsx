@@ -18,13 +18,13 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
         >
           {t("landing.archTitle")}
         </h2>
-        <p className="mt-2 text-sm text-zinc-500">{t("landing.archSubtitle")}</p>
+        <p className={`mt-2 text-sm ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>{t("landing.archSubtitle")}</p>
       </div>
 
       <div
         className={`relative overflow-hidden rounded-2xl border p-6 sm:p-10 ${
           isDark
-            ? "border-zinc-800/80 bg-zinc-900/40 backdrop-blur-sm"
+            ? "border-zinc-700/80 bg-zinc-900/60 backdrop-blur-sm"
             : "border-zinc-200 bg-white/60 backdrop-blur-sm"
         }`}
       >
@@ -51,7 +51,7 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
               </div>
               <div>
                 <span className={`text-xs font-semibold tracking-wide ${isDark ? "text-zinc-200" : "text-zinc-800"}`}>{t("landing.archRustCore")}</span>
-                <span className={`ml-2 font-mono text-[10px] ${isDark ? "text-zinc-600" : "text-zinc-400"}`}>Cargo Workspace</span>
+                <span className={`ml-2 font-mono text-[10px] ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>Cargo Workspace</span>
               </div>
             </div>
 
@@ -71,10 +71,10 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
                       <span className={`font-mono text-[11px] font-medium ${isDark ? "text-amber-400" : "text-amber-700"}`}>{crateItem.name}</span>
                     </div>
                     <div className={`text-[11px] font-medium ${isDark ? "text-zinc-300" : "text-zinc-700"}`}>{crateItem.title}</div>
-                    <div className={`font-mono text-[9px] ${isDark ? "text-zinc-600" : "text-zinc-400"}`}>{crateItem.sub}</div>
+                    <div className={`font-mono text-[9px] ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>{crateItem.sub}</div>
                   </div>
                   {index < 2 && (
-                    <span className={`hidden text-sm sm:block ${isDark ? "text-zinc-600" : "text-zinc-400"}`}>→</span>
+                    <span className={`hidden text-sm sm:block ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>→</span>
                   )}
                 </div>
               ))}
@@ -83,19 +83,19 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
 
           <div className="flex items-center justify-center py-2">
             <div className="hidden sm:flex sm:flex-col sm:items-center sm:gap-1">
-              <div className={`h-6 border-l border-dashed ${isDark ? "border-zinc-600" : "border-zinc-300"}`} />
+              <div className={`h-6 border-l border-dashed ${isDark ? "border-zinc-500" : "border-zinc-300"}`} />
               <span
                 className={`rounded-full px-3 py-1 font-mono text-[10px] font-medium ${
-                  isDark ? "bg-zinc-800/60 text-zinc-400" : "bg-zinc-100/80 text-zinc-500"
+                  isDark ? "bg-zinc-800/80 text-zinc-300" : "bg-zinc-100/80 text-zinc-500"
                 }`}
               >
                 {t("landing.archTsPort")}
               </span>
-              <div className={`h-6 border-l border-dashed ${isDark ? "border-zinc-600" : "border-zinc-300"}`} />
+              <div className={`h-6 border-l border-dashed ${isDark ? "border-zinc-500" : "border-zinc-300"}`} />
             </div>
             <div className="flex w-full items-center gap-3 sm:hidden">
               <div className={`h-px flex-1 ${isDark ? "bg-zinc-700" : "bg-zinc-300"}`} />
-              <span className={`font-mono text-[10px] font-medium ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>{t("landing.archTsPort")}</span>
+              <span className={`font-mono text-[10px] font-medium ${isDark ? "text-zinc-300" : "text-zinc-500"}`}>{t("landing.archTsPort")}</span>
               <div className={`h-px flex-1 ${isDark ? "bg-zinc-700" : "bg-zinc-300"}`} />
             </div>
           </div>
@@ -114,7 +114,7 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
                 </div>
                 <div>
                   <span className={`text-xs font-semibold tracking-wide ${isDark ? "text-zinc-200" : "text-zinc-800"}`}>{t("landing.archBrowser")}</span>
-                  <span className={`ml-2 font-mono text-[10px] ${isDark ? "text-zinc-600" : "text-zinc-400"}`}>React + TypeScript</span>
+                  <span className={`ml-2 font-mono text-[10px] ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>React + TypeScript</span>
                 </div>
               </div>
 
@@ -137,7 +137,7 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
                       className={`rounded-lg px-3 py-2 ${
                         idx === 4
                           ? isDark ? "bg-magenta/10 ring-1 ring-magenta/20" : "bg-magenta-dark/5 ring-1 ring-magenta-dark/15"
-                          : isDark ? "bg-zinc-800/60" : "bg-zinc-100/80"
+                          : isDark ? "bg-zinc-800/80" : "bg-zinc-100/80"
                       }`}
                     >
                       <div className={`text-[11px] font-medium ${
@@ -145,7 +145,7 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
                           ? isDark ? "text-magenta-light" : "text-magenta-dark"
                           : isDark ? "text-zinc-300" : "text-zinc-700"
                       }`}>{moduleItem.label}</div>
-                      <div className={`font-mono text-[9px] ${isDark ? "text-zinc-600" : "text-zinc-400"}`}>{moduleItem.sub}</div>
+                      <div className={`font-mono text-[9px] ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>{moduleItem.sub}</div>
                     </div>
                   ))}
                 </div>
@@ -154,7 +154,7 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
 
             <div className="hidden lg:flex lg:flex-col lg:items-center lg:justify-center lg:gap-4 lg:px-2">
               <div className="flex flex-col items-center gap-1">
-                <span className={`font-mono text-[9px] ${isDark ? "text-zinc-600" : "text-zinc-400"}`}>stream</span>
+                <span className={`font-mono text-[9px] ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>stream</span>
                 <div className="relative flex items-center">
                   <div className={`h-px w-16 ${isDark ? "bg-zinc-700" : "bg-zinc-300"}`} />
                   <div
@@ -170,7 +170,7 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
                 </div>
               </div>
               <div className="flex flex-col items-center gap-1">
-                <span className={`font-mono text-[9px] ${isDark ? "text-zinc-600" : "text-zinc-400"}`}>fetch</span>
+                <span className={`font-mono text-[9px] ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>fetch</span>
                 <div className="relative flex items-center">
                   <div className={`h-px w-16 ${isDark ? "bg-zinc-700" : "bg-zinc-300"}`} />
                   <div
@@ -189,7 +189,7 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
 
             <div className="flex items-center justify-center gap-2 lg:hidden">
               <div className={`h-8 w-px ${isDark ? "bg-zinc-700" : "bg-zinc-300"}`} />
-              <span className={`font-mono text-[9px] ${isDark ? "text-zinc-600" : "text-zinc-400"}`}>stream / fetch</span>
+              <span className={`font-mono text-[9px] ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>stream / fetch</span>
               <div className={`h-8 w-px ${isDark ? "bg-zinc-700" : "bg-zinc-300"}`} />
             </div>
 
@@ -206,7 +206,7 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
                 </div>
                 <div>
                   <span className={`text-xs font-semibold tracking-wide ${isDark ? "text-zinc-200" : "text-zinc-800"}`}>Edge Functions</span>
-                  <span className={`ml-2 font-mono text-[10px] ${isDark ? "text-zinc-600" : "text-zinc-400"}`}>Netlify · Deno</span>
+                  <span className={`ml-2 font-mono text-[10px] ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>Netlify · Deno</span>
                 </div>
               </div>
 
@@ -223,7 +223,7 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
                     />
                     <span className={`font-mono text-[11px] font-medium ${isDark ? "text-cyan-light" : "text-cyan-dark"}`}>chat-proxy.ts</span>
                   </div>
-                  <p className="mt-1 text-[10px] text-zinc-500">{t("landing.archProxy")}</p>
+                  <p className={`mt-1 text-[10px] ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>{t("landing.archProxy")}</p>
                 </div>
 
                 <div
@@ -238,18 +238,18 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
                     />
                     <span className={`font-mono text-[11px] font-medium ${isDark ? "text-cyan-light" : "text-cyan-dark"}`}>web-search.ts</span>
                   </div>
-                  <p className="mt-1 text-[10px] text-zinc-500">{t("landing.archSearch")}</p>
+                  <p className={`mt-1 text-[10px] ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>{t("landing.archSearch")}</p>
                 </div>
 
-                <div className={`mt-1 flex items-center gap-2 rounded-lg px-3 py-2 ${isDark ? "bg-zinc-800/40" : "bg-zinc-100/60"}`}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={`h-3 w-3 ${isDark ? "text-zinc-600" : "text-zinc-400"}`}>
+                <div className={`mt-1 flex items-center gap-2 rounded-lg px-3 py-2 ${isDark ? "bg-zinc-800/60" : "bg-zinc-100/60"}`}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={`h-3 w-3 ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
                     />
                   </svg>
-                  <span className={`font-mono text-[9px] ${isDark ? "text-zinc-600" : "text-zinc-400"}`}>
+                  <span className={`font-mono text-[9px] ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>
                     {t("landing.archPrivacy")}
                   </span>
                 </div>

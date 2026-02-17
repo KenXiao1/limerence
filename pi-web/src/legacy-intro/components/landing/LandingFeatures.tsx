@@ -18,7 +18,7 @@ export default function LandingFeatures({ isDark }: LandingFeaturesProps) {
         >
           {t("landing.featuresTitle")}
         </h2>
-        <p className="mt-2 text-sm text-zinc-500">{t("landing.featuresSubtitle")}</p>
+        <p className={`mt-2 text-sm ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>{t("landing.featuresSubtitle")}</p>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
@@ -27,7 +27,7 @@ export default function LandingFeatures({ isDark }: LandingFeaturesProps) {
             key={index}
             className={`group relative overflow-hidden rounded-2xl border p-6 transition-all hover:scale-[1.01] ${
               isDark
-                ? "border-zinc-800/80 bg-zinc-900/40 backdrop-blur-sm hover:border-zinc-700"
+                ? "border-zinc-700/80 bg-zinc-900/60 backdrop-blur-sm hover:border-zinc-600"
                 : "border-zinc-200 bg-white/60 backdrop-blur-sm hover:border-zinc-300 hover:shadow-lg hover:shadow-zinc-200/50"
             }`}
             style={{ animationDelay: `${index * 100}ms` }}
@@ -53,7 +53,7 @@ export default function LandingFeatures({ isDark }: LandingFeaturesProps) {
                 </svg>
               </div>
               <h3 className="text-sm font-semibold tracking-wide">{feature.title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-zinc-500">{feature.desc}</p>
+              <p className={`mt-1.5 text-sm leading-relaxed ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>{feature.desc}</p>
             </div>
           </div>
         ))}
