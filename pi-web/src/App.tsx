@@ -1,11 +1,20 @@
-import { useState, useEffect, useCallback } from "react";
-import { Chat } from "./components/Chat";
+import { useState, useEffect, useCallback, Suspense, lazy } from "react";
 import { StorageProvider } from "./hooks/use-storage";
 import { SettingsProvider } from "./hooks/use-settings";
 import { getPreferredTheme, applyTheme } from "./lib/theme";
 import { getLocale, onLocaleChange } from "./lib/i18n";
-import Landing from "./legacy-intro/pages/Landing";
-import { ChatRuntimeProvider } from "./chat/runtime/RuntimeProvider";
+
+const Chat = lazy(() =>
+  import("./components/Chat").then((module) => ({ default: module.Chat })),
+);
+
+const ChatRuntimeProvider = lazy(() =>
+  import("./chat/runtime/RuntimeProvider").then((module) => ({
+    default: module.ChatRuntimeProvider,
+  })),
+);
+
+const Landing = lazy(() => import("./legacy-intro/pages/Landing"));
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -53,10 +62,18 @@ function AppInner() {
   }, []);
 
   if (view === "intro") {
-    return <IntroView onStartChat={() => showChat(true)} />;
+    return (
+      <Suspense fallback={<RouteLoading />}>
+        <IntroView onStartChat={() => showChat(true)} />
+      </Suspense>
+    );
   }
 
-  return <ChatView onShowIntro={() => showIntro(true)} />;
+  return (
+    <Suspense fallback={<RouteLoading />}>
+      <ChatView onShowIntro={() => showIntro(true)} />
+    </Suspense>
+  );
 }
 
 // ── Chat view with runtime ─────────────────────────────────────
@@ -73,6 +90,14 @@ function ChatView({ onShowIntro }: { onShowIntro: () => void }) {
 
 function IntroView({ onStartChat }: { onStartChat: () => void }) {
   return <Landing onStartChat={onStartChat} />;
+}
+
+function RouteLoading() {
+  return (
+    <div className="flex h-screen w-full items-center justify-center text-muted-foreground text-sm">
+      Loading...
+    </div>
+  );
 }
 
 // ── Root app ───────────────────────────────────────────────────
