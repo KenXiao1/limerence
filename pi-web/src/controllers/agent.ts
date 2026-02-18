@@ -4,6 +4,7 @@
  */
 
 import type { CharacterCard } from "../lib/character";
+import { normalizeCommand } from "../lib/normalize";
 import type { ChatMessage, Usage } from "../types/chat-message";
 import { DEFAULT_FREE_MODEL_ID } from "./free-model-quota";
 
@@ -15,7 +16,7 @@ const NEW_COMMANDS = new Set(["/new", "/reset"]);
 export type ChatCommandResult = "stop" | "new" | null;
 
 export function parseChatCommand(text: string): ChatCommandResult {
-  const trimmed = text.trim().toLowerCase();
+  const trimmed = normalizeCommand(text);
   if (!trimmed) return null;
   if (STOP_COMMANDS.has(trimmed)) return "stop";
   if (NEW_COMMANDS.has(trimmed)) return "new";

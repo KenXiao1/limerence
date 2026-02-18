@@ -29,7 +29,6 @@ import type { CharacterEntry } from "../controllers/character";
 
 const SETTINGS_STORE = "pi-web-ui:settings";
 const PROVIDER_KEYS_STORE = "pi-web-ui:provider-keys";
-const CUSTOM_PROVIDERS_STORE = "pi-web-ui:custom-providers";
 
 export const PROXY_MODE_KEY = "limerence.proxy_mode";
 
@@ -87,6 +86,11 @@ export interface SettingsContextValue {
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
 
+/** Swallow errors from IndexedDB reads — returns undefined on failure. */
+async function tryLoad<T>(fn: () => Promise<T>): Promise<T | undefined> {
+  try { return await fn(); } catch { return undefined; }
+}
+
 // ── Provider ────────────────────────────────────────────────────
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
@@ -117,54 +121,28 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       const chars = await limerenceStorage.loadCharacters();
       if (!cancelled) setCharacterList(chars);
 
-      // Persona
-      try {
-        const p = await backend.get<Persona>(SETTINGS_STORE, PERSONA_SETTINGS_KEY);
-        if (!cancelled && p?.name) _setPersona(p);
-      } catch { /* ignore */ }
+      const [persona, proxyRaw, lorebook, rules, preset, presets, promptPreset, gcRaw] =
+        await Promise.all([
+          tryLoad(() => backend.get<Persona>(SETTINGS_STORE, PERSONA_SETTINGS_KEY)),
+          tryLoad(() => backend.get<unknown>(SETTINGS_STORE, PROXY_MODE_KEY)),
+          tryLoad(() => limerenceStorage.loadLorebookEntries()),
+          tryLoad(() => backend.get<RegexRule[]>(SETTINGS_STORE, REGEX_RULES_KEY)),
+          tryLoad(() => backend.get<GenerationPreset>(SETTINGS_STORE, ACTIVE_PRESET_KEY)),
+          tryLoad(() => backend.get<PromptPresetConfig[]>(SETTINGS_STORE, PROMPT_PRESETS_KEY)),
+          tryLoad(() => backend.get<PromptPresetConfig>(SETTINGS_STORE, ACTIVE_PROMPT_PRESET_KEY)),
+          tryLoad(() => backend.get<unknown>(SETTINGS_STORE, GROUP_CHAT_KEY)),
+        ]);
 
-      // Proxy mode
-      try {
-        const raw = await backend.get<unknown>(SETTINGS_STORE, PROXY_MODE_KEY);
-        if (!cancelled) _setProxyModeEnabled(typeof raw === "boolean" ? raw : true);
-      } catch { /* ignore */ }
-
-      // Lorebook
-      try {
-        const entries = await limerenceStorage.loadLorebookEntries();
-        if (!cancelled) _setLorebookEntries(entries);
-      } catch { /* ignore */ }
-
-      // Regex rules
-      try {
-        const rules = await backend.get<RegexRule[]>(SETTINGS_STORE, REGEX_RULES_KEY);
-        if (!cancelled && Array.isArray(rules)) _setRegexRules(rules);
-      } catch { /* ignore */ }
-
-      // Active preset
-      try {
-        const preset = await backend.get<GenerationPreset>(SETTINGS_STORE, ACTIVE_PRESET_KEY);
-        if (!cancelled && preset) _setActivePreset(preset);
-      } catch { /* ignore */ }
-
-      // Prompt presets
-      try {
-        const presets = await backend.get<PromptPresetConfig[]>(SETTINGS_STORE, PROMPT_PRESETS_KEY);
-        if (!cancelled && Array.isArray(presets)) _setPromptPresets(presets);
-      } catch { /* ignore */ }
-
-      // Active prompt preset
-      try {
-        const ap = await backend.get<PromptPresetConfig>(SETTINGS_STORE, ACTIVE_PROMPT_PRESET_KEY);
-        if (!cancelled && ap?.id) _setActivePromptPreset(ap);
-      } catch { /* ignore */ }
-
-      // Group chat
-      try {
-        const raw = await backend.get<unknown>(SETTINGS_STORE, GROUP_CHAT_KEY);
-        const gc = deserializeGroupConfig(raw);
-        if (!cancelled && gc) _setGroupChat(gc);
-      } catch { /* ignore */ }
+      if (cancelled) return;
+      if (persona?.name) _setPersona(persona);
+      _setProxyModeEnabled(typeof proxyRaw === "boolean" ? proxyRaw : true);
+      if (lorebook) _setLorebookEntries(lorebook);
+      if (Array.isArray(rules)) _setRegexRules(rules);
+      if (preset) _setActivePreset(preset);
+      if (Array.isArray(presets)) _setPromptPresets(presets);
+      if (promptPreset?.id) _setActivePromptPreset(promptPreset);
+      const gc = deserializeGroupConfig(gcRaw);
+      if (gc) _setGroupChat(gc);
 
       if (!cancelled) setReady(true);
     }

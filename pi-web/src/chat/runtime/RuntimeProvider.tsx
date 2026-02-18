@@ -14,6 +14,7 @@ import {
   buildSystemPromptFromPreset,
 } from "../../lib/character";
 import { shouldFlushMemory, FLUSH_PROMPT } from "../../controllers/compaction";
+import { resolveUserName } from "../../controllers/resolve-settings";
 import { createThreadListAdapter } from "./thread-list-adapter";
 
 function SystemInstructionRegistrar({ instruction }: { instruction: string }) {
@@ -56,7 +57,7 @@ async function buildCurrentSystemInstruction(
   const { character, persona, activePromptPreset, storage } = deps;
   if (!character) return "";
 
-  const userName = persona?.name ?? "用户";
+  const userName = resolveUserName(persona);
   const [profileContent, memoryContent] = await Promise.all([
     storage.readWorkspaceFile("memory/PROFILE.md"),
     storage.readWorkspaceFile("memory/MEMORY.md"),

@@ -33,6 +33,7 @@ import { Settings } from "./Settings";
 import { ToolRenderers } from "./ToolRenderers";
 import { useSettings } from "../hooks/use-settings";
 import { loadCharacterFromFile } from "../controllers/character";
+import { resolveCharacterName } from "../controllers/resolve-settings";
 
 export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
   const settings = useSettings();
@@ -49,7 +50,7 @@ export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
     [settings],
   );
 
-  const charName = settings.character?.data?.name ?? "Limerence";
+  const charName = resolveCharacterName(settings.character);
 
   return (
     <div className="limerence-chat-shell h-screen w-full bg-background text-foreground">

@@ -4,6 +4,7 @@
  */
 
 import { t } from "../lib/i18n";
+import { normalizeCommand } from "../lib/normalize";
 
 export type SlashCommandResult =
   | { type: "handled" }
@@ -20,7 +21,7 @@ export type SlashCommandResult =
  * Returns the command result or null if not a command.
  */
 export function parseSlashCommand(text: string): SlashCommandResult {
-  const trimmed = text.trim().toLowerCase();
+  const trimmed = normalizeCommand(text);
   if (!trimmed.startsWith("/")) return null;
 
   const cmd = trimmed.split(/\s+/)[0];
