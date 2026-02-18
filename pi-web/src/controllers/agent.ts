@@ -1,12 +1,10 @@
 /**
- * Agent controller — pure functions for chat commands,
- * model factories, and message building.
- * No global state references.
+ * Agent controller — pure helpers for command parsing, model selection gates,
+ * route handling, and greeting message building.
  */
 
-import { getModel, type AssistantMessage, type Model } from "@mariozechner/pi-ai";
-import type { Usage } from "@mariozechner/pi-ai";
 import type { CharacterCard } from "../lib/character";
+import type { ChatMessage, Usage } from "../types/chat-message";
 import { DEFAULT_FREE_MODEL_ID } from "./free-model-quota";
 
 // ── Chat commands ──────────────────────────────────────────────
@@ -16,10 +14,6 @@ const NEW_COMMANDS = new Set(["/new", "/reset"]);
 
 export type ChatCommandResult = "stop" | "new" | null;
 
-/**
- * Parse a chat command from user input.
- * Returns the command type or null if not a command.
- */
 export function parseChatCommand(text: string): ChatCommandResult {
   const trimmed = text.trim().toLowerCase();
   if (!trimmed) return null;
@@ -28,9 +22,27 @@ export function parseChatCommand(text: string): ChatCommandResult {
   return null;
 }
 
-// ── Model factories ────────────────────────────────────────────
+// ── Model helpers ──────────────────────────────────────────────
 
-export function createProxyModel(): Model<"openai-completions"> {
+export interface ChatModelConfig {
+  id: string;
+  name: string;
+  api: "openai-completions";
+  provider: string;
+  baseUrl?: string;
+  reasoning: boolean;
+  input: string[];
+  cost: {
+    input: number;
+    output: number;
+    cacheRead: number;
+    cacheWrite: number;
+  };
+  contextWindow: number;
+  maxTokens: number;
+}
+
+export function createProxyModel(): ChatModelConfig {
   return {
     id: DEFAULT_FREE_MODEL_ID,
     name: `${DEFAULT_FREE_MODEL_ID} (Netlify Proxy)`,
@@ -45,34 +57,33 @@ export function createProxyModel(): Model<"openai-completions"> {
   };
 }
 
-export function createDirectModel(): Model<any> {
-  try {
-    return getModel("openai", "gpt-4o-mini");
-  } catch {
-    return getModel("openai", "gpt-4.1-mini");
-  }
+export function createDirectModel(): ChatModelConfig {
+  return {
+    id: "gpt-4o-mini",
+    name: "gpt-4o-mini",
+    api: "openai-completions",
+    provider: "openai",
+    baseUrl: "https://api.openai.com/v1",
+    reasoning: false,
+    input: ["text"],
+    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+    contextWindow: 128000,
+    maxTokens: 8192,
+  };
 }
 
-/**
- * Whether at least one direct (user-provided) model provider key exists.
- * We treat `limerence-proxy` as hosted free-model sentinel, not a direct key.
- */
 export function hasDirectProviderKeys(providers: string[]): boolean {
   return providers.some((provider) => provider !== "limerence-proxy");
 }
 
-/**
- * When no direct key is configured, we always force proxy model.
- * If direct keys exist, follow the proxy mode switch.
- */
-export function shouldUseProxyModel(proxyModeEnabled: boolean, hasDirectKey: boolean): boolean {
+export function shouldUseProxyModel(
+  proxyModeEnabled: boolean,
+  hasDirectKey: boolean,
+): boolean {
   if (!hasDirectKey) return true;
   return proxyModeEnabled;
 }
 
-/**
- * Model selector is only meaningful when user configured direct providers.
- */
 export function shouldEnableModelSelector(hasDirectKey: boolean): boolean {
   return hasDirectKey;
 }
@@ -81,9 +92,9 @@ export function shouldEnableModelSelector(hasDirectKey: boolean): boolean {
 
 export function buildGreetingMessage(
   character: CharacterCard | undefined,
-  model: Model<any>,
+  model: ChatModelConfig,
   defaultUsage: Usage,
-): AssistantMessage | null {
+): ChatMessage | null {
   const text = character?.data.first_mes?.trim();
   if (!text) return null;
 
@@ -130,3 +141,4 @@ export function buildRouteUrl(
   }
   return url.toString();
 }
+

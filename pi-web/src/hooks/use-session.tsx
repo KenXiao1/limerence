@@ -8,10 +8,11 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
   type ReactNode,
 } from "react";
 import { useStorageContext } from "./use-storage";
-import type { AgentMessage } from "../runtime/message-converter";
+import type { ChatMessage } from "../types/chat-message";
 import {
   generateTitle as _generateTitle,
   shouldSaveSession as _shouldSaveSession,
@@ -42,7 +43,7 @@ export interface SessionData {
   title: string;
   model: any;
   thinkingLevel: any;
-  messages: AgentMessage[];
+  messages: ChatMessage[];
   createdAt: string;
   lastModified: string;
 }
@@ -53,10 +54,10 @@ export interface SessionContextValue {
   currentSessionId: string | undefined;
   currentTitle: string;
   currentCreatedAt: string;
-  messages: AgentMessage[];
+  messages: ChatMessage[];
 
   setCurrentTitle: (title: string) => void;
-  setMessages: (msgs: AgentMessage[]) => void;
+  setMessages: (msgs: ChatMessage[]) => void;
 
   newSession: () => void;
   loadSession: (sessionId: string) => Promise<boolean>;
@@ -65,8 +66,8 @@ export interface SessionContextValue {
   listSessions: () => Promise<SessionMetadata[]>;
   updateTitle: (sessionId: string, title: string) => Promise<void>;
 
-  indexMessageIntoMemory: (message: AgentMessage) => Promise<void>;
-  generateTitle: (messages: AgentMessage[]) => string;
+  indexMessageIntoMemory: (message: ChatMessage) => Promise<void>;
+  generateTitle: (messages: ChatMessage[]) => string;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -92,7 +93,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   });
   const [currentTitle, setCurrentTitle] = useState("");
   const [currentCreatedAt, setCurrentCreatedAt] = useState(() => new Date().toISOString());
-  const [messages, setMessages] = useState<AgentMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   const updateUrl = useCallback((sessionId: string) => {
     const url = new URL(window.location.href);
@@ -100,6 +101,19 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     url.searchParams.set("session", sessionId);
     window.history.replaceState({}, "", url.toString());
   }, []);
+
+  // Auto-load session from IndexedDB on mount if URL has session ID
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlSessionId = params.get("session");
+    if (!urlSessionId) return;
+    backend.get<SessionData>(SESSIONS_STORE, urlSessionId).then((data) => {
+      if (!data?.messages?.length) return;
+      setMessages(data.messages);
+      if (data.title) setCurrentTitle(data.title);
+      if (data.createdAt) setCurrentCreatedAt(data.createdAt);
+    });
+  }, [backend]);
 
   const newSession = useCallback(() => {
     const id = crypto.randomUUID();
@@ -177,7 +191,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }, [backend, currentSessionId]);
 
-  const indexMessageIntoMemory = useCallback(async (message: AgentMessage) => {
+  const indexMessageIntoMemory = useCallback(async (message: ChatMessage) => {
     const entry = createMemoryEntry(message as any, currentSessionId ?? "");
     if (!entry) return;
     memoryIndex.add(entry);

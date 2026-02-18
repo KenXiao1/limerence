@@ -1,13 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { AssistantRuntimeProvider } from "@assistant-ui/react";
 import { Chat } from "./components/Chat";
-import { useLimerenceRuntime } from "./runtime/use-limerence-runtime";
-import { StorageProvider, useStorageContext } from "./hooks/use-storage";
+import { StorageProvider } from "./hooks/use-storage";
 import { SettingsProvider } from "./hooks/use-settings";
-import { SessionProvider } from "./hooks/use-session";
 import { getPreferredTheme, applyTheme } from "./lib/theme";
 import { getLocale, onLocaleChange } from "./lib/i18n";
 import Landing from "./legacy-intro/pages/Landing";
+import { ChatRuntimeProvider } from "./chat/runtime/RuntimeProvider";
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -58,22 +56,16 @@ function AppInner() {
     return <IntroView onStartChat={() => showChat(true)} />;
   }
 
-  return (
-    <SessionProvider>
-      <ChatView onShowIntro={() => showIntro(true)} />
-    </SessionProvider>
-  );
+  return <ChatView onShowIntro={() => showIntro(true)} />;
 }
 
 // ── Chat view with runtime ─────────────────────────────────────
 
 function ChatView({ onShowIntro }: { onShowIntro: () => void }) {
-  const runtime = useLimerenceRuntime();
-
   return (
-    <AssistantRuntimeProvider runtime={runtime}>
+    <ChatRuntimeProvider>
       <Chat onShowIntro={onShowIntro} />
-    </AssistantRuntimeProvider>
+    </ChatRuntimeProvider>
   );
 }
 

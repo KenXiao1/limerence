@@ -8,6 +8,10 @@
   function = "chat-proxy"
 
 [[edge_functions]]
+  path = "/api/chat"
+  function = "chat"
+
+[[edge_functions]]
   path = "/api/web-search"
   function = "web-search"
 

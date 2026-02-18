@@ -3,7 +3,7 @@
  * and message compaction. No global state references.
  */
 
-import type { AgentMessage } from "../runtime/message-converter";
+import type { ChatMessage } from "../types/chat-message";
 import { countTokens } from "../lib/tokenizer";
 
 // ── Token estimation ────────────────────────────────────────────
@@ -13,7 +13,7 @@ export function estimateTokens(text: string): number {
   return countTokens(text);
 }
 
-function messageText(msg: AgentMessage): string {
+function messageText(msg: ChatMessage): string {
   const content = (msg as any).content;
   if (typeof content === "string") return content;
   if (!Array.isArray(content)) return "";
@@ -27,7 +27,7 @@ function messageText(msg: AgentMessage): string {
     .join("\n");
 }
 
-export function estimateMessagesTokens(messages: AgentMessage[]): number {
+export function estimateMessagesTokens(messages: ChatMessage[]): number {
   let total = 0;
   for (const msg of messages) {
     total += estimateTokens(messageText(msg));
@@ -45,14 +45,15 @@ const KEEP_RECENT = 10;
  * or null if no compaction needed.
  */
 export function compactMessages(
-  messages: AgentMessage[],
+  messages: ChatMessage[],
   contextWindow: number,
-): AgentMessage[] | null {
+): ChatMessage[] | null {
+  if (messages.length <= KEEP_RECENT + 1) return null;
+
   const threshold = Math.floor(contextWindow * COMPACTION_THRESHOLD);
   const totalTokens = estimateMessagesTokens(messages);
 
   if (totalTokens <= threshold) return null;
-  if (messages.length <= KEEP_RECENT + 1) return null;
 
   const first = messages[0];
   const kept = messages.slice(-KEEP_RECENT);
@@ -82,7 +83,7 @@ export function compactMessages(
     .filter(Boolean)
     .join("\n");
 
-  const summaryMessage: AgentMessage = {
+  const summaryMessage: ChatMessage = {
     role: "assistant",
     content: [{ type: "text", text: summaryText }],
     api: (first as any).api ?? "openai-completions",
@@ -107,3 +108,4 @@ export function tokenUsagePercent(tokens: number, contextWindow: number): number
   if (contextWindow <= 0) return 0;
   return Math.min(100, Math.round((tokens / contextWindow) * 100));
 }
+

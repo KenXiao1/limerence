@@ -3,12 +3,11 @@
  * No global state references; all dependencies passed as parameters.
  */
 
-import type { AgentMessage } from "../runtime/message-converter";
-import type { Usage } from "@mariozechner/pi-ai";
+import type { ChatMessage, Usage } from "../types/chat-message";
 
 // ── Title generation ───────────────────────────────────────────
 
-export function generateTitle(messages: AgentMessage[]): string {
+export function generateTitle(messages: ChatMessage[]): string {
   const firstUser = messages.find((m) => {
     const role = (m as any).role;
     return role === "user" || role === "user-with-attachments";
@@ -41,14 +40,14 @@ export function generateTitle(messages: AgentMessage[]): string {
 
 // ── Message inspection ─────────────────────────────────────────
 
-function hasRealAssistantText(message: AgentMessage): boolean {
+function hasRealAssistantText(message: ChatMessage): boolean {
   if ((message as any).role !== "assistant") return false;
   const content = (message as any).content;
   if (!Array.isArray(content)) return false;
   return content.some((c: any) => c?.type === "text" && String(c.text ?? "").trim().length > 0);
 }
 
-export function shouldSaveSession(messages: AgentMessage[]): boolean {
+export function shouldSaveSession(messages: ChatMessage[]): boolean {
   const hasUser = messages.some((m) => {
     const role = (m as any).role;
     return role === "user" || role === "user-with-attachments";
@@ -58,7 +57,7 @@ export function shouldSaveSession(messages: AgentMessage[]): boolean {
   return hasUser && hasAssistant;
 }
 
-export function extractPlainText(message: AgentMessage): string {
+export function extractPlainText(message: ChatMessage): string {
   const role = (message as any).role;
   const content = (message as any).content;
 
@@ -88,7 +87,7 @@ export function extractPlainText(message: AgentMessage): string {
 
 // ── Usage aggregation ──────────────────────────────────────────
 
-export function summarizeUsage(messages: AgentMessage[], defaultUsage: Usage): Usage {
+export function summarizeUsage(messages: ChatMessage[], defaultUsage: Usage): Usage {
   const usage = { ...defaultUsage, cost: { ...defaultUsage.cost } };
 
   for (const msg of messages) {
@@ -125,7 +124,7 @@ export interface MemoryEntryData {
  * is not suitable for memory indexing.
  */
 export function createMemoryEntry(
-  message: AgentMessage,
+  message: ChatMessage,
   sessionId: string,
 ): MemoryEntryData | null {
   const role = (message as any).role;
@@ -148,7 +147,7 @@ export interface SessionSaveParams {
   sessionId: string;
   title: string;
   createdAt: string;
-  messages: AgentMessage[];
+  messages: ChatMessage[];
   model: any;
   thinkingLevel: any;
 }

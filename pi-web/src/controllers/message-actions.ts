@@ -4,14 +4,14 @@
  * No global state references; all dependencies passed as parameters.
  */
 
-import type { AgentMessage } from "../runtime/message-converter";
+import type { ChatMessage } from "../types/chat-message";
 
 // ── Types ──────────────────────────────────────────────────────
 
 /** A "swipe group" is the assistant response + any tool call/result messages that follow a user message. */
 export interface SwipeAlternative {
   /** The messages that make up this alternative (assistant + tool results + final assistant, etc.) */
-  messages: AgentMessage[];
+  messages: ChatMessage[];
   /** Timestamp when this alternative was generated */
   timestamp: number;
 }
@@ -32,7 +32,7 @@ export type SessionSwipeData = Map<number, SwipeState>;
  * Find the index of the last user message in the conversation.
  * Returns -1 if no user message found.
  */
-export function findLastUserMessageIndex(messages: AgentMessage[]): number {
+export function findLastUserMessageIndex(messages: ChatMessage[]): number {
   for (let i = messages.length - 1; i >= 0; i--) {
     const role = (messages[i] as any).role;
     if (role === "user" || role === "user-with-attachments") return i;
@@ -45,7 +45,7 @@ export function findLastUserMessageIndex(messages: AgentMessage[]): number {
  * Returns [startIndex, endIndex) — the slice range of the response group.
  */
 export function findResponseGroup(
-  messages: AgentMessage[],
+  messages: ChatMessage[],
   userMessageIndex: number,
 ): [number, number] {
   const start = userMessageIndex + 1;
@@ -63,7 +63,7 @@ export function findResponseGroup(
 /**
  * Check if a response group contains any real assistant text (not just tool calls).
  */
-export function hasAssistantText(messages: AgentMessage[]): boolean {
+export function hasAssistantText(messages: ChatMessage[]): boolean {
   return messages.some((m) => {
     if ((m as any).role !== "assistant") return false;
     const content = (m as any).content;
@@ -81,9 +81,9 @@ export function hasAssistantText(messages: AgentMessage[]): boolean {
  * Returns the truncated messages (up to and including the last user message),
  * and the removed response group (for storing as a swipe alternative).
  */
-export function prepareRegeneration(messages: AgentMessage[]): {
-  truncated: AgentMessage[];
-  removed: AgentMessage[];
+export function prepareRegeneration(messages: ChatMessage[]): {
+  truncated: ChatMessage[];
+  removed: ChatMessage[];
   userMessageIndex: number;
 } | null {
   const userIdx = findLastUserMessageIndex(messages);
@@ -102,7 +102,7 @@ export function prepareRegeneration(messages: AgentMessage[]): {
  * Initialize swipe state for a response position.
  * Stores the current response as the first alternative.
  */
-export function initSwipeState(currentMessages: AgentMessage[]): SwipeState {
+export function initSwipeState(currentMessages: ChatMessage[]): SwipeState {
   return {
     alternatives: [{ messages: currentMessages, timestamp: Date.now() }],
     currentIndex: 0,
@@ -114,7 +114,7 @@ export function initSwipeState(currentMessages: AgentMessage[]): SwipeState {
  */
 export function addSwipeAlternative(
   state: SwipeState,
-  newMessages: AgentMessage[],
+  newMessages: ChatMessage[],
 ): SwipeState {
   const alternatives = [
     ...state.alternatives,
@@ -152,10 +152,10 @@ export function switchSwipeAlternative(
  * Replaces the response group at userMessageIndex with the current alternative.
  */
 export function applySwipe(
-  messages: AgentMessage[],
+  messages: ChatMessage[],
   userMessageIndex: number,
   swipeState: SwipeState,
-): AgentMessage[] {
+): ChatMessage[] {
   const [start, end] = findResponseGroup(messages, userMessageIndex);
   const before = messages.slice(0, start);
   const after = messages.slice(end);
@@ -170,10 +170,10 @@ export function applySwipe(
  * Returns the modified messages array.
  */
 export function editUserMessage(
-  messages: AgentMessage[],
+  messages: ChatMessage[],
   messageIndex: number,
   newText: string,
-): AgentMessage[] {
+): ChatMessage[] {
   const msg = messages[messageIndex];
   if (!msg) return messages;
 
@@ -203,10 +203,10 @@ export function editUserMessage(
  * Returns the modified messages array.
  */
 export function editAssistantMessage(
-  messages: AgentMessage[],
+  messages: ChatMessage[],
   messageIndex: number,
   newText: string,
-): AgentMessage[] {
+): ChatMessage[] {
   const msg = messages[messageIndex];
   if (!msg) return messages;
   if ((msg as any).role !== "assistant") return messages;
@@ -236,9 +236,9 @@ export function editAssistantMessage(
  * that belong to it (up to the next user or assistant message).
  */
 export function deleteMessage(
-  messages: AgentMessage[],
+  messages: ChatMessage[],
   messageIndex: number,
-): AgentMessage[] {
+): ChatMessage[] {
   const msg = messages[messageIndex];
   if (!msg) return messages;
 
@@ -271,9 +271,9 @@ export function deleteMessage(
  * Delete a message and everything after it (for "regenerate from here").
  */
 export function deleteFromIndex(
-  messages: AgentMessage[],
+  messages: ChatMessage[],
   messageIndex: number,
-): AgentMessage[] {
+): ChatMessage[] {
   return messages.slice(0, messageIndex);
 }
 
@@ -282,7 +282,7 @@ export function deleteFromIndex(
 /**
  * Extract the plain text content from a message for editing.
  */
-export function getMessageText(message: AgentMessage): string {
+export function getMessageText(message: ChatMessage): string {
   const content = (message as any).content;
   if (typeof content === "string") return content;
   if (!Array.isArray(content)) return "";
@@ -295,16 +295,17 @@ export function getMessageText(message: AgentMessage): string {
 /**
  * Get the role of a message.
  */
-export function getMessageRole(message: AgentMessage): string {
+export function getMessageRole(message: ChatMessage): string {
   return (message as any).role ?? "unknown";
 }
 
 /**
  * Count the number of displayable messages (user + assistant with text).
  */
-export function countDisplayableMessages(messages: AgentMessage[]): number {
+export function countDisplayableMessages(messages: ChatMessage[]): number {
   return messages.filter((m) => {
     const role = (m as any).role;
     return role === "user" || role === "user-with-attachments" || role === "assistant";
   }).length;
 }
+

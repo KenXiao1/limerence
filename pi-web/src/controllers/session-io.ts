@@ -3,7 +3,7 @@
  * No global state references.
  */
 
-import type { AgentMessage } from "../runtime/message-converter";
+import type { ChatMessage } from "../types/chat-message";
 import { t } from "../lib/i18n";
 
 export interface ExportedSession {
@@ -15,7 +15,7 @@ export interface ExportedSession {
     createdAt: string;
     model: any;
     thinkingLevel: string;
-    messages: AgentMessage[];
+    messages: ChatMessage[];
   };
 }
 
@@ -28,7 +28,7 @@ export function buildExportData(
   createdAt: string,
   model: any,
   thinkingLevel: string,
-  messages: AgentMessage[],
+  messages: ChatMessage[],
 ): ExportedSession {
   return {
     version: 1,
@@ -74,7 +74,7 @@ export function validateImportData(
         createdAt: String(obj.createdAt ?? new Date().toISOString()),
         model: obj.model ?? null,
         thinkingLevel: String(obj.thinkingLevel ?? "off"),
-        messages: obj.messages as AgentMessage[],
+        messages: obj.messages as ChatMessage[],
       },
       error: null,
     };
@@ -104,3 +104,4 @@ export async function readFileAsJson(file: File): Promise<unknown> {
   const text = await file.text();
   return JSON.parse(text);
 }
+

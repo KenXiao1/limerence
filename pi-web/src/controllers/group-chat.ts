@@ -6,7 +6,7 @@
 
 import type { CharacterCard, Persona } from "../lib/character";
 import { buildSystemPrompt } from "../lib/character";
-import type { AgentMessage } from "../runtime/message-converter";
+import type { ChatMessage } from "../types/chat-message";
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -84,7 +84,7 @@ function getActiveMembers(config: GroupChatConfig): GroupMember[] {
 export function selectNextSpeakers(
   config: GroupChatConfig,
   lastSpeakerId: string | null,
-  _messages: AgentMessage[],
+  _messages: ChatMessage[],
 ): string[] {
   const active = getActiveMembers(config);
   if (active.length === 0) return [];
@@ -224,3 +224,4 @@ export function deserializeGroupConfig(data: unknown): GroupChatConfig | null {
     })),
   };
 }
+

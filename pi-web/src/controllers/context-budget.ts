@@ -3,7 +3,7 @@
  * Implements smarter compaction with lossless strategies before lossy compression.
  */
 
-import type { AgentMessage } from "../runtime/message-converter";
+import type { ChatMessage } from "../types/chat-message";
 import { estimateTokens } from "./compaction";
 
 // ── Types ──────────────────────────────────────────────────────
@@ -47,7 +47,7 @@ export function calculateBudget(
   contextWindow: number,
   systemPromptText: string,
   lorebookText: string,
-  messages: AgentMessage[],
+  messages: ChatMessage[],
   config: BudgetConfig = DEFAULT_BUDGET_CONFIG,
 ): TokenBudget {
   const systemPrompt = estimateTokens(systemPromptText);
@@ -75,7 +75,7 @@ export function calculateBudget(
 /**
  * Estimate tokens for a single message.
  */
-function estimateMessageTokens(msg: AgentMessage): number {
+function estimateMessageTokens(msg: ChatMessage): number {
   const content = (msg as any).content;
   if (typeof content === "string") return estimateTokens(content);
   if (!Array.isArray(content)) return 0;
@@ -96,11 +96,11 @@ function estimateMessageTokens(msg: AgentMessage): number {
  * Returns compacted messages or null if no compaction needed.
  */
 export function smartCompact(
-  messages: AgentMessage[],
+  messages: ChatMessage[],
   contextWindow: number,
   systemPromptTokens: number,
   config: BudgetConfig = DEFAULT_BUDGET_CONFIG,
-): AgentMessage[] | null {
+): ChatMessage[] | null {
   const maxHistoryTokens = Math.floor(
     contextWindow * config.historyThreshold - systemPromptTokens,
   );
@@ -137,9 +137,9 @@ export function smartCompact(
  * Truncate tool outputs in old messages to save tokens.
  */
 function truncateOldToolOutputs(
-  messages: AgentMessage[],
+  messages: ChatMessage[],
   keepRecent: number,
-): AgentMessage[] {
+): ChatMessage[] {
   const cutoff = messages.length - keepRecent;
   return messages.map((msg, i) => {
     if (i >= cutoff) return msg;
@@ -156,7 +156,7 @@ function truncateOldToolOutputs(
       return block;
     });
 
-    return { ...msg, content: truncated } as AgentMessage;
+    return { ...msg, content: truncated } as ChatMessage;
   });
 }
 
@@ -164,9 +164,9 @@ function truncateOldToolOutputs(
  * Remove thinking blocks from old messages.
  */
 function removeOldThinkingBlocks(
-  messages: AgentMessage[],
+  messages: ChatMessage[],
   keepRecent: number,
-): AgentMessage[] {
+): ChatMessage[] {
   const cutoff = messages.length - keepRecent;
   return messages.map((msg, i) => {
     if (i >= cutoff) return msg;
@@ -178,7 +178,7 @@ function removeOldThinkingBlocks(
     const filtered = content.filter((block: any) => block?.type !== "thinking");
     if (filtered.length === content.length) return msg;
 
-    return { ...msg, content: filtered } as AgentMessage;
+    return { ...msg, content: filtered } as ChatMessage;
   });
 }
 
@@ -186,9 +186,9 @@ function removeOldThinkingBlocks(
  * Lossy compaction: summarize old messages into a single summary message.
  */
 function lossyCompact(
-  messages: AgentMessage[],
+  messages: ChatMessage[],
   keepRecent: number,
-): AgentMessage[] {
+): ChatMessage[] {
   if (messages.length <= keepRecent + 1) return messages;
 
   const first = messages[0];
@@ -229,7 +229,7 @@ function lossyCompact(
     .filter(Boolean)
     .join("\n");
 
-  const summaryMessage: AgentMessage = {
+  const summaryMessage: ChatMessage = {
     role: "assistant",
     content: [{ type: "text", text: summaryText }],
     api: (first as any).api ?? "openai-completions",
@@ -258,3 +258,4 @@ export function formatBudget(budget: TokenBudget): string {
     `可用: ${fmt(budget.available)}`,
   ].filter(Boolean).join(" · ");
 }
+

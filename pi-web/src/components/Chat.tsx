@@ -1,144 +1,116 @@
-/**
- * Chat component — main chat view using assistant-ui primitives.
- */
-
-import { useState, useCallback } from "react";
+import { useState, useCallback, type FC } from "react";
 import {
-  ThreadPrimitive,
+  ActionBarPrimitive,
+  AuiIf,
   ComposerPrimitive,
   MessagePrimitive,
+  ThreadListItemMorePrimitive,
+  ThreadListItemPrimitive,
+  ThreadListPrimitive,
+  ThreadPrimitive,
 } from "@assistant-ui/react";
 import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
-import { ToolRenderers } from "./ToolRenderers";
-import { Header } from "./Header";
-import { SessionListDialog } from "./SessionListDialog";
+import {
+  ArchiveIcon,
+  ArrowUpIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CopyIcon,
+  HomeIcon,
+  MoreHorizontalIcon,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
+  RefreshCwIcon,
+  Settings2Icon,
+  SquareIcon,
+  TrashIcon,
+  UserCircle2Icon,
+} from "lucide-react";
 import { CharacterSelector } from "./CharacterSelector";
-import { Workspace } from "./Workspace";
 import { Settings } from "./Settings";
-import { useSession } from "../hooks/use-session";
+import { ToolRenderers } from "./ToolRenderers";
 import { useSettings } from "../hooks/use-settings";
-import { buildExportData, downloadJson, readFileAsJson, validateImportData } from "../controllers/session-io";
 import { loadCharacterFromFile } from "../controllers/character";
 
 export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
-  const session = useSession();
   const settings = useSettings();
-
-  const [sessionsOpen, setSessionsOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [charSelectorOpen, setCharSelectorOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [focusMode, setFocusMode] = useState(false);
-  const [workspaceOpen, setWorkspaceOpen] = useState(false);
 
-  const handleExport = useCallback(() => {
-    if (!session.currentSessionId) return;
-    const data = buildExportData(
-      session.currentSessionId,
-      session.currentTitle || "Limerence",
-      session.currentCreatedAt,
-      null,
-      "off",
-      session.messages as any,
-    );
-    downloadJson(data, `limerence-${session.currentSessionId.slice(0, 8)}.json`);
-  }, [session]);
-
-  const handleImport = useCallback(async (file: File) => {
-    try {
-      const raw = await readFileAsJson(file);
-      const { session: imported, error } = validateImportData(raw);
-      if (error || !imported) {
-        console.error("[Import]", error);
-        return;
-      }
-      session.setMessages(imported.messages as any);
-      if (imported.title) session.setCurrentTitle(imported.title);
-    } catch (err) {
-      console.error("[Import] Failed:", err);
-    }
-  }, [session]);
-
-  const handleCharImport = useCallback(async (file: File) => {
-    try {
+  const handleCharImport = useCallback(
+    async (file: File) => {
       const entry = await loadCharacterFromFile(file);
-      if (entry) {
-        settings.setCharacterList([...settings.characterList, entry]);
-      }
-    } catch (err) {
-      console.error("[CharImport]", err);
-    }
-  }, [settings]);
+      if (!entry) return;
+      settings.setCharacterList([...settings.characterList, entry]);
+    },
+    [settings],
+  );
+
+  const charName = settings.character?.data?.name ?? "Limerence";
 
   return (
-    <div className="w-full h-screen flex bg-background text-foreground overflow-hidden">
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <ToolRenderers />
+    <div className="limerence-chat-shell h-screen w-full bg-background text-foreground">
+      <ToolRenderers />
+      <div className="flex h-full w-full min-w-0">
+        <aside
+          className={`border-r border-border transition-all duration-200 ${
+            sidebarOpen ? "w-72" : "w-0"
+          } overflow-hidden`}
+        >
+          <div className="flex h-full flex-col bg-muted/30 p-3">
+            <ThreadList />
+          </div>
+        </aside>
 
-        {!focusMode && (
-          <Header
-            currentTitle={session.currentTitle}
-            characterName={settings.character?.data?.name ?? ""}
-            isStreaming={false}
-            focusMode={focusMode}
-            proxyModeEnabled={settings.proxyModeEnabled}
-            workspacePanelOpen={workspaceOpen}
-            estimatedTokens={0}
-            contextWindow={128000}
-            activeToolCalls={[]}
-            authEmail={null}
-            syncStatus="idle"
-            onShowIntro={onShowIntro}
-            onOpenSessions={() => setSessionsOpen(true)}
-            onNewSession={session.newSession}
-            onTitleChange={session.setCurrentTitle}
-            onToggleProxy={() => settings.setProxyModeEnabled(!settings.proxyModeEnabled)}
-            onToggleWorkspace={() => setWorkspaceOpen((v) => !v)}
-            onToggleFocus={() => setFocusMode((v) => !v)}
-            onOpenSettings={() => setSettingsOpen(true)}
-            onOpenCharacterSelector={() => setCharSelectorOpen(true)}
-            onOpenLimerenceSettings={() => setSettingsOpen(true)}
-            onExportSession={handleExport}
-            onImportSession={handleImport}
-            onLoginClick={() => {/* TODO: auth */}}
-            onLogout={() => {/* TODO: auth */}}
-          />
-        )}
+        <main className="flex min-w-0 flex-1 flex-col">
+          <header className="flex h-14 items-center justify-between border-b border-border px-3">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="inline-flex h-8 items-center justify-center rounded-md border border-border px-2 text-sm hover:bg-muted"
+                onClick={onShowIntro}
+              >
+                <HomeIcon className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-8 items-center justify-center rounded-md border border-border px-2 text-sm hover:bg-muted"
+                onClick={() => setSidebarOpen((v) => !v)}
+              >
+                {sidebarOpen ? (
+                  <PanelLeftCloseIcon className="h-4 w-4" />
+                ) : (
+                  <PanelLeftOpenIcon className="h-4 w-4" />
+                )}
+              </button>
+              <span className="text-sm text-muted-foreground">当前角色</span>
+              <span className="font-medium text-sm">{charName}</span>
+            </div>
 
-        <div className="flex-1 overflow-hidden">
-          <ThreadPrimitive.Root>
-            <ThreadPrimitive.Viewport>
-              <ThreadPrimitive.Messages
-                components={{
-                  UserMessage,
-                  AssistantMessage,
-                }}
-              />
-              <ThreadPrimitive.ViewportFooter>
-                <Composer />
-              </ThreadPrimitive.ViewportFooter>
-            </ThreadPrimitive.Viewport>
-          </ThreadPrimitive.Root>
-        </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="inline-flex h-8 items-center justify-center rounded-md border border-border px-2 text-sm hover:bg-muted"
+                onClick={() => setCharSelectorOpen(true)}
+              >
+                <UserCircle2Icon className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-8 items-center justify-center rounded-md border border-border px-2 text-sm hover:bg-muted"
+                onClick={() => setSettingsOpen(true)}
+              >
+                <Settings2Icon className="h-4 w-4" />
+              </button>
+            </div>
+          </header>
+
+          <Thread />
+        </main>
       </div>
-
-      {/* Workspace side panel */}
-      {workspaceOpen && (
-        <Workspace open={workspaceOpen} onClose={() => setWorkspaceOpen(false)} />
-      )}
-
-      {/* Dialogs */}
-      {sessionsOpen && (
-        <SessionListDialog
-          onClose={() => setSessionsOpen(false)}
-          onLoadSession={async (id) => {
-            await session.loadSession(id);
-            setSessionsOpen(false);
-          }}
-          onDeleteSession={session.deleteSession}
-          listSessions={session.listSessions}
-        />
-      )}
 
       <CharacterSelector
         open={charSelectorOpen}
@@ -146,73 +118,243 @@ export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
         defaultCharacterName={settings.character?.data?.name ?? "Default"}
         importError=""
         onSelect={(entry) => {
-          if (entry) {
-            settings.setCharacter(entry.card);
-          }
-          // null = use default, already loaded
+          if (entry) settings.setCharacter(entry.card);
         }}
         onImport={handleCharImport}
         onDelete={(id) => {
           settings.setCharacterList(settings.characterList.filter((c) => c.id !== id));
         }}
         onExportJson={(entry) => {
-          downloadJson(entry.card, `${entry.name}.json`);
+          const blob = new Blob([JSON.stringify(entry.card, null, 2)], { type: "application/json" });
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = `${entry.name}.json`;
+          a.click();
+          URL.revokeObjectURL(a.href);
         }}
         onClose={() => setCharSelectorOpen(false)}
       />
 
-      {settingsOpen && (
-        <Settings
-          open={settingsOpen}
-          onClose={() => setSettingsOpen(false)}
-        />
-      )}
+      <Settings open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 }
 
-function UserMessage() {
+const ThreadList: FC = () => {
   return (
-    <MessagePrimitive.Root>
-      <div className="flex justify-end px-4 py-2">
-        <div className="max-w-[80%] rounded-2xl bg-primary text-primary-foreground px-4 py-2">
-          <MessagePrimitive.Content
-            components={{ Text: ({ text }) => <p>{text}</p> }}
-          />
+    <ThreadListPrimitive.Root className="flex h-full flex-col gap-2">
+      <ThreadListPrimitive.New asChild>
+        <button
+          type="button"
+          className="inline-flex h-9 items-center justify-start rounded-md border border-border px-3 text-left text-sm hover:bg-muted"
+        >
+          新会话
+        </button>
+      </ThreadListPrimitive.New>
+
+      <AuiIf condition={(s) => s.threads.isLoading}>
+        <div className="space-y-2 pt-2">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="h-8 animate-pulse rounded bg-muted" />
+          ))}
         </div>
+      </AuiIf>
+
+      <AuiIf condition={(s) => !s.threads.isLoading}>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <ThreadListPrimitive.Items components={{ ThreadListItem }} />
+        </div>
+      </AuiIf>
+    </ThreadListPrimitive.Root>
+  );
+};
+
+const ThreadListItem: FC = () => {
+  return (
+    <ThreadListItemPrimitive.Root className="group flex h-9 items-center gap-1 rounded-md px-1 transition-colors hover:bg-muted focus-within:bg-muted data-active:bg-muted">
+      <ThreadListItemPrimitive.Trigger className="min-w-0 flex-1 truncate rounded px-2 py-1 text-left text-sm">
+        <ThreadListItemPrimitive.Title fallback="New Chat" />
+      </ThreadListItemPrimitive.Trigger>
+
+      <ThreadListItemMorePrimitive.Root>
+        <ThreadListItemMorePrimitive.Trigger asChild>
+          <button
+            type="button"
+            className="inline-flex h-7 w-7 items-center justify-center rounded opacity-0 transition-opacity hover:bg-background group-hover:opacity-100 data-[state=open]:opacity-100"
+          >
+            <MoreHorizontalIcon className="h-4 w-4" />
+          </button>
+        </ThreadListItemMorePrimitive.Trigger>
+
+        <ThreadListItemMorePrimitive.Content className="z-50 min-w-28 rounded-md border border-border bg-background p-1 shadow-md">
+          <ThreadListItemPrimitive.Archive asChild>
+            <ThreadListItemMorePrimitive.Item className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted">
+              <ArchiveIcon className="h-4 w-4" />
+              Archive
+            </ThreadListItemMorePrimitive.Item>
+          </ThreadListItemPrimitive.Archive>
+          <ThreadListItemPrimitive.Delete asChild>
+            <ThreadListItemMorePrimitive.Item className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-red-500 hover:bg-red-500/10">
+              <TrashIcon className="h-4 w-4" />
+              Delete
+            </ThreadListItemMorePrimitive.Item>
+          </ThreadListItemPrimitive.Delete>
+        </ThreadListItemMorePrimitive.Content>
+      </ThreadListItemMorePrimitive.Root>
+    </ThreadListItemPrimitive.Root>
+  );
+};
+
+const Thread: FC = () => {
+  return (
+    <ThreadPrimitive.Root className="flex min-h-0 flex-1 flex-col">
+      <ThreadPrimitive.Viewport className="relative flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pt-4">
+        <AuiIf condition={(s) => s.thread.isEmpty}>
+          <div className="mx-auto my-auto w-full max-w-3xl px-4">
+            <h1 className="font-semibold text-2xl">Hello there</h1>
+            <p className="mt-2 text-muted-foreground text-sm">
+              Start a new conversation. Thread history is now persisted per chat.
+            </p>
+          </div>
+        </AuiIf>
+
+        <ThreadPrimitive.Messages
+          components={{
+            UserMessage,
+            AssistantMessage,
+            EditComposer,
+          }}
+        />
+
+        <ThreadPrimitive.ViewportFooter className="sticky bottom-0 mx-auto mt-auto w-full max-w-3xl bg-background pb-4 pt-2">
+          <ThreadPrimitive.ScrollToBottom asChild>
+            <button
+              type="button"
+              className="absolute -top-10 left-1/2 inline-flex -translate-x-1/2 items-center justify-center rounded-full border border-border bg-background p-2 shadow-sm disabled:invisible"
+            >
+              <ChevronDownIcon className="h-4 w-4" />
+            </button>
+          </ThreadPrimitive.ScrollToBottom>
+          <Composer />
+        </ThreadPrimitive.ViewportFooter>
+      </ThreadPrimitive.Viewport>
+    </ThreadPrimitive.Root>
+  );
+};
+
+const UserMessage: FC = () => {
+  return (
+    <MessagePrimitive.Root className="mx-auto grid w-full max-w-3xl grid-cols-[1fr_auto] py-2">
+      <div className="col-start-2 max-w-[85%] rounded-2xl bg-muted px-4 py-2 text-sm">
+        <MessagePrimitive.Parts />
+      </div>
+      <div className="col-span-full col-start-1 flex justify-end pr-1">
+        <MessageActions />
       </div>
     </MessagePrimitive.Root>
   );
-}
+};
 
-function MarkdownText() {
-  return <MarkdownTextPrimitive />;
-}
+const MarkdownTextPart: FC = () => <MarkdownTextPrimitive />;
 
-function AssistantMessage() {
+const AssistantMessage: FC = () => {
   return (
-    <MessagePrimitive.Root>
-      <div className="flex justify-start px-4 py-2">
-        <div className="max-w-[80%] rounded-2xl bg-muted px-4 py-2">
-          <MessagePrimitive.Content
-            components={{ Text: MarkdownText }}
-          />
-        </div>
+    <MessagePrimitive.Root className="mx-auto w-full max-w-3xl py-2">
+      <div className="rounded-2xl border border-border/60 bg-background px-4 py-3 text-sm">
+        <MessagePrimitive.Parts
+          components={{
+            Text: MarkdownTextPart,
+          }}
+        />
+        <MessagePrimitive.Error>
+          <div className="mt-2 rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-red-500 text-xs">
+            生成失败，请重试
+          </div>
+        </MessagePrimitive.Error>
+      </div>
+      <div className="mt-1 flex items-center gap-1 text-muted-foreground">
+        <MessageActions />
       </div>
     </MessagePrimitive.Root>
   );
-}
+};
 
-function Composer() {
+const MessageActions: FC = () => {
   return (
-    <ComposerPrimitive.Root className="flex items-end gap-2 p-4 border-t border-border">
+    <ActionBarPrimitive.Root hideWhenRunning autohide="not-last" className="flex items-center gap-1">
+      <ActionBarPrimitive.Copy asChild>
+        <button type="button" className="inline-flex h-7 w-7 items-center justify-center rounded hover:bg-muted">
+          <AuiIf condition={(s) => s.message.isCopied}>
+            <CheckIcon className="h-4 w-4" />
+          </AuiIf>
+          <AuiIf condition={(s) => !s.message.isCopied}>
+            <CopyIcon className="h-4 w-4" />
+          </AuiIf>
+        </button>
+      </ActionBarPrimitive.Copy>
+      <ActionBarPrimitive.Reload asChild>
+        <button type="button" className="inline-flex h-7 w-7 items-center justify-center rounded hover:bg-muted">
+          <RefreshCwIcon className="h-4 w-4" />
+        </button>
+      </ActionBarPrimitive.Reload>
+    </ActionBarPrimitive.Root>
+  );
+};
+
+const EditComposer: FC = () => {
+  return (
+    <MessagePrimitive.Root className="mx-auto w-full max-w-3xl py-2">
+      <ComposerPrimitive.Root className="ml-auto flex w-full max-w-[85%] flex-col rounded-2xl border border-border bg-muted/30">
+        <ComposerPrimitive.Input
+          className="min-h-14 w-full resize-none bg-transparent px-4 py-3 text-sm outline-none"
+          autoFocus
+        />
+        <div className="mb-3 mr-3 flex items-center justify-end gap-2">
+          <ComposerPrimitive.Cancel asChild>
+            <button type="button" className="rounded border border-border px-3 py-1 text-xs hover:bg-muted">
+              Cancel
+            </button>
+          </ComposerPrimitive.Cancel>
+          <ComposerPrimitive.Send asChild>
+            <button type="button" className="rounded border border-border px-3 py-1 text-xs hover:bg-muted">
+              Update
+            </button>
+          </ComposerPrimitive.Send>
+        </div>
+      </ComposerPrimitive.Root>
+    </MessagePrimitive.Root>
+  );
+};
+
+const Composer: FC = () => {
+  return (
+    <ComposerPrimitive.Root className="flex w-full items-end gap-2 rounded-2xl border border-border bg-background p-2">
       <ComposerPrimitive.Input
         placeholder="输入消息..."
-        className="flex-1 resize-none rounded-xl border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        className="min-h-12 flex-1 resize-none bg-transparent px-3 py-2 text-sm outline-none"
       />
-      <ComposerPrimitive.Send className="rounded-xl bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 disabled:opacity-50">
-        发送
-      </ComposerPrimitive.Send>
+
+      <AuiIf condition={(s) => !s.thread.isRunning}>
+        <ComposerPrimitive.Send asChild>
+          <button
+            type="submit"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40"
+          >
+            <ArrowUpIcon className="h-4 w-4" />
+          </button>
+        </ComposerPrimitive.Send>
+      </AuiIf>
+
+      <AuiIf condition={(s) => s.thread.isRunning}>
+        <ComposerPrimitive.Cancel asChild>
+          <button
+            type="button"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground"
+          >
+            <SquareIcon className="h-3 w-3 fill-current" />
+          </button>
+        </ComposerPrimitive.Cancel>
+      </AuiIf>
     </ComposerPrimitive.Root>
   );
-}
+};
