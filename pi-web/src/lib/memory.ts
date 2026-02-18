@@ -74,7 +74,13 @@ export class MemoryIndex {
       }
     }
 
-    const sorted = [...scores.entries()].sort((a, b) => b[1] - a[1]);
+    const now = Date.now();
+    const sorted = [...scores.entries()]
+      .map(([idx, relevance]) => {
+        const recency = recencyBoost(this.entries[idx].timestamp, now);
+        return [idx, 0.85 * relevance + 0.15 * recency] as [number, number];
+      })
+      .sort((a, b) => b[1] - a[1]);
     return sorted.slice(0, limit).map(([idx, score]) => ({
       timestamp: this.entries[idx].timestamp,
       role: this.entries[idx].role,
@@ -138,6 +144,16 @@ function tokenize(text: string): string[] {
 
   if (currentWord) tokens.push(currentWord);
   return tokens;
+}
+
+// ── Time decay ──────────────────────────────────────────────────
+
+const HALF_LIFE_DAYS = 7;
+const DECAY_RATE = 0.693 / HALF_LIFE_DAYS; // ln(2) / halfLife
+
+function recencyBoost(timestamp: string, nowMs: number): number {
+  const ageDays = (nowMs - new Date(timestamp).getTime()) / 86_400_000;
+  return Math.exp(-DECAY_RATE * Math.max(ageDays, 0));
 }
 
 function isCjk(ch: string): boolean {

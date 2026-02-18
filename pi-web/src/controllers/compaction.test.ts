@@ -70,37 +70,33 @@ describe("estimateMessagesTokens", () => {
 // ── compactMessages ─────────────────────────────────────────────
 
 describe("compactMessages", () => {
-  it("returns null when under threshold", () => {
+  it("returns null when under threshold", async () => {
     const messages = [
       mockMsg("assistant", "greeting"),
       mockMsg("user", "hi"),
       mockMsg("assistant", "hello"),
     ];
-    expect(compactMessages(messages, 128000)).toBeNull();
+    expect(await compactMessages(messages, 128000)).toBeNull();
   });
 
-  it("returns null when too few messages", () => {
+  it("returns null when too few messages", async () => {
     const messages = Array.from({ length: 5 }, (_, i) =>
       i % 2 === 0 ? mockMsg("user", "x".repeat(5000)) : mockMsg("assistant", "y".repeat(5000)),
     );
-    // Even with large text, if <= KEEP_RECENT+1 messages, no compaction
-    expect(compactMessages(messages, 100)).toBeNull();
+    expect(await compactMessages(messages, 100)).toBeNull();
   });
 
-  it("compacts when over threshold with enough messages", () => {
-    // Create 20 messages with enough text to exceed 80% of a small context window
+  it("compacts when over threshold with enough messages", async () => {
     const messages = [
       mockMsg("assistant", "greeting"),
       ...Array.from({ length: 19 }, (_, i) =>
         i % 2 === 0 ? mockMsg("user", "x".repeat(200)) : mockMsg("assistant", "y".repeat(200)),
       ),
     ];
-    const result = compactMessages(messages, 200);
+    const result = await compactMessages(messages, 200);
     expect(result).not.toBeNull();
-    // Should keep first message + summary + last 10
     expect(result!.length).toBeLessThan(messages.length);
-    expect(result![0]).toBe(messages[0]); // first message preserved
-    // Summary message should contain compaction note
+    expect(result![0]).toBe(messages[0]);
     const summaryText = (result![1] as any).content[0].text;
     expect(summaryText).toContain("压缩");
   });

@@ -202,6 +202,21 @@ function escapeLike(text: string): string {
   return text.replace(/[\\%_]/g, "\\$&");
 }
 
+const HALF_LIFE_DAYS = 7;
+const DECAY_RATE = 0.693 / HALF_LIFE_DAYS;
+
+function recencyBoostMs(updatedAt: number, nowMs: number): number {
+  const ageDays = (nowMs - updatedAt) / 86_400_000;
+  return Math.exp(-DECAY_RATE * Math.max(ageDays, 0));
+}
+
+function applyRecency(results: SearchResult[], getTime: (r: SearchResult) => number): SearchResult[] {
+  const now = Date.now();
+  return results
+    .map((r) => ({ ...r, score: 0.85 * r.score + 0.15 * recencyBoostMs(getTime(r), now) }))
+    .sort((a, b) => b.score - a.score);
+}
+
 function isMissingFtsModuleError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
   return message.toLowerCase().includes("no such module: fts5");
@@ -499,39 +514,40 @@ export class MemoryDB {
     const ftsQuery = buildFtsQuery(query);
     if (!ftsQuery || ftsQuery === '""') return [];
 
+    const candidateLimit = limit * 3;
     let sql: string;
     let params: any[];
 
     if (sourcePath) {
-      sql = `SELECT id, path, start_line, end_line, text, bm25(chunks_fts) as rank
-             FROM chunks_fts
-             WHERE chunks_fts MATCH ? AND path = ?
-             ORDER BY rank
-             LIMIT ?`;
-      params = [ftsQuery, sourcePath, limit];
+      sql = `SELECT f.id, f.path, f.start_line, f.end_line, f.text, bm25(chunks_fts) as rank, c.updated_at
+             FROM chunks_fts f JOIN chunks c ON f.id = c.id
+             WHERE chunks_fts MATCH ? AND f.path = ?
+             ORDER BY rank LIMIT ?`;
+      params = [ftsQuery, sourcePath, candidateLimit];
     } else {
-      sql = `SELECT id, path, start_line, end_line, text, bm25(chunks_fts) as rank
-             FROM chunks_fts
+      sql = `SELECT f.id, f.path, f.start_line, f.end_line, f.text, bm25(chunks_fts) as rank, c.updated_at
+             FROM chunks_fts f JOIN chunks c ON f.id = c.id
              WHERE chunks_fts MATCH ?
-             ORDER BY rank
-             LIMIT ?`;
-      params = [ftsQuery, limit];
+             ORDER BY rank LIMIT ?`;
+      params = [ftsQuery, candidateLimit];
     }
 
     try {
       const rows = this.db.exec(sql, params);
       if (rows.length === 0) return [];
 
-      return rows[0].values.map((row: any[]) => ({
+      const results = rows[0].values.map((row: any[]) => ({
         id: row[0] as string,
         path: row[1] as string,
         startLine: row[2] as number,
         endLine: row[3] as number,
         text: row[4] as string,
         score: bm25RankToScore(row[5] as number),
+        _updatedAt: row[6] as number,
       }));
+
+      return applyRecency(results, (r) => (r as any)._updatedAt ?? 0).slice(0, limit);
     } catch {
-      // FTS query syntax error — return empty
       return [];
     }
   }
@@ -545,7 +561,7 @@ export class MemoryDB {
 
     const likeClauses = tokens.map(() => "LOWER(text) LIKE ? ESCAPE '\\\\'");
     const params: any[] = tokens.map((token) => `%${escapeLike(token)}%`);
-    let sql = `SELECT id, path, start_line, end_line, text
+    let sql = `SELECT id, path, start_line, end_line, text, updated_at
                FROM chunks
                WHERE (${likeClauses.join(" OR ")})`;
 
@@ -565,6 +581,7 @@ export class MemoryDB {
       const loweredQuery = query.toLowerCase();
       const ranked = rows[0].values.map((row: any[]) => {
         const text = row[4] as string;
+        const updatedAt = row[5] as number;
         const lowered = text.toLowerCase();
         let hits = 0;
         for (const token of tokens) {
@@ -579,12 +596,11 @@ export class MemoryDB {
           endLine: row[3] as number,
           text,
           score,
-        } satisfies SearchResult;
+          _updatedAt: updatedAt,
+        };
       });
 
-      return ranked
-        .sort((a, b) => b.score - a.score)
-        .slice(0, limit);
+      return applyRecency(ranked, (r) => (r as any)._updatedAt ?? 0).slice(0, limit);
     } catch {
       return [];
     }

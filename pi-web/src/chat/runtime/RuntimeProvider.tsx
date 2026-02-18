@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AssistantRuntimeProvider,
   unstable_useRemoteThreadListRuntime,
   useAssistantInstructions,
+  useThread,
 } from "@assistant-ui/react";
 import { AssistantChatTransport, useChatRuntime } from "@assistant-ui/react-ai-sdk";
 import { useSettings } from "../../hooks/use-settings";
@@ -12,6 +13,7 @@ import {
   buildSystemPrompt,
   buildSystemPromptFromPreset,
 } from "../../lib/character";
+import { shouldFlushMemory, FLUSH_PROMPT } from "../../controllers/compaction";
 import { createThreadListAdapter } from "./thread-list-adapter";
 
 function SystemInstructionRegistrar({ instruction }: { instruction: string }) {
@@ -19,6 +21,27 @@ function SystemInstructionRegistrar({ instruction }: { instruction: string }) {
     instruction,
     disabled: instruction.trim().length === 0,
   });
+  return null;
+}
+
+const DEFAULT_CONTEXT_WINDOW = 128_000;
+
+/**
+ * Monitors thread token usage and injects a flush instruction
+ * when approaching the compaction threshold.
+ */
+function MemoryFlushRegistrar() {
+  const lastFlushAtRef = useRef(0);
+  const messages = useThread((s) => s.messages);
+
+  const needed = shouldFlushMemory(messages as any[], DEFAULT_CONTEXT_WINDOW, lastFlushAtRef.current);
+  if (needed) lastFlushAtRef.current = Date.now();
+
+  useAssistantInstructions({
+    instruction: FLUSH_PROMPT,
+    disabled: !needed,
+  });
+
   return null;
 }
 
@@ -101,6 +124,7 @@ export function ChatRuntimeProvider({ children }: { children: ReactNode }) {
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <SystemInstructionRegistrar instruction={systemInstruction} />
+      <MemoryFlushRegistrar />
       {children}
     </AssistantRuntimeProvider>
   );
