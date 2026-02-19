@@ -41,6 +41,7 @@ const en: Record<string, string> = {
   "settings.presets": "Presets",
   "settings.regex": "Regex",
   "settings.group": "Group",
+  "settings.skills": "Skills",
 
   // ── Persona ─────────────────────────────────────────────
   "persona.hint": "Set your character name and description. The AI will use this info in conversations. Supports {{user}} template variable.",
@@ -120,6 +121,26 @@ const en: Record<string, string> = {
   "group.enable2": "Enable",
   "group.remove": "Remove",
   "group.noDesc": "No description",
+
+  // ── Skills ─────────────────────────────────────────────
+  "skills.hint": "Manage built-in commands and custom prompt skills. Custom skills can inject reusable prompts with slash commands.",
+  "skills.builtin": "Built-in skills",
+  "skills.custom": "Custom skills",
+  "skills.readonly": "Read-only",
+  "skills.empty": "No custom skills yet",
+  "skills.commandPlaceholder": "Command, e.g. /summarize",
+  "skills.namePlaceholder": "Display name",
+  "skills.descriptionPlaceholder": "Description",
+  "skills.promptPlaceholder": "Prompt template injected when command is used",
+  "skills.add": "Add skill",
+  "skills.update": "Update skill",
+  "skills.cancelEdit": "Cancel edit",
+  "skills.edit": "Edit",
+  "skills.disable": "Disable",
+  "skills.enable": "Enable",
+  "skills.validation": "Command, name and prompt template are required.",
+  "skills.commandExists": "This command already exists.",
+  "skills.commandReserved": "This command is reserved by built-in skills.",
 
   // ── Character selector ──────────────────────────────────
   "char.title": "Select Character",

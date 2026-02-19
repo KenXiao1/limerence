@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AssistantRuntimeProvider,
   unstable_useRemoteThreadListRuntime,
@@ -16,6 +16,7 @@ import {
 import { shouldFlushMemory, FLUSH_PROMPT } from "../../controllers/compaction";
 import { resolveUserName } from "../../controllers/resolve-settings";
 import { createThreadListAdapter } from "./thread-list-adapter";
+import { THREAD_OVERRIDES_STORE, type ThreadOverrides } from "../../controllers/thread-overrides";
 
 function SystemInstructionRegistrar({ instruction }: { instruction: string }) {
   useAssistantInstructions({
@@ -79,10 +80,53 @@ async function buildCurrentSystemInstruction(
   return buildSystemPrompt(character, persona, memoryInjection ?? undefined);
 }
 
+// ── Thread overrides context ──────────────────────────────────
+
+interface ThreadOverridesContextValue {
+  overrides: ThreadOverrides;
+  setOverrides: (o: ThreadOverrides) => void;
+  loadOverrides: (threadId: string) => Promise<ThreadOverrides>;
+  saveOverrides: (threadId: string, o: ThreadOverrides) => Promise<void>;
+}
+
+const ThreadOverridesContext = createContext<ThreadOverridesContextValue | null>(null);
+
+export function useThreadOverrides(): ThreadOverridesContextValue {
+  const ctx = useContext(ThreadOverridesContext);
+  if (!ctx) throw new Error("useThreadOverrides must be used within ChatRuntimeProvider");
+  return ctx;
+}
+
+// Module-level mutable ref so the transport always reads latest overrides
+const _bodyRef: Record<string, unknown> = {};
+
 export function ChatRuntimeProvider({ children }: { children: ReactNode }) {
   const settings = useSettings();
   const { backend, storage } = useStorageContext();
   const [systemInstruction, setSystemInstruction] = useState("");
+  const [overrides, _setOverrides] = useState<ThreadOverrides>({});
+
+  const setOverrides = useCallback((o: ThreadOverrides) => {
+    _setOverrides(o);
+    _bodyRef.threadOverrides = o;
+  }, []);
+
+  const loadOverrides = useCallback(async (threadId: string): Promise<ThreadOverrides> => {
+    const saved = await backend.get<ThreadOverrides>(THREAD_OVERRIDES_STORE, threadId);
+    const o = saved ?? {};
+    setOverrides(o);
+    return o;
+  }, [backend, setOverrides]);
+
+  const saveOverrides = useCallback(async (threadId: string, o: ThreadOverrides) => {
+    setOverrides(o);
+    await backend.set(THREAD_OVERRIDES_STORE, threadId, o);
+  }, [backend, setOverrides]);
+
+  const overridesCtx = useMemo<ThreadOverridesContextValue>(
+    () => ({ overrides, setOverrides, loadOverrides, saveOverrides }),
+    [overrides, setOverrides, loadOverrides, saveOverrides],
+  );
 
   const threadListAdapter = useMemo(
     () => createThreadListAdapter(backend),
@@ -117,6 +161,7 @@ export function ChatRuntimeProvider({ children }: { children: ReactNode }) {
       useChatRuntime({
         transport: new AssistantChatTransport({
           api: "/api/chat",
+          body: _bodyRef,
         }),
       }),
     adapter: threadListAdapter,
@@ -124,9 +169,11 @@ export function ChatRuntimeProvider({ children }: { children: ReactNode }) {
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      <SystemInstructionRegistrar instruction={systemInstruction} />
-      <MemoryFlushRegistrar />
-      {children}
+      <ThreadOverridesContext.Provider value={overridesCtx}>
+        <SystemInstructionRegistrar instruction={systemInstruction} />
+        <MemoryFlushRegistrar />
+        {children}
+      </ThreadOverridesContext.Provider>
     </AssistantRuntimeProvider>
   );
 }

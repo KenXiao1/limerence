@@ -41,6 +41,7 @@ const zh: Record<string, string> = {
   "settings.presets": "预设",
   "settings.regex": "正则",
   "settings.group": "群聊",
+  "settings.skills": "技能",
 
   // ── Persona ─────────────────────────────────────────────
   "persona.hint": "设置你的角色名和描述，AI 会在对话中使用这些信息。支持 {{user}} 模板变量。",
@@ -120,6 +121,26 @@ const zh: Record<string, string> = {
   "group.enable2": "启用",
   "group.remove": "移除",
   "group.noDesc": "无描述",
+
+  // ── Skills ─────────────────────────────────────────────
+  "skills.hint": "管理内置命令和自定义提示词技能。自定义技能可通过斜杠命令注入复用提示词。",
+  "skills.builtin": "内置技能",
+  "skills.custom": "自定义技能",
+  "skills.readonly": "只读",
+  "skills.empty": "暂无自定义技能",
+  "skills.commandPlaceholder": "命令，例如 /summarize",
+  "skills.namePlaceholder": "显示名称",
+  "skills.descriptionPlaceholder": "描述",
+  "skills.promptPlaceholder": "命令触发时注入的提示词模板",
+  "skills.add": "添加技能",
+  "skills.update": "更新技能",
+  "skills.cancelEdit": "取消编辑",
+  "skills.edit": "编辑",
+  "skills.disable": "禁用",
+  "skills.enable": "启用",
+  "skills.validation": "命令、名称和提示词模板为必填项。",
+  "skills.commandExists": "该命令已存在。",
+  "skills.commandReserved": "该命令已被内置技能占用。",
 
   // ── Character selector ──────────────────────────────────
   "char.title": "选择角色",

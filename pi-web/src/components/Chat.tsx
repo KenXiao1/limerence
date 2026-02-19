@@ -1,4 +1,4 @@
-import { useState, useCallback, type FC } from "react";
+import { useState, useCallback, useEffect, useMemo, type FC, type FormEvent } from "react";
 import {
   ActionBarPrimitive,
   AuiIf,
@@ -8,6 +8,9 @@ import {
   ThreadListItemPrimitive,
   ThreadListPrimitive,
   ThreadPrimitive,
+  useComposer,
+  useComposerRuntime,
+  useThread,
 } from "@assistant-ui/react";
 import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import {
@@ -15,9 +18,8 @@ import {
   ArrowUpIcon,
   CheckIcon,
   ChevronDownIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   CopyIcon,
+  FolderOpenIcon,
   HomeIcon,
   MoreHorizontalIcon,
   PanelLeftCloseIcon,
@@ -31,15 +33,32 @@ import {
 import { CharacterSelector } from "./CharacterSelector";
 import { Settings } from "./Settings";
 import { ToolRenderers } from "./ToolRenderers";
+import { TokenBudgetBar } from "./TokenBudgetBar";
+import { Workspace } from "./Workspace";
 import { useSettings } from "../hooks/use-settings";
+import { useThreadOverrides } from "../chat/runtime/RuntimeProvider";
 import { loadCharacterFromFile } from "../controllers/character";
 import { resolveCharacterName } from "../controllers/resolve-settings";
+import { calculateBudget, DEFAULT_BUDGET_CONFIG } from "../controllers/context-budget";
+import type { ThinkingLevel, ThreadOverrides } from "../controllers/thread-overrides";
+import { parseSlashCommand } from "../controllers/slash-commands";
+
+const THINKING_LEVELS: { value: ThinkingLevel; label: string }[] = [
+  { value: "off", label: "关闭" },
+  { value: "low", label: "低" },
+  { value: "medium", label: "中" },
+  { value: "high", label: "高" },
+];
 
 export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
   const settings = useSettings();
+  const threadId = useThread((s) => s.threadId);
+  const { overrides, setOverrides, loadOverrides, saveOverrides } = useThreadOverrides();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [charSelectorOpen, setCharSelectorOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [workspaceOpen, setWorkspaceOpen] = useState(false);
+  const [providerOptions, setProviderOptions] = useState<string[]>(["limerence-proxy"]);
 
   const handleCharImport = useCallback(
     async (file: File) => {
@@ -51,6 +70,50 @@ export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
   );
 
   const charName = resolveCharacterName(settings.character);
+  const currentThinking = overrides.thinkingLevel ?? "off";
+  const currentModelId = overrides.modelId ?? "";
+  const currentProviderId = overrides.providerId ?? "";
+
+  useEffect(() => {
+    let cancelled = false;
+    void settings.listProviderKeys().then((keys) => {
+      if (cancelled) return;
+      const options = Array.from(new Set(["limerence-proxy", ...keys])).sort((a, b) => a.localeCompare(b));
+      setProviderOptions(options);
+    }).catch((error) => {
+      console.error("[Chat] Failed to load provider keys:", error);
+      if (!cancelled) setProviderOptions(["limerence-proxy"]);
+    });
+    return () => { cancelled = true; };
+  }, [settings.listProviderKeys]);
+
+  useEffect(() => {
+    if (!threadId) return;
+    void loadOverrides(threadId).catch((error) => {
+      console.error("[Chat] Failed to load thread overrides:", error);
+      setOverrides({});
+    });
+  }, [loadOverrides, setOverrides, threadId]);
+
+  const persistOverrides = useCallback((next: ThreadOverrides) => {
+    if (!threadId) {
+      setOverrides(next);
+      return;
+    }
+    void saveOverrides(threadId, next);
+  }, [saveOverrides, setOverrides, threadId]);
+
+  const handleProviderChange = useCallback((providerId: string) => {
+    persistOverrides({ ...overrides, providerId: providerId || undefined });
+  }, [overrides, persistOverrides]);
+
+  const handleModelChange = useCallback((modelId: string) => {
+    persistOverrides({ ...overrides, modelId: modelId || undefined });
+  }, [overrides, persistOverrides]);
+
+  const handleThinkingChange = useCallback((level: ThinkingLevel) => {
+    persistOverrides({ ...overrides, thinkingLevel: level });
+  }, [overrides, persistOverrides]);
 
   return (
     <div className="limerence-chat-shell h-screen w-full bg-background text-foreground">
@@ -91,7 +154,51 @@ export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
               <span className="font-medium text-sm">{charName}</span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              {/* Provider override selector */}
+              <select
+                value={currentProviderId}
+                onChange={(e) => handleProviderChange(e.target.value)}
+                className="h-8 rounded-md border border-border bg-background px-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                title="Provider"
+              >
+                <option value="">默认 Provider</option>
+                {providerOptions.map((provider) => (
+                  <option key={provider} value={provider}>
+                    {provider}
+                  </option>
+                ))}
+              </select>
+              {/* Model override input */}
+              <input
+                type="text"
+                value={currentModelId}
+                onChange={(e) => handleModelChange(e.target.value)}
+                placeholder="模型 ID（留空用默认）"
+                className="h-8 w-36 rounded-md border border-border bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+              {/* Thinking level selector */}
+              <select
+                value={currentThinking}
+                onChange={(e) => handleThinkingChange(e.target.value as ThinkingLevel)}
+                className="h-8 rounded-md border border-border bg-background px-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                title="思考深度"
+              >
+                {THINKING_LEVELS.map((l) => (
+                  <option key={l.value} value={l.value}>
+                    {currentThinking !== "off" && l.value === currentThinking ? `🧠 ${l.label}` : l.label}
+                  </option>
+                ))}
+              </select>
+              {/* Workspace toggle */}
+              <button
+                type="button"
+                className={`inline-flex h-8 items-center justify-center rounded-md border border-border px-2 text-sm hover:bg-muted ${workspaceOpen ? "bg-muted" : ""}`}
+                onClick={() => setWorkspaceOpen((v) => !v)}
+                title="工作区"
+              >
+                <FolderOpenIcon className="h-4 w-4" />
+              </button>
               <button
                 type="button"
                 className="inline-flex h-8 items-center justify-center rounded-md border border-border px-2 text-sm hover:bg-muted"
@@ -109,7 +216,14 @@ export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
             </div>
           </header>
 
-          <Thread />
+          <div className="flex min-h-0 flex-1">
+            <div className="flex min-w-0 flex-1 flex-col">
+              <Thread />
+            </div>
+            {workspaceOpen && (
+              <Workspace open={workspaceOpen} onClose={() => setWorkspaceOpen(false)} />
+            )}
+          </div>
         </main>
       </div>
 
@@ -207,6 +321,12 @@ const ThreadListItem: FC = () => {
 };
 
 const Thread: FC = () => {
+  const messages = useThread((s) => s.messages);
+  const budget = useMemo(
+    () => calculateBudget(128_000, "", "", messages as any[], DEFAULT_BUDGET_CONFIG),
+    [messages],
+  );
+
   return (
     <ThreadPrimitive.Root className="flex min-h-0 flex-1 flex-col">
       <ThreadPrimitive.Viewport className="relative flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pt-4">
@@ -236,6 +356,11 @@ const Thread: FC = () => {
               <ChevronDownIcon className="h-4 w-4" />
             </button>
           </ThreadPrimitive.ScrollToBottom>
+          {messages.length > 0 && (
+            <div className="mb-1.5">
+              <TokenBudgetBar budget={budget} />
+            </div>
+          )}
           <Composer />
         </ThreadPrimitive.ViewportFooter>
       </ThreadPrimitive.Viewport>
@@ -328,8 +453,29 @@ const EditComposer: FC = () => {
 };
 
 const Composer: FC = () => {
+  const composerText = useComposer((s) => s.text);
+  const composerRuntime = useComposerRuntime();
+  const { customSkills } = useSettings();
+
+  const handleSubmit = useCallback((e: FormEvent<HTMLFormElement>) => {
+    const cmd = parseSlashCommand(composerText, customSkills);
+    if (cmd?.type !== "prompt") return;
+
+    e.preventDefault();
+    const args = composerText.trim().split(/\s+/).slice(1).join(" ").trim();
+    const injectedPrompt = cmd.promptTemplate.trim();
+    const finalPrompt = args ? `${injectedPrompt}\n\n${args}` : injectedPrompt;
+    if (!finalPrompt) return;
+
+    composerRuntime.setText(finalPrompt);
+    composerRuntime.send();
+  }, [composerRuntime, composerText, customSkills]);
+
   return (
-    <ComposerPrimitive.Root className="flex w-full items-end gap-2 rounded-2xl border border-border bg-background p-2">
+    <ComposerPrimitive.Root
+      className="flex w-full items-end gap-2 rounded-2xl border border-border bg-background p-2"
+      onSubmit={handleSubmit}
+    >
       <ComposerPrimitive.Input
         placeholder="输入消息..."
         className="min-h-12 flex-1 resize-none bg-transparent px-3 py-2 text-sm outline-none"

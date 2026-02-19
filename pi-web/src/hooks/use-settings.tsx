@@ -24,6 +24,8 @@ import { ACTIVE_PROMPT_PRESET_KEY, PROMPT_PRESETS_KEY } from "../controllers/pro
 import type { GroupChatConfig } from "../controllers/group-chat";
 import { DEFAULT_GROUP_CONFIG, deserializeGroupConfig, GROUP_CHAT_KEY } from "../controllers/group-chat";
 import type { CharacterEntry } from "../controllers/character";
+import type { Skill } from "../controllers/skills";
+import { SKILLS_STORE_KEY } from "../controllers/skills";
 
 // ── Store names (backward-compatible with pi-web-ui) ────────────
 
@@ -76,6 +78,10 @@ export interface SettingsContextValue {
   groupChat: GroupChatConfig;
   setGroupChat: (config: GroupChatConfig) => void;
 
+  // Skills
+  customSkills: Skill[];
+  setCustomSkills: (skills: Skill[]) => void;
+
   // Generic settings access
   getSetting: <T>(key: string) => Promise<T | null>;
   setSetting: (key: string, value: unknown) => Promise<void>;
@@ -107,6 +113,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [promptPresets, _setPromptPresets] = useState<PromptPresetConfig[]>([]);
   const [activePromptPreset, _setActivePromptPreset] = useState<PromptPresetConfig | undefined>();
   const [groupChat, _setGroupChat] = useState<GroupChatConfig>({ ...DEFAULT_GROUP_CONFIG });
+  const [customSkills, _setCustomSkills] = useState<Skill[]>([]);
 
   // Load all settings from IndexedDB on mount
   useEffect(() => {
@@ -121,7 +128,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       const chars = await limerenceStorage.loadCharacters();
       if (!cancelled) setCharacterList(chars);
 
-      const [persona, proxyRaw, lorebook, rules, preset, presets, promptPreset, gcRaw] =
+      const [persona, proxyRaw, lorebook, rules, preset, presets, promptPreset, gcRaw, skills] =
         await Promise.all([
           tryLoad(() => backend.get<Persona>(SETTINGS_STORE, PERSONA_SETTINGS_KEY)),
           tryLoad(() => backend.get<unknown>(SETTINGS_STORE, PROXY_MODE_KEY)),
@@ -131,6 +138,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           tryLoad(() => backend.get<PromptPresetConfig[]>(SETTINGS_STORE, PROMPT_PRESETS_KEY)),
           tryLoad(() => backend.get<PromptPresetConfig>(SETTINGS_STORE, ACTIVE_PROMPT_PRESET_KEY)),
           tryLoad(() => backend.get<unknown>(SETTINGS_STORE, GROUP_CHAT_KEY)),
+          tryLoad(() => backend.get<Skill[]>(SETTINGS_STORE, SKILLS_STORE_KEY)),
         ]);
 
       if (cancelled) return;
@@ -143,6 +151,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       if (promptPreset?.id) _setActivePromptPreset(promptPreset);
       const gc = deserializeGroupConfig(gcRaw);
       if (gc) _setGroupChat(gc);
+      if (Array.isArray(skills)) _setCustomSkills(skills);
 
       if (!cancelled) setReady(true);
     }
@@ -197,6 +206,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     void backend.set(SETTINGS_STORE, GROUP_CHAT_KEY, config);
   }, [backend]);
 
+  const setCustomSkills = useCallback((skills: Skill[]) => {
+    _setCustomSkills(skills);
+    void backend.set(SETTINGS_STORE, SKILLS_STORE_KEY, skills);
+  }, [backend]);
+
   // ── Provider key helpers ──────────────────────────────────────
 
   const getProviderKey = useCallback(async (provider: string): Promise<string | null> => {
@@ -233,6 +247,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     promptPresets, setPromptPresets,
     activePromptPreset, setActivePromptPreset,
     groupChat, setGroupChat,
+    customSkills, setCustomSkills,
     getSetting, setSetting,
     ready,
   };

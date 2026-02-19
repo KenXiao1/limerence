@@ -5,6 +5,7 @@
 
 import { t } from "../lib/i18n";
 import { normalizeCommand } from "../lib/normalize";
+import { findSkillByCommand, normalizeSkillCommand, type Skill } from "./skills";
 
 export type SlashCommandResult =
   | { type: "handled" }
@@ -14,35 +15,50 @@ export type SlashCommandResult =
   | { type: "clear" }
   | { type: "export" }
   | { type: "help"; text: string }
+  | { type: "prompt"; command: string; promptTemplate: string }
   | null;
+
+const COMMAND_ALIASES: Record<string, string> = {
+  "/abort": "/stop",
+  "/reset": "/new",
+  "/regenerate": "/retry",
+  "/regen": "/retry",
+  "/?": "/help",
+};
 
 /**
  * Parse a slash command from user input.
  * Returns the command result or null if not a command.
  */
-export function parseSlashCommand(text: string): SlashCommandResult {
+export function parseSlashCommand(text: string, customSkills: Skill[] = []): SlashCommandResult {
   const trimmed = normalizeCommand(text);
   if (!trimmed.startsWith("/")) return null;
 
-  const cmd = trimmed.split(/\s+/)[0];
+  const rawCommand = normalizeSkillCommand(trimmed.split(/\s+/)[0]);
+  const command = COMMAND_ALIASES[rawCommand] ?? rawCommand;
+  const skill = findSkillByCommand(command, customSkills);
+  if (!skill) return null;
 
-  switch (cmd) {
+  if (skill.type === "prompt") {
+    return {
+      type: "prompt",
+      command,
+      promptTemplate: skill.promptTemplate ?? "",
+    };
+  }
+
+  switch (command) {
     case "/stop":
-    case "/abort":
       return { type: "stop" };
     case "/new":
-    case "/reset":
       return { type: "new" };
     case "/retry":
-    case "/regenerate":
-    case "/regen":
       return { type: "retry" };
     case "/clear":
       return { type: "clear" };
     case "/export":
       return { type: "export" };
     case "/help":
-    case "/?":
       return { type: "help", text: t("slash.help") };
     default:
       return null;

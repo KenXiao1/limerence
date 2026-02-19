@@ -10,13 +10,19 @@ import { useSettings } from "../hooks/use-settings";
 import type { LorebookEntry } from "../lib/storage";
 import type { RegexRule } from "../controllers/regex-rules";
 import { createRegexRule } from "../controllers/regex-rules";
-import { BUILTIN_PRESETS, type GenerationPreset } from "../controllers/presets";
+import { BUILTIN_PRESETS } from "../controllers/presets";
 import { importSTPreset, type PromptPresetConfig } from "../controllers/prompt-presets";
 import type { TurnStrategy } from "../controllers/group-chat";
 import { addMember } from "../controllers/group-chat";
 import { downloadJson } from "../controllers/session-io";
+import {
+  BUILTIN_SKILLS,
+  createPromptSkill,
+  normalizeSkillCommand,
+  type Skill,
+} from "../controllers/skills";
 
-type SettingsTab = "persona" | "lorebook" | "presets" | "regex" | "prompt" | "group";
+type SettingsTab = "persona" | "lorebook" | "presets" | "regex" | "prompt" | "group" | "skills";
 
 interface Props {
   open: boolean;
@@ -24,7 +30,6 @@ interface Props {
 }
 
 export function Settings({ open, onClose }: Props) {
-  const settings = useSettings();
   const [tab, setTab] = useState<SettingsTab>("persona");
 
   if (!open) return null;
@@ -36,6 +41,7 @@ export function Settings({ open, onClose }: Props) {
     { id: "regex", label: t("settings.regex") },
     { id: "prompt", label: t("settings.prompt") },
     { id: "group", label: t("settings.group") },
+    { id: "skills", label: t("settings.skills") },
   ];
 
   return (
@@ -72,6 +78,7 @@ export function Settings({ open, onClose }: Props) {
           {tab === "regex" && <RegexTab />}
           {tab === "prompt" && <PromptTab />}
           {tab === "group" && <GroupTab />}
+          {tab === "skills" && <SkillsTab />}
         </div>
       </div>
     </div>
@@ -652,6 +659,212 @@ function GroupTab() {
             </p>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Skills tab ──────────────────────────────────────────────────
+
+function SkillsTab() {
+  const { customSkills, setCustomSkills } = useSettings();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftCommand, setDraftCommand] = useState("");
+  const [draftName, setDraftName] = useState("");
+  const [draftDescription, setDraftDescription] = useState("");
+  const [draftPrompt, setDraftPrompt] = useState("");
+  const [error, setError] = useState("");
+
+  const builtinCommands = new Set(BUILTIN_SKILLS.map((s) => normalizeSkillCommand(s.command)));
+
+  const resetForm = useCallback(() => {
+    setEditingId(null);
+    setDraftCommand("");
+    setDraftName("");
+    setDraftDescription("");
+    setDraftPrompt("");
+    setError("");
+  }, []);
+
+  const handleSave = useCallback(() => {
+    const command = normalizeSkillCommand(draftCommand);
+    const name = draftName.trim();
+    const description = draftDescription.trim();
+    const promptTemplate = draftPrompt.trim();
+
+    if (!command || !name || !promptTemplate) {
+      setError(t("skills.validation"));
+      return;
+    }
+
+    if (!editingId && builtinCommands.has(command)) {
+      setError(t("skills.commandReserved"));
+      return;
+    }
+
+    const duplicate = customSkills.some(
+      (skill) => skill.id !== editingId && normalizeSkillCommand(skill.command) === command,
+    );
+    if (duplicate) {
+      setError(t("skills.commandExists"));
+      return;
+    }
+
+    if (editingId) {
+      setCustomSkills(customSkills.map((skill) =>
+        skill.id === editingId
+          ? {
+              ...skill,
+              command,
+              name,
+              description,
+              promptTemplate,
+            }
+          : skill,
+      ));
+    } else {
+      setCustomSkills([...customSkills, createPromptSkill(command, name, description, promptTemplate)]);
+    }
+    resetForm();
+  }, [
+    builtinCommands,
+    customSkills,
+    draftCommand,
+    draftDescription,
+    draftName,
+    draftPrompt,
+    editingId,
+    resetForm,
+    setCustomSkills,
+  ]);
+
+  const handleEdit = useCallback((skill: Skill) => {
+    setEditingId(skill.id);
+    setDraftCommand(skill.command);
+    setDraftName(skill.name);
+    setDraftDescription(skill.description);
+    setDraftPrompt(skill.promptTemplate ?? "");
+    setError("");
+  }, []);
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">{t("skills.hint")}</p>
+
+      <div>
+        <label className="text-xs font-medium mb-1 block">{t("skills.builtin")}</label>
+        <div className="space-y-1">
+          {BUILTIN_SKILLS.map((skill) => (
+            <div key={skill.id} className="border border-border rounded-lg p-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium">{skill.command} · {skill.name}</span>
+                <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 bg-secondary rounded">
+                  {t("skills.readonly")}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">{skill.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="border border-border rounded-lg p-2.5 space-y-2">
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            value={draftCommand}
+            onChange={(e) => setDraftCommand(e.target.value)}
+            placeholder={t("skills.commandPlaceholder")}
+            className="px-2 py-1.5 text-xs border border-border rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+          <input
+            value={draftName}
+            onChange={(e) => setDraftName(e.target.value)}
+            placeholder={t("skills.namePlaceholder")}
+            className="px-2 py-1.5 text-xs border border-border rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+        </div>
+        <input
+          value={draftDescription}
+          onChange={(e) => setDraftDescription(e.target.value)}
+          placeholder={t("skills.descriptionPlaceholder")}
+          className="w-full px-2 py-1.5 text-xs border border-border rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+        />
+        <textarea
+          value={draftPrompt}
+          onChange={(e) => setDraftPrompt(e.target.value)}
+          rows={3}
+          placeholder={t("skills.promptPlaceholder")}
+          className="w-full px-2 py-1.5 text-xs border border-border rounded bg-background resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+        />
+        {error && <p className="text-xs text-destructive">{error}</p>}
+        <div className="flex gap-2">
+          <button
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90"
+            onClick={handleSave}
+          >
+            <Plus className="w-3 h-3" />
+            {editingId ? t("skills.update") : t("skills.add")}
+          </button>
+          {editingId && (
+            <button
+              className="px-3 py-1.5 text-xs bg-secondary text-secondary-foreground rounded-lg hover:opacity-90"
+              onClick={resetForm}
+            >
+              {t("skills.cancelEdit")}
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <label className="text-xs font-medium mb-1 block">{t("skills.custom")}</label>
+        {customSkills.length === 0 && (
+          <p className="text-xs text-muted-foreground">{t("skills.empty")}</p>
+        )}
+        <div className="space-y-1">
+          {customSkills.map((skill) => (
+            <div
+              key={skill.id}
+              className={`border border-border rounded-lg p-2 ${skill.enabled ? "" : "opacity-50"}`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium">{skill.command} · {skill.name}</span>
+                <div className="flex gap-1">
+                  <button
+                    className="px-1.5 py-0.5 text-[10px] rounded hover:bg-secondary"
+                    onClick={() => {
+                      setCustomSkills(customSkills.map((s) =>
+                        s.id === skill.id ? { ...s, enabled: !s.enabled } : s,
+                      ));
+                    }}
+                  >
+                    {skill.enabled ? t("skills.disable") : t("skills.enable")}
+                  </button>
+                  <button
+                    className="px-1.5 py-0.5 text-[10px] rounded hover:bg-secondary"
+                    onClick={() => handleEdit(skill)}
+                  >
+                    {t("skills.edit")}
+                  </button>
+                  <button
+                    className="p-1 hover:bg-destructive/10 hover:text-destructive rounded"
+                    onClick={() => setCustomSkills(customSkills.filter((s) => s.id !== skill.id))}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">{skill.description}</p>
+              {skill.promptTemplate && (
+                <p className="text-xs text-muted-foreground mt-1 font-mono">
+                  {skill.promptTemplate.length > 120
+                    ? `${skill.promptTemplate.slice(0, 120)}...`
+                    : skill.promptTemplate}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

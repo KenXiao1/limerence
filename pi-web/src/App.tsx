@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, Suspense, lazy } from "react";
 import { StorageProvider } from "./hooks/use-storage";
 import { SettingsProvider } from "./hooks/use-settings";
 import { getPreferredTheme, applyTheme } from "./lib/theme";
-import { getLocale, onLocaleChange } from "./lib/i18n";
+import { onLocaleChange } from "./lib/i18n";
 
 const Chat = lazy(() =>
   import("./components/Chat").then((module) => ({ default: module.Chat })),

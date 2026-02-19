@@ -49,17 +49,40 @@ export default async function handler(req: Request, _context: Context) {
 
     const system = typeof body?.system === "string" ? body.system : undefined;
     const tools = body?.tools && typeof body.tools === "object" ? body.tools : {};
-    const modelId =
-      typeof body?.model === "string" && body.model.trim()
-        ? body.model.trim()
-        : DEFAULT_MODEL_ID;
 
-    const baseURL = new URL("/api/llm/v1", req.url).toString().replace(/\/+$/, "");
+    // Thread overrides: per-thread model + thinking level
+    const overrides = body?.threadOverrides as
+      | { modelId?: string; providerId?: string; baseUrl?: string; thinkingLevel?: string }
+      | undefined;
+
+    const modelId =
+      overrides?.modelId?.trim() ||
+      (typeof body?.model === "string" && body.model.trim()
+        ? body.model.trim()
+        : DEFAULT_MODEL_ID);
+
+    const baseURL = overrides?.baseUrl?.trim() ||
+      new URL("/api/llm/v1", req.url).toString().replace(/\/+$/, "");
     const provider = createOpenAICompatible({
-      name: "limerence-proxy",
+      name: overrides?.providerId || "limerence-proxy",
       baseURL,
       apiKey: "__PROXY__",
     });
+
+    // Thinking level → provider-specific params
+    const thinkingLevel = overrides?.thinkingLevel ?? "off";
+    const providerOptions: Record<string, unknown> = {};
+    if (thinkingLevel !== "off") {
+      const budgetMap: Record<string, number> = { low: 1024, medium: 4096, high: 16384 };
+      const budget = budgetMap[thinkingLevel] ?? 0;
+      if (budget > 0) {
+        // Anthropic extended thinking
+        providerOptions["anthropic"] = { thinking: { type: "enabled", budgetTokens: budget } };
+        // OpenAI reasoning effort
+        const effortMap: Record<string, string> = { low: "low", medium: "medium", high: "high" };
+        providerOptions["openai"] = { reasoningEffort: effortMap[thinkingLevel] ?? "medium" };
+      }
+    }
 
     const result = streamText({
       model: provider(modelId),
@@ -69,6 +92,7 @@ export default async function handler(req: Request, _context: Context) {
       tools: {
         ...frontendTools(tools),
       },
+      ...(Object.keys(providerOptions).length > 0 ? { providerOptions } : {}),
     });
 
     return result.toUIMessageStreamResponse({
