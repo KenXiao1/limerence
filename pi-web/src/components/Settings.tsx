@@ -21,8 +21,11 @@ import {
   normalizeSkillCommand,
   type Skill,
 } from "../controllers/skills";
+import { getDefaultAliases } from "../controllers/model-selection";
+import { getBuiltinTemplateVariables } from "../controllers/template-engine";
+import { useThreadOverrides } from "../chat/runtime/RuntimeProvider";
 
-type SettingsTab = "persona" | "lorebook" | "presets" | "regex" | "prompt" | "group" | "skills";
+type SettingsTab = "persona" | "lorebook" | "presets" | "regex" | "prompt" | "group" | "skills" | "models";
 
 interface Props {
   open: boolean;
@@ -42,6 +45,7 @@ export function Settings({ open, onClose }: Props) {
     { id: "prompt", label: t("settings.prompt") },
     { id: "group", label: t("settings.group") },
     { id: "skills", label: t("settings.skills") },
+    { id: "models", label: t("settings.models") },
   ];
 
   return (
@@ -79,6 +83,7 @@ export function Settings({ open, onClose }: Props) {
           {tab === "prompt" && <PromptTab />}
           {tab === "group" && <GroupTab />}
           {tab === "skills" && <SkillsTab />}
+          {tab === "models" && <ModelsTab />}
         </div>
       </div>
     </div>
@@ -862,6 +867,207 @@ function SkillsTab() {
                     : skill.promptTemplate}
                 </p>
               )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Models tab ──────────────────────────────────────────────────
+
+function ModelsTab() {
+  const { overrides, setOverrides } = useThreadOverrides();
+
+  const aliases = overrides.modelAliases ?? {};
+  const fallbacks = overrides.fallbackModels ?? [];
+  const contextTokens = overrides.contextTokens;
+
+  const [draftAlias, setDraftAlias] = useState("");
+  const [draftAliasTarget, setDraftAliasTarget] = useState("");
+  const [draftFallback, setDraftFallback] = useState("");
+  const [draftContext, setDraftContext] = useState(contextTokens ? String(contextTokens) : "");
+  const [showBuiltinAliases, setShowBuiltinAliases] = useState(false);
+
+  const builtinAliases = getDefaultAliases();
+  const templateVars = getBuiltinTemplateVariables();
+
+  const handleAddAlias = useCallback(() => {
+    const alias = draftAlias.trim().toLowerCase();
+    const target = draftAliasTarget.trim();
+    if (!alias || !target) return;
+    const next = { ...overrides, modelAliases: { ...aliases, [alias]: target } };
+    setOverrides(next);
+    setDraftAlias("");
+    setDraftAliasTarget("");
+  }, [aliases, draftAlias, draftAliasTarget, overrides, setOverrides]);
+
+  const handleRemoveAlias = useCallback((key: string) => {
+    const next = { ...aliases };
+    delete next[key];
+    setOverrides({ ...overrides, modelAliases: next });
+  }, [aliases, overrides, setOverrides]);
+
+  const handleAddFallback = useCallback(() => {
+    const fb = draftFallback.trim();
+    if (!fb) return;
+    setOverrides({ ...overrides, fallbackModels: [...fallbacks, fb] });
+    setDraftFallback("");
+  }, [draftFallback, fallbacks, overrides, setOverrides]);
+
+  const handleRemoveFallback = useCallback((index: number) => {
+    const next = fallbacks.filter((_, i) => i !== index);
+    setOverrides({ ...overrides, fallbackModels: next });
+  }, [fallbacks, overrides, setOverrides]);
+
+  const handleSaveContext = useCallback(() => {
+    const val = Number.parseInt(draftContext, 10);
+    if (Number.isFinite(val) && val > 0) {
+      setOverrides({ ...overrides, contextTokens: val });
+    }
+  }, [draftContext, overrides, setOverrides]);
+
+  const handleClearContext = useCallback(() => {
+    const { contextTokens: _, ...rest } = overrides;
+    setOverrides(rest);
+    setDraftContext("");
+  }, [overrides, setOverrides]);
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-muted-foreground">{t("models.hint")}</p>
+
+      {/* Model Aliases */}
+      <div>
+        <label className="text-xs font-medium mb-1 block">{t("models.aliasTitle")}</label>
+        <p className="text-xs text-muted-foreground mb-2">{t("models.aliasHint")}</p>
+        <div className="flex gap-2 mb-2">
+          <input
+            value={draftAlias}
+            onChange={(e) => setDraftAlias(e.target.value)}
+            placeholder={t("models.aliasPlaceholder")}
+            className="flex-1 px-2 py-1.5 text-xs border border-border rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+          <input
+            value={draftAliasTarget}
+            onChange={(e) => setDraftAliasTarget(e.target.value)}
+            placeholder={t("models.aliasTargetPlaceholder")}
+            className="flex-1 px-2 py-1.5 text-xs border border-border rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+          <button
+            className="px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded hover:opacity-90"
+            onClick={handleAddAlias}
+          >
+            <Plus className="w-3 h-3" />
+          </button>
+        </div>
+        {Object.keys(aliases).length === 0 && (
+          <p className="text-xs text-muted-foreground">{t("models.aliasEmpty")}</p>
+        )}
+        {Object.entries(aliases).map(([key, val]) => (
+          <div key={key} className="flex items-center justify-between border border-border rounded p-1.5 mb-1">
+            <span className="text-xs font-mono">{key} → {val}</span>
+            <button
+              className="p-1 hover:bg-destructive/10 hover:text-destructive rounded"
+              onClick={() => handleRemoveAlias(key)}
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </div>
+        ))}
+        <button
+          className="mt-1 text-[10px] text-muted-foreground hover:text-foreground"
+          onClick={() => setShowBuiltinAliases(!showBuiltinAliases)}
+        >
+          {t("models.builtinAliases")} {showBuiltinAliases ? "▴" : "▾"}
+        </button>
+        {showBuiltinAliases && (
+          <div className="mt-1 max-h-32 overflow-y-auto border border-border rounded p-2 space-y-0.5">
+            {Object.entries(builtinAliases).map(([key, val]) => (
+              <div key={key} className="text-[10px] font-mono text-muted-foreground">
+                {key} → {val}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Fallback Models */}
+      <div>
+        <label className="text-xs font-medium mb-1 block">{t("models.fallbackTitle")}</label>
+        <p className="text-xs text-muted-foreground mb-2">{t("models.fallbackHint")}</p>
+        <div className="flex gap-2 mb-2">
+          <input
+            value={draftFallback}
+            onChange={(e) => setDraftFallback(e.target.value)}
+            placeholder={t("models.fallbackPlaceholder")}
+            className="flex-1 px-2 py-1.5 text-xs border border-border rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+          <button
+            className="px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded hover:opacity-90"
+            onClick={handleAddFallback}
+          >
+            <Plus className="w-3 h-3" />
+          </button>
+        </div>
+        {fallbacks.length === 0 && (
+          <p className="text-xs text-muted-foreground">{t("models.fallbackEmpty")}</p>
+        )}
+        {fallbacks.map((fb, i) => (
+          <div key={i} className="flex items-center justify-between border border-border rounded p-1.5 mb-1">
+            <span className="text-xs font-mono">#{i + 1} {fb}</span>
+            <button
+              className="p-1 hover:bg-destructive/10 hover:text-destructive rounded"
+              onClick={() => handleRemoveFallback(i)}
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Context Window Override */}
+      <div>
+        <label className="text-xs font-medium mb-1 block">{t("models.contextTitle")}</label>
+        <p className="text-xs text-muted-foreground mb-2">{t("models.contextHint")}</p>
+        <div className="flex gap-2">
+          <input
+            value={draftContext}
+            onChange={(e) => setDraftContext(e.target.value)}
+            placeholder={t("models.contextPlaceholder")}
+            type="number"
+            className="flex-1 px-2 py-1.5 text-xs border border-border rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+          <button
+            className="px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded hover:opacity-90"
+            onClick={handleSaveContext}
+          >
+            {t("models.contextSave")}
+          </button>
+          <button
+            className="px-3 py-1.5 text-xs bg-secondary text-secondary-foreground rounded hover:opacity-90"
+            onClick={handleClearContext}
+          >
+            {t("models.contextClear")}
+          </button>
+        </div>
+        {contextTokens && (
+          <p className="text-xs text-muted-foreground mt-1">
+            当前: {contextTokens >= 1000 ? `${(contextTokens / 1000).toFixed(0)}K` : contextTokens} tokens
+          </p>
+        )}
+      </div>
+
+      {/* Template Variables Reference */}
+      <div>
+        <label className="text-xs font-medium mb-1 block">{t("models.templateVarsTitle")}</label>
+        <p className="text-xs text-muted-foreground mb-2">{t("models.templateVarsHint")}</p>
+        <div className="border border-border rounded p-2 space-y-0.5 max-h-40 overflow-y-auto">
+          {templateVars.map((v) => (
+            <div key={v.name} className="text-[10px]">
+              <span className="font-mono text-primary">{`{{${v.name}}}`}</span>
+              <span className="text-muted-foreground ml-2">{v.description}</span>
             </div>
           ))}
         </div>

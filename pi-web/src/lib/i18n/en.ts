@@ -351,6 +351,29 @@ const en: Record<string, string> = {
   "landing.termLine8": "Has a cat named \"Bit\"",
   "landing.archMod5": "SQLite WASM Memory",
   "landing.archMod5Sub": "FTS5 · Persistence",
+
+  // ── Settings — Models tab ─────────────────────────────────
+  "settings.models": "Models",
+  "models.hint": "Configure model aliases, fallback chain, and context window.",
+  "models.aliasTitle": "Model Aliases",
+  "models.aliasHint": "Custom alias mapping, e.g. fast → deepseek/deepseek-chat. Use aliases directly in model input.",
+  "models.aliasPlaceholder": "Alias, e.g. fast",
+  "models.aliasTargetPlaceholder": "Target, e.g. deepseek/deepseek-chat",
+  "models.aliasAdd": "Add alias",
+  "models.aliasEmpty": "No custom aliases",
+  "models.fallbackTitle": "Fallback Model Chain",
+  "models.fallbackHint": "Models tried in order when the primary fails. Supports aliases.",
+  "models.fallbackPlaceholder": "Model ID or alias",
+  "models.fallbackAdd": "Add fallback",
+  "models.fallbackEmpty": "No fallback models",
+  "models.contextTitle": "Context Window",
+  "models.contextHint": "Leave empty to use model default, or specify token count manually.",
+  "models.contextPlaceholder": "e.g. 128000",
+  "models.contextSave": "Save",
+  "models.contextClear": "Clear",
+  "models.builtinAliases": "Built-in aliases",
+  "models.templateVarsTitle": "Template Variables",
+  "models.templateVarsHint": "The following variables can be used in custom skill prompt templates:",
 };
 
 export default en;

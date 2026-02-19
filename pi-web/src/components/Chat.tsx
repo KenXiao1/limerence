@@ -38,10 +38,11 @@ import { Workspace } from "./Workspace";
 import { useSettings } from "../hooks/use-settings";
 import { useThreadOverrides } from "../chat/runtime/RuntimeProvider";
 import { loadCharacterFromFile } from "../controllers/character";
-import { resolveCharacterName } from "../controllers/resolve-settings";
+import { resolveCharacterName, resolveUserName } from "../controllers/resolve-settings";
 import { calculateBudget, DEFAULT_BUDGET_CONFIG } from "../controllers/context-budget";
 import type { ThinkingLevel, ThreadOverrides } from "../controllers/thread-overrides";
 import { parseSlashCommand } from "../controllers/slash-commands";
+import { applyTemplate, buildTemplateContext } from "../controllers/template-engine";
 
 const THINKING_LEVELS: { value: ThinkingLevel; label: string }[] = [
   { value: "off", label: "关闭" },
@@ -455,21 +456,32 @@ const EditComposer: FC = () => {
 const Composer: FC = () => {
   const composerText = useComposer((s) => s.text);
   const composerRuntime = useComposerRuntime();
-  const { customSkills } = useSettings();
+  const settings = useSettings();
+  const { overrides } = useThreadOverrides();
 
   const handleSubmit = useCallback((e: FormEvent<HTMLFormElement>) => {
-    const cmd = parseSlashCommand(composerText, customSkills);
+    const cmd = parseSlashCommand(composerText, settings.customSkills);
     if (cmd?.type !== "prompt") return;
 
     e.preventDefault();
     const args = composerText.trim().split(/\s+/).slice(1).join(" ").trim();
-    const injectedPrompt = cmd.promptTemplate.trim();
+
+    // Apply template variables to the prompt
+    const templateCtx = buildTemplateContext({
+      characterName: resolveCharacterName(settings.character),
+      persona: settings.persona?.description,
+      userName: resolveUserName(settings.persona),
+      modelId: overrides.modelId,
+      providerId: overrides.providerId,
+    });
+    const injectedPrompt = applyTemplate(cmd.promptTemplate.trim(), templateCtx);
+
     const finalPrompt = args ? `${injectedPrompt}\n\n${args}` : injectedPrompt;
     if (!finalPrompt) return;
 
     composerRuntime.setText(finalPrompt);
     composerRuntime.send();
-  }, [composerRuntime, composerText, customSkills]);
+  }, [composerRuntime, composerText, settings, overrides]);
 
   return (
     <ComposerPrimitive.Root

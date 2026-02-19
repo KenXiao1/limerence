@@ -17,6 +17,7 @@ import { shouldFlushMemory, FLUSH_PROMPT } from "../../controllers/compaction";
 import { resolveUserName } from "../../controllers/resolve-settings";
 import { createThreadListAdapter } from "./thread-list-adapter";
 import { THREAD_OVERRIDES_STORE, type ThreadOverrides } from "../../controllers/thread-overrides";
+import { getEffectiveContextWindow, evaluateContextWindowGuard } from "../../controllers/context-window-guard";
 
 function SystemInstructionRegistrar({ instruction }: { instruction: string }) {
   useAssistantInstructions({
@@ -26,22 +27,34 @@ function SystemInstructionRegistrar({ instruction }: { instruction: string }) {
   return null;
 }
 
-const DEFAULT_CONTEXT_WINDOW = 128_000;
-
 /**
  * Monitors thread token usage and injects a flush instruction
  * when approaching the compaction threshold.
  */
-function MemoryFlushRegistrar() {
+function MemoryFlushRegistrar({ contextWindow }: { contextWindow: number }) {
   const lastFlushAtRef = useRef(0);
   const messages = useThread((s) => s.messages);
 
-  const needed = shouldFlushMemory(messages as any[], DEFAULT_CONTEXT_WINDOW, lastFlushAtRef.current);
+  const needed = shouldFlushMemory(messages as any[], contextWindow, lastFlushAtRef.current);
   if (needed) lastFlushAtRef.current = Date.now();
 
   useAssistantInstructions({
     instruction: FLUSH_PROMPT,
     disabled: !needed,
+  });
+
+  return null;
+}
+
+/**
+ * Displays a context window warning when the model has a small context.
+ */
+function ContextWindowWarningRegistrar({ modelId, contextTokens }: { modelId: string; contextTokens?: number }) {
+  const guard = evaluateContextWindowGuard(modelId, contextTokens);
+
+  useAssistantInstructions({
+    instruction: guard.warningMessage ?? "",
+    disabled: !guard.shouldWarn && !guard.shouldBlock,
   });
 
   return null;
@@ -167,11 +180,20 @@ export function ChatRuntimeProvider({ children }: { children: ReactNode }) {
     adapter: threadListAdapter,
   });
 
+  const effectiveContextWindow = getEffectiveContextWindow(
+    overrides.modelId ?? "",
+    overrides.contextTokens,
+  );
+
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <ThreadOverridesContext.Provider value={overridesCtx}>
         <SystemInstructionRegistrar instruction={systemInstruction} />
-        <MemoryFlushRegistrar />
+        <MemoryFlushRegistrar contextWindow={effectiveContextWindow} />
+        <ContextWindowWarningRegistrar
+          modelId={overrides.modelId ?? ""}
+          contextTokens={overrides.contextTokens}
+        />
         {children}
       </ThreadOverridesContext.Provider>
     </AssistantRuntimeProvider>

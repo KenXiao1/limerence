@@ -351,6 +351,29 @@ const zh: Record<string, string> = {
   "landing.termLine8": "养了一只叫「比特」的猫",
   "landing.archMod5": "SQLite WASM 记忆",
   "landing.archMod5Sub": "FTS5 · 持久化",
+
+  // ── Settings — Models tab ─────────────────────────────────
+  "settings.models": "模型",
+  "models.hint": "配置模型别名、Fallback 链和上下文窗口。",
+  "models.aliasTitle": "模型别名",
+  "models.aliasHint": "自定义别名映射，例如 fast → deepseek/deepseek-chat。输入时可直接使用别名。",
+  "models.aliasPlaceholder": "别名，例如 fast",
+  "models.aliasTargetPlaceholder": "目标，例如 deepseek/deepseek-chat",
+  "models.aliasAdd": "添加别名",
+  "models.aliasEmpty": "暂无自定义别名",
+  "models.fallbackTitle": "Fallback 模型链",
+  "models.fallbackHint": "主模型失败时依次尝试的备选模型。支持别名。",
+  "models.fallbackPlaceholder": "模型 ID 或别名",
+  "models.fallbackAdd": "添加 Fallback",
+  "models.fallbackEmpty": "暂无 Fallback 模型",
+  "models.contextTitle": "上下文窗口",
+  "models.contextHint": "留空使用模型默认值，或手动指定 token 数。",
+  "models.contextPlaceholder": "例如 128000",
+  "models.contextSave": "保存",
+  "models.contextClear": "清除",
+  "models.builtinAliases": "内置别名",
+  "models.templateVarsTitle": "模板变量",
+  "models.templateVarsHint": "在自定义技能的提示词模板中可使用以下变量：",
 };
 
 export default zh;

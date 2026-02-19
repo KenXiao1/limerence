@@ -10,6 +10,12 @@ export interface ThreadOverrides {
   providerId?: string;
   baseUrl?: string;
   thinkingLevel?: ThinkingLevel;
+  /** Override context window size for this thread */
+  contextTokens?: number;
+  /** Fallback model IDs (aliases or provider/model) tried in order if primary fails */
+  fallbackModels?: string[];
+  /** Per-thread model alias overrides */
+  modelAliases?: Record<string, string>;
 }
 
 export const THREAD_OVERRIDES_STORE = "limerence:thread-overrides";
