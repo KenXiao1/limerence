@@ -1,18 +1,17 @@
-import type { Context } from "https://edge.netlify.com";
 import {
   convertToModelMessages,
   stepCountIs,
   streamText,
   type UIMessage,
-} from "npm:ai@6";
-import { createOpenAICompatible } from "npm:@ai-sdk/openai-compatible";
-import { frontendTools } from "npm:@assistant-ui/react-ai-sdk";
+} from "ai";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { frontendTools } from "@assistant-ui/react-ai-sdk";
 import { resolveFreeModelId } from "../../src/controllers/free-model-quota.ts";
 import { parseModelRef, normalizeProviderId } from "../../src/controllers/model-selection.ts";
 import type { FallbackCandidate } from "../../src/controllers/model-fallback.ts";
 
 const DEFAULT_MODEL_ID = resolveFreeModelId(
-  Deno.env.get("LLM_MODEL_ID") ?? Deno.env.get("FREE_MODEL_ID"),
+  process.env.LLM_MODEL_ID ?? process.env.FREE_MODEL_ID,
 );
 
 function corsHeaders(): Record<string, string> {
@@ -54,7 +53,7 @@ function resolveCandidate(
   return { providerId, modelId, baseURL };
 }
 
-export default async function handler(req: Request, _context: Context) {
+export default async function handler(req: Request) {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders() });
   }
@@ -169,5 +168,3 @@ export default async function handler(req: Request, _context: Context) {
     return jsonResponse({ error: message }, 500);
   }
 }
-
-export const config = { path: "/api/chat" };
