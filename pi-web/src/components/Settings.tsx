@@ -49,33 +49,45 @@ export function Settings({ open, onClose }: Props) {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 px-4 py-6 backdrop-blur-[3px]"
+      onClick={onClose}
+    >
       <div
-        className="bg-background border border-border rounded-xl shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col"
+        className="flex max-h-[84vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-[0_24px_80px_rgba(15,23,42,0.22)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Tab bar + close */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-border shrink-0">
-          <div className="flex gap-1 overflow-x-auto">
-            {tabs.map((t) => (
-              <button
-                key={t.id}
-                className={`px-3 py-1.5 text-xs rounded-lg whitespace-nowrap transition-colors ${
-                  tab === t.id ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
-                }`}
-                onClick={() => setTab(t.id)}
-              >
-                {t.label}
-              </button>
-            ))}
+        <div className="shrink-0 border-b border-border bg-background/95 px-4 pb-2 pt-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="limerence-scrollbar-none min-w-0 flex-1 overflow-x-auto pb-1">
+              <div className="flex min-w-max items-center gap-1.5">
+                {tabs.map((t) => (
+                  <button
+                    key={t.id}
+                    className={`inline-flex h-9 items-center rounded-lg border px-3 text-sm font-medium whitespace-nowrap transition-colors ${
+                      tab === t.id
+                        ? "border-primary/30 bg-primary/12 text-primary"
+                        : "border-transparent text-muted-foreground hover:border-border hover:bg-secondary hover:text-foreground"
+                    }`}
+                    onClick={() => setTab(t.id)}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-secondary rounded ml-2 shrink-0">
-            <X className="w-4 h-4" />
-          </button>
         </div>
 
         {/* Tab content */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto bg-gradient-to-b from-background to-background/80 p-4 md:p-5">
           {tab === "persona" && <PersonaTab />}
           {tab === "lorebook" && <LorebookTab />}
           {tab === "presets" && <PresetsTab />}

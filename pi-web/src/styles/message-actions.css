@@ -14,9 +14,9 @@
   align-items: center;
   gap: 8px;
   padding: 3px 6px;
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   border-radius: 10px;
-  background: color-mix(in oklab, var(--background) 92%, transparent);
+  background: color-mix(in oklab, hsl(var(--background)) 92%, transparent);
   backdrop-filter: blur(4px);
 }
 
@@ -27,7 +27,7 @@
   align-items: center;
   gap: 2px;
   padding-right: 6px;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid hsl(var(--border));
 }
 
 .limerence-msg-swipe-btn {
@@ -39,7 +39,7 @@
   border: none;
   border-radius: 5px;
   background: transparent;
-  color: var(--foreground);
+  color: hsl(var(--foreground));
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -58,7 +58,7 @@
 
 .limerence-msg-swipe-counter {
   font-size: var(--font-size-xs);
-  color: var(--muted-foreground);
+  color: hsl(var(--muted-foreground));
   min-width: 28px;
   text-align: center;
   user-select: none;
@@ -80,7 +80,7 @@
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: var(--muted-foreground);
+  color: hsl(var(--muted-foreground));
   font-size: var(--font-size-xs);
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
@@ -90,7 +90,7 @@
 
 .limerence-msg-btn:hover:not(:disabled) {
   background: var(--ws-accent-bg);
-  color: var(--foreground);
+  color: hsl(var(--foreground));
 }
 
 .limerence-msg-btn:disabled {
@@ -126,7 +126,7 @@
 .limerence-msg-edit-label {
   font-size: var(--font-size-sm);
   font-weight: 600;
-  color: var(--muted-foreground);
+  color: hsl(var(--muted-foreground));
 }
 
 .limerence-msg-edit-actions {
@@ -139,10 +139,10 @@
   min-height: 80px;
   max-height: 300px;
   resize: vertical;
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   border-radius: 8px;
   background: var(--ws-input-bg);
-  color: var(--foreground);
+  color: hsl(var(--foreground));
   padding: 8px 10px;
   font-size: var(--font-size-base);
   font-family: var(--font-sans);
@@ -151,7 +151,7 @@
 
 .limerence-msg-edit-textarea:focus {
   outline: none;
-  border-color: color-mix(in oklab, var(--foreground) 40%, var(--border));
+  border-color: color-mix(in oklab, hsl(var(--foreground)) 40%, hsl(var(--border)));
 }
 
 /* ── Mobile responsive ──────────────────────────────────────── */
@@ -173,3 +173,4 @@
     padding: 6px 8px 4px;
   }
 }
+

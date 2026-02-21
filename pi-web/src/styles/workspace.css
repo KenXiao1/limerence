@@ -8,7 +8,7 @@
   flex-direction: column;
   backdrop-filter: blur(6px);
   background:
-    radial-gradient(120% 140% at 100% 0%, color-mix(in oklab, var(--muted) 22%, transparent), transparent 55%),
+    radial-gradient(120% 140% at 100% 0%, color-mix(in oklab, hsl(var(--muted)) 22%, transparent), transparent 55%),
     var(--ws-bg);
 }
 
@@ -31,13 +31,13 @@
   bottom: 0;
   left: 2px;
   width: 2px;
-  background: var(--border);
+  background: hsl(var(--border));
   transition: background 0.15s;
 }
 
 .limerence-resize-handle:hover::after,
 .limerence-resize-handle.is-dragging::after {
-  background: var(--foreground);
+  background: hsl(var(--foreground));
   opacity: 0.5;
 }
 
@@ -48,7 +48,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--ws-padding) 12px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 .limerence-workspace-title {
@@ -59,7 +59,7 @@
 
 .limerence-workspace-subtitle {
   font-size: var(--font-size-sm);
-  color: var(--muted-foreground);
+  color: hsl(var(--muted-foreground));
   margin-top: 3px;
 }
 
@@ -69,9 +69,9 @@
 }
 
 .limerence-workspace-icon-button {
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   background: var(--ws-icon-btn-bg);
-  color: var(--foreground);
+  color: hsl(var(--foreground));
   border-radius: var(--ws-btn-radius);
   width: 30px;
   height: 30px;
@@ -82,7 +82,7 @@
 }
 
 .limerence-workspace-icon-button:hover {
-  background: color-mix(in oklab, var(--accent) 18%, transparent);
+  background: color-mix(in oklab, hsl(var(--accent)) 18%, transparent);
 }
 
 /* ── Content area ────────────────────────────────────────────── */
@@ -98,7 +98,7 @@
 }
 
 .limerence-workspace-section {
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   border-radius: var(--ws-section-radius);
   padding: var(--ws-padding);
   background: var(--ws-section-bg);
@@ -113,7 +113,7 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--muted-foreground);
+  color: hsl(var(--muted-foreground));
   margin-bottom: 8px;
 }
 
@@ -127,18 +127,18 @@
 .limerence-workspace-input {
   flex: 1;
   min-width: 0;
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   border-radius: var(--ws-input-radius);
   padding: 8px 10px;
   font-size: var(--font-size-base);
   background: var(--ws-input-bg);
-  color: var(--foreground);
+  color: hsl(var(--foreground));
 }
 
 .limerence-workspace-action {
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   background: var(--ws-accent-bg);
-  color: var(--foreground);
+  color: hsl(var(--foreground));
   border-radius: var(--ws-input-radius);
   padding: 0 10px;
   font-size: var(--font-size-base);
@@ -157,11 +157,11 @@
   margin-top: 8px;
   font-size: var(--font-size-sm);
   line-height: 1.35;
-  color: var(--foreground);
+  color: hsl(var(--foreground));
 }
 
 .limerence-workspace-message-muted {
-  color: var(--muted-foreground);
+  color: hsl(var(--muted-foreground));
 }
 
 /* ── File list ───────────────────────────────────────────────── */
@@ -178,7 +178,7 @@
   border: 1px solid transparent;
   border-radius: 9px;
   background: transparent;
-  color: var(--foreground);
+  color: hsl(var(--foreground));
   font-size: var(--font-size-base);
   text-align: left;
   display: flex;
@@ -199,7 +199,7 @@
 
 .limerence-workspace-file-icon {
   display: inline-flex;
-  color: var(--muted-foreground);
+  color: hsl(var(--muted-foreground));
 }
 
 .limerence-workspace-file-path {
@@ -217,7 +217,7 @@
 }
 
 .limerence-workspace-dirty {
-  color: var(--muted-foreground);
+  color: hsl(var(--muted-foreground));
   font-size: var(--font-size-sm);
 }
 
@@ -230,9 +230,9 @@
   min-height: 230px;
   resize: vertical;
   border-radius: var(--ws-input-radius);
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   background: var(--ws-input-bg);
-  color: var(--foreground);
+  color: hsl(var(--foreground));
   padding: var(--ws-padding);
   font-size: var(--font-size-base);
   line-height: 1.5;
@@ -255,7 +255,7 @@
   line-height: 1;
   border-radius: 999px;
   padding: 3px 7px;
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
 }
 
 .limerence-workspace-diff-badge.is-added {
@@ -283,7 +283,7 @@
   grid-template-columns: 18px minmax(0, 1fr);
   align-items: start;
   gap: 6px;
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   border-radius: var(--ws-btn-radius);
   padding: 4px 6px;
   font-family: var(--font-mono);
@@ -323,7 +323,7 @@
 .limerence-workspace-diff-truncated {
   margin-top: 6px;
   font-size: var(--font-size-sm);
-  color: var(--muted-foreground);
+  color: hsl(var(--muted-foreground));
 }
 
 /* ── Event log ───────────────────────────────────────────────── */
@@ -341,14 +341,14 @@
 }
 
 .limerence-workspace-event {
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   border-radius: var(--ws-input-radius);
   padding: 8px;
-  background: color-mix(in oklab, var(--background) 95%, transparent);
+  background: color-mix(in oklab, hsl(var(--background)) 95%, transparent);
 }
 
 .limerence-workspace-event.is-error {
-  border-color: color-mix(in oklab, var(--diff-removed) 60%, var(--border));
+  border-color: color-mix(in oklab, var(--diff-removed) 60%, hsl(var(--border)));
   background: color-mix(in oklab, var(--diff-removed) 10%, transparent);
 }
 
@@ -362,14 +362,14 @@
   font-size: var(--font-size-xs);
   line-height: 1;
   border-radius: 999px;
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   padding: 3px 7px;
-  color: var(--muted-foreground);
+  color: hsl(var(--muted-foreground));
 }
 
 .limerence-workspace-time {
   font-size: var(--font-size-xs);
-  color: var(--muted-foreground);
+  color: hsl(var(--muted-foreground));
 }
 
 .limerence-workspace-event-path {
@@ -382,14 +382,14 @@
 .limerence-workspace-event-summary {
   margin-top: 4px;
   font-size: var(--font-size-sm);
-  color: var(--muted-foreground);
+  color: hsl(var(--muted-foreground));
   line-height: 1.35;
   word-break: break-word;
 }
 
 .limerence-workspace-empty {
   font-size: var(--font-size-base);
-  color: var(--muted-foreground);
+  color: hsl(var(--muted-foreground));
   padding: 8px 0;
 }
 
@@ -397,7 +397,7 @@
 
 .limerence-workspace-tabs {
   display: flex;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid hsl(var(--border));
   flex-shrink: 0;
 }
 
@@ -407,7 +407,7 @@
   font-size: var(--font-size-sm);
   font-weight: 500;
   text-align: center;
-  color: var(--muted-foreground);
+  color: hsl(var(--muted-foreground));
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
@@ -416,12 +416,12 @@
 }
 
 .limerence-workspace-tab:hover {
-  color: var(--foreground);
+  color: hsl(var(--foreground));
 }
 
 .limerence-workspace-tab.is-active {
-  color: var(--foreground);
-  border-bottom-color: var(--accent);
+  color: hsl(var(--foreground));
+  border-bottom-color: hsl(var(--accent));
 }
 
 /* ── Memory file tree ───────────────────────────────────────── */
@@ -442,7 +442,7 @@
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
-  color: var(--foreground);
+  color: hsl(var(--foreground));
   font-size: var(--font-size-base);
   text-align: left;
   cursor: pointer;
@@ -453,7 +453,7 @@
 }
 
 .limerence-memory-file.is-active {
-  border-color: color-mix(in oklab, var(--memory-write) 40%, var(--border));
+  border-color: color-mix(in oklab, var(--memory-write) 40%, hsl(var(--border)));
   background: color-mix(in oklab, var(--memory-write) 10%, transparent);
 }
 
@@ -481,10 +481,10 @@
   white-space: pre-wrap;
   word-break: break-word;
   padding: var(--ws-padding);
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   border-radius: var(--ws-input-radius);
   background: var(--ws-input-bg);
-  color: var(--foreground);
+  color: hsl(var(--foreground));
 }
 
 /* ── Memory operation log ───────────────────────────────────── */
@@ -494,7 +494,7 @@
   align-items: flex-start;
   gap: 8px;
   padding: 6px 8px;
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   border-radius: var(--ws-btn-radius);
   font-size: var(--font-size-sm);
 }
@@ -515,12 +515,13 @@
 }
 
 .limerence-memory-op-summary {
-  color: var(--foreground);
+  color: hsl(var(--foreground));
   word-break: break-word;
 }
 
 .limerence-memory-op-time {
   font-size: var(--font-size-xs);
-  color: var(--muted-foreground);
+  color: hsl(var(--muted-foreground));
   margin-top: 2px;
 }
+

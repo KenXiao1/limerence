@@ -57,7 +57,7 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   border-radius: 6px;
   background: var(--bg-secondary, hsl(var(--secondary)));
   color: var(--text-muted, hsl(var(--muted-foreground)));
@@ -149,14 +149,14 @@
 .chat-msg-name {
   font-size: 12px;
   font-weight: 600;
-  color: var(--muted-foreground);
+  color: hsl(var(--muted-foreground));
   margin-bottom: 4px;
 }
 
 .chat-msg-assistant .chat-msg-content {
   font-size: 14px;
   line-height: 1.7;
-  color: var(--foreground);
+  color: hsl(var(--foreground));
 }
 
 .chat-msg-assistant .chat-msg-content p {
@@ -168,7 +168,7 @@
 }
 
 .chat-typing {
-  color: var(--muted-foreground);
+  color: hsl(var(--muted-foreground));
   font-size: 14px;
 }
 
@@ -185,9 +185,9 @@
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  border: 1px solid var(--border);
+  border: 1px solid hsl(var(--border));
   border-radius: 20px;
-  background: var(--background);
+  background: hsl(var(--background));
   padding: 6px 6px 6px 16px;
   transition: border-color 0.2s;
 }
@@ -201,7 +201,7 @@
   resize: none;
   border: none;
   background: transparent;
-  color: var(--foreground);
+  color: hsl(var(--foreground));
   font-size: 14px;
   line-height: 1.5;
   padding: 6px 0;
@@ -232,3 +232,4 @@
 .chat-composer-send:hover:not(:disabled) {
   opacity: 0.85;
 }
+

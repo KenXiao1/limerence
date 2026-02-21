@@ -151,8 +151,10 @@ export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
                   <PanelLeftOpenIcon className="h-4 w-4" />
                 )}
               </button>
-              <span className="text-sm text-muted-foreground">当前角色</span>
-              <span className="font-medium text-sm">{charName}</span>
+              <div className="inline-flex items-center gap-1.5 rounded-lg border border-border/70 bg-secondary/55 px-2.5 py-1">
+                <span className="text-xs font-medium tracking-wide text-muted-foreground">当前角色</span>
+                <span className="text-sm font-semibold text-foreground">{charName}</span>
+              </div>
             </div>
 
             <div className="flex items-center gap-1.5">
