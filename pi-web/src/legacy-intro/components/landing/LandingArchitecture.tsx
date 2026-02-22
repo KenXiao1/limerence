@@ -89,13 +89,13 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
                   isDark ? "bg-zinc-800/80 text-zinc-300" : "bg-zinc-100/80 text-zinc-500"
                 }`}
               >
-                {t("landing.archTsPort")}
+                {t("landing.archWebStack")}
               </span>
               <div className={`h-6 border-l border-dashed ${isDark ? "border-zinc-500" : "border-zinc-300"}`} />
             </div>
             <div className="flex w-full items-center gap-3 sm:hidden">
               <div className={`h-px flex-1 ${isDark ? "bg-zinc-700" : "bg-zinc-300"}`} />
-              <span className={`font-mono text-[10px] font-medium ${isDark ? "text-zinc-300" : "text-zinc-500"}`}>{t("landing.archTsPort")}</span>
+              <span className={`font-mono text-[10px] font-medium ${isDark ? "text-zinc-300" : "text-zinc-500"}`}>{t("landing.archWebStack")}</span>
               <div className={`h-px flex-1 ${isDark ? "bg-zinc-700" : "bg-zinc-300"}`} />
             </div>
           </div>
@@ -114,7 +114,7 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
                 </div>
                 <div>
                   <span className={`text-xs font-semibold tracking-wide ${isDark ? "text-zinc-200" : "text-zinc-800"}`}>{t("landing.archBrowser")}</span>
-                  <span className={`ml-2 font-mono text-[10px] ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>React + TypeScript</span>
+                  <span className={`ml-2 font-mono text-[10px] ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>React 19 + assistant-ui</span>
                 </div>
               </div>
 
@@ -128,7 +128,7 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
                     className={`h-1.5 w-1.5 rounded-full ${isDark ? "bg-magenta" : "bg-magenta-dark"}`}
                     style={{ boxShadow: isDark ? "0 0 6px #e040a0" : "0 0 6px #a02070" }}
                   />
-                  <span className={`font-mono text-[11px] font-medium ${isDark ? "text-magenta-light" : "text-magenta-dark"}`}>Agent Loop</span>
+                  <span className={`font-mono text-[11px] font-medium ${isDark ? "text-magenta-light" : "text-magenta-dark"}`}>Client-side Runtime</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {AGENT_MODULES.map((moduleItem, idx) => (
@@ -221,9 +221,9 @@ export default function LandingArchitecture({ isDark }: LandingArchitectureProps
                       className={`h-1.5 w-1.5 rounded-full ${isDark ? "bg-cyan" : "bg-cyan-dark"}`}
                       style={{ boxShadow: isDark ? "0 0 6px #22d3ee" : "0 0 6px #0891b2" }}
                     />
-                    <span className={`font-mono text-[11px] font-medium ${isDark ? "text-cyan-light" : "text-cyan-dark"}`}>chat-proxy.ts</span>
+                    <span className={`font-mono text-[11px] font-medium ${isDark ? "text-cyan-light" : "text-cyan-dark"}`}>chat.ts</span>
                   </div>
-                  <p className={`mt-1 text-[10px] ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>{t("landing.archProxy")}</p>
+                  <p className={`mt-1 text-[10px] ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>{t("landing.archChat")}</p>
                 </div>
 
                 <div

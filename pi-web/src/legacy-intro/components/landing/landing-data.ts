@@ -57,9 +57,9 @@ export interface AgentModuleCard {
 
 export function getAgentModules(): AgentModuleCard[] {
   return [
-    { label: t("landing.archMod1"), sub: "SSE stream" },
-    { label: t("landing.archMod2"), sub: "CJK tokenizer" },
-    { label: t("landing.archMod3"), sub: "IndexedDB" },
+    { label: t("landing.archMod1"), sub: "React 19" },
+    { label: t("landing.archMod2"), sub: "streamText · transport" },
+    { label: t("landing.archMod3"), sub: "frontendTools · 8 tools" },
     { label: t("landing.archMod4"), sub: t("landing.archMod4Sub") },
     { label: t("landing.archMod5"), sub: t("landing.archMod5Sub") },
   ];
