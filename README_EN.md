@@ -106,6 +106,12 @@ engine = "duckduckgo"  # or "searxng"
 # searxng_url = "http://localhost:8080"
 ```
 
+Optional: set `LIMERENCE_HOME` to override the default data directory (useful for isolated testing or multi-instance runs):
+
+```bash
+export LIMERENCE_HOME="/path/to/custom/limerence-home"
+```
+
 Switch providers by changing `base_url`:
 
 ```toml
@@ -135,14 +141,16 @@ The agent has 8 built-in tools, invoked automatically based on conversation cont
 
 | Tool | Purpose |
 |------|---------|
-| `memory_search` | SQLite FTS5 + BM25 hybrid search over memory files and conversation history, CJK-aware |
+| `memory_search` | BM25 dual-source search: persistent memory files (`memory/*.md`) + conversation history |
 | `memory_write` | Write persistent memory files (PROFILE.md / MEMORY.md / daily logs) |
 | `memory_get` | Read memory file content by line range |
 | `web_search` | DuckDuckGo / SearXNG web search |
 | `note_write` | Write persistent notes to `~/.limerence/notes/` |
 | `note_read` | Read notes or list all notes |
 | `file_read` | Read files from sandboxed workspace |
-| `file_write` | Create/write files in sandboxed workspace |
+| `file_write` | Create/write files in sandboxed workspace (`memory/` paths must use `memory_write`) |
+
+The TUI automatically injects `memory/PROFILE.md` and `memory/MEMORY.md` into the system prompt on each turn.
 
 ## Character Cards
 
@@ -170,7 +178,7 @@ Card structure:
     "mes_example": "Example dialogue",
     "extensions": {
       "limerence": {
-        "tools": ["memory_search", "web_search", "note_write", "note_read", "file_read", "file_write"]
+        "tools": ["memory_search", "memory_write", "memory_get", "web_search", "note_write", "note_read", "file_read", "file_write"]
       }
     }
   }

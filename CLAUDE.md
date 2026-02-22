@@ -62,7 +62,7 @@ OpenAI-compatible LLM client. Handles SSE streaming, tool call assembly, message
 ### limerence-core (crates/limerence-core/)
 Agent runtime. The agent loop in `agent.rs` is the core: stream LLM → execute tool calls → loop until no tools remain. Sends `AgentEvent` variants to the UI layer via `mpsc` channel.
 
-Modules: `agent` (orchestrator), `character` (SillyTavern V2 cards), `config` (TOML), `memory` (BM25 with CJK tokenizer), `session` (JSONL persistence), `tool` (6 tools + dispatch), `notes`, `file_os` (sandboxed).
+Modules: `agent` (orchestrator), `character` (SillyTavern V2 cards), `config` (TOML), `memory` (BM25 with CJK tokenizer + memory file search), `session` (JSONL persistence), `tool` (8 tools + dispatch), `notes`, `file_os` (sandboxed).
 
 ### limerence-tui (crates/limerence-tui/)
 Binary crate. `clap` CLI args → Config → CharacterCard → Agent → ratatui event loop. The binary name is `limerence`.
@@ -96,7 +96,7 @@ TypeScript port of `limerence-core` logic, running entirely in the browser. `leg
 | `agent.ts` | `agent.rs` | Agent loop via async/await instead of mpsc |
 | `llm.ts` | `client.rs` + `stream.rs` | SSE parsing, AsyncGenerator yield |
 | `memory.ts` | `memory.rs` | BM25 + CJK tokenizer, identical algorithm |
-| `tools.ts` | `tool.rs` | Same 6 tools, async (IndexedDB + fetch) |
+| `tools.ts` | `tool.rs` | Core tool semantics aligned (memory/web/note/file). Rust persists to filesystem; web uses IndexedDB + fetch |
 | `storage.ts` | `session.rs` + `notes.rs` + `file_os.rs` | IndexedDB via idb-keyval |
 | `character.ts` | `character.rs` | System prompt builder |
 
@@ -107,9 +107,10 @@ TypeScript port of `limerence-core` logic, running entirely in the browser. `leg
 
 - **Tool execution (pi-web):** Tools run client-side. The edge function (`chat.ts`) uses `frontendTools` from `@assistant-ui/react-ai-sdk` — the LLM requests tool calls, the edge function streams them to the browser, assistant-ui executes them locally via `createLimerenceTools()`, then sends results back. The tool loop uses Vercel AI SDK's `stepCountIs(max)` as the stop condition.
 - **Tool execution (Rust):** Agent streams LLM → executes tool calls sequentially → appends results → loops until no tools remain (`agent.rs` with mpsc).
+- **Tools (Rust):** 8 tools in `tool.rs`: `memory_search`, `memory_write`, `memory_get`, `web_search`, `note_write`, `note_read`, `file_read`, `file_write`. `file_write` rejects `memory/` paths and redirects to `memory_write`.
 - **Tools (pi-web):** 8 tools defined in `src/lib/tools.ts` via `createLimerenceTools()`: `memory_search` (SQLite FTS5 + BM25 fallback), `memory_write`, `memory_get`, `web_search`, `note_write`, `note_read`, `file_read`, `file_write`. Schemas use `@sinclair/typebox`.
-- **Memory:** Dual-layer search in pi-web: `MemoryDB` (SQLite FTS5 via sql.js, persistent memory files chunked into segments) + `MemoryIndex` (BM25 in-memory, conversation history). Rust and legacy-web use BM25 only. BM25 algorithm with CJK single-character tokenization is identical across all three — changes should be mirrored.
-- **Persistence:** TUI uses filesystem (`~/.limerence/`). Pi-web uses `IndexedDBStorageBackend` with stores: `limerence-memory`, `limerence-notes`, `limerence-files`, `limerence-characters`, `limerence-lorebook`, `limerence-memory-db` (SQLite blob), plus `pi-web-ui:*` stores (sessions, settings, provider-keys — names kept for backward compat). Legacy-web uses idb-keyval with key prefixes.
+- **Memory:** Dual-layer search in pi-web: `MemoryDB` (SQLite FTS5 via sql.js, persistent memory files chunked into segments) + `MemoryIndex` (BM25 in-memory, conversation history). Rust uses BM25 for both conversation history and `memory/*.md` files (path + line-range snippets), and auto-injects `memory/PROFILE.md` + `memory/MEMORY.md` into each turn's system prompt.
+- **Persistence:** TUI uses filesystem (`~/.limerence/` by default, overridable via `LIMERENCE_HOME`). Pi-web uses `IndexedDBStorageBackend` with stores: `limerence-memory`, `limerence-notes`, `limerence-files`, `limerence-characters`, `limerence-lorebook`, `limerence-memory-db` (SQLite blob), plus `pi-web-ui:*` stores (sessions, settings, provider-keys — names kept for backward compat). Legacy-web uses idb-keyval with key prefixes.
 - **Supabase sync:** `SyncEngine` in `src/lib/sync-engine.ts` does bidirectional sync between IndexedDB and Supabase (sessions, memory, notes, files, characters, lorebook). Uses Supabase Realtime for push notifications. Auth via `src/lib/auth.ts`.
 - **Context management:** `context-budget.ts` manages token budgets (system prompt + lorebook + history + output reserve). `compaction.ts` uses tiktoken for precise token counting and implements message compaction when history exceeds budget.
 - **Character cards:** SillyTavern V2 JSON format. Default card is `config/default_character.json`, embedded in Rust via `include_str!` and served as `pi-web/public/default_character.json`.

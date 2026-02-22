@@ -15,6 +15,8 @@ pub fn execute_tool(
 
     match name {
         "memory_search" => tool_memory_search(&args, memory),
+        "memory_write" => tool_memory_write(&args, memory),
+        "memory_get" => tool_memory_get(&args, memory),
         "web_search" => tool_web_search(&args, search_config),
         "note_write" => tool_note_write(&args),
         "note_read" => tool_note_read(&args),
@@ -29,7 +31,7 @@ pub fn all_tool_defs() -> Vec<ToolDef> {
     vec![
         ToolDef {
             name: "memory_search".to_string(),
-            description: "搜索与用户的历史对话记忆。用于回忆用户之前提到的事情。".to_string(),
+            description: "搜索历史对话和持久记忆文件。用于回忆之前的事情。".to_string(),
             parameters: json!({
                 "type": "object",
                 "properties": {
@@ -44,6 +46,53 @@ pub fn all_tool_defs() -> Vec<ToolDef> {
                     }
                 },
                 "required": ["query"]
+            }),
+        },
+        ToolDef {
+            name: "memory_write".to_string(),
+            description: "写入持久记忆文件。路径必须以 memory/ 开头。默认追加模式。".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "记忆文件路径，如 memory/PROFILE.md, memory/MEMORY.md, memory/2025-01-01.md"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "要写入的内容"
+                    },
+                    "append": {
+                        "type": "boolean",
+                        "description": "是否追加（默认追加）",
+                        "default": true
+                    }
+                },
+                "required": ["path", "content"]
+            }),
+        },
+        ToolDef {
+            name: "memory_get".to_string(),
+            description: "读取记忆文件的指定行范围。搜索后用此工具获取完整内容。路径必须以 memory/ 开头。".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "记忆文件路径，留空列出所有记忆文件",
+                        "default": ""
+                    },
+                    "from": {
+                        "type": "integer",
+                        "description": "起始行号（1-based）",
+                        "default": 1
+                    },
+                    "lines": {
+                        "type": "integer",
+                        "description": "读取行数",
+                        "default": 50
+                    }
+                }
             }),
         },
         ToolDef {
@@ -113,7 +162,7 @@ pub fn all_tool_defs() -> Vec<ToolDef> {
         },
         ToolDef {
             name: "file_write".to_string(),
-            description: "在工作区创建或写入文件。路径相对于工作区根目录，自动创建子目录。".to_string(),
+            description: "在工作区创建或写入文件。路径相对于工作区根目录，自动创建子目录。不可写入 memory/ 目录（请用 memory_write）。".to_string(),
             parameters: json!({
                 "type": "object",
                 "properties": {
@@ -140,28 +189,90 @@ fn tool_memory_search(args: &serde_json::Value, memory: &MemoryIndex) -> String 
         return "请提供搜索关键词。".to_string();
     }
 
-    let results = memory.search(query, limit);
-    if results.is_empty() {
+    let mut sections = Vec::new();
+
+    let persistent_results = memory.search_memory_files(query, limit);
+    if !persistent_results.is_empty() {
+        sections.push("── 持久记忆 ──".to_string());
+        for (i, r) in persistent_results.iter().enumerate() {
+            let path_name = r.path.replace("memory/", "");
+            sections.push(format!(
+                "[{}] [记忆:{path_name}:L{}-L{}] {}",
+                i + 1,
+                r.start_line,
+                r.end_line,
+                r.text
+            ));
+        }
+    }
+
+    let conversation_results = memory.search(query, limit);
+    if !conversation_results.is_empty() {
+        sections.push("── 对话历史 ──".to_string());
+        for (i, r) in conversation_results.iter().enumerate() {
+            let time = r.timestamp.format("%Y-%m-%d %H:%M");
+            let role = match r.role.as_str() {
+                "user" => "用户",
+                "assistant" => "助手",
+                _ => &r.role,
+            };
+
+            let content = if r.content.len() > 200 {
+                format!(
+                    "{}...",
+                    &r.content[..r
+                        .content
+                        .char_indices()
+                        .nth(200)
+                        .map(|(idx, _)| idx)
+                        .unwrap_or(r.content.len())]
+                )
+            } else {
+                r.content.clone()
+            };
+            sections.push(format!("[{}] [{time}] {role}：{content}", i + 1));
+        }
+    }
+
+    if sections.is_empty() {
         return "没有找到相关记忆。".to_string();
     }
 
-    let mut output = String::new();
-    for (i, r) in results.iter().enumerate() {
-        let time = r.timestamp.format("%Y-%m-%d %H:%M");
-        let role = match r.role.as_str() {
-            "user" => "用户",
-            "assistant" => "助手",
-            _ => &r.role,
-        };
-        // Truncate long content
-        let content = if r.content.len() > 200 {
-            format!("{}...", &r.content[..r.content.char_indices().nth(200).map(|(i, _)| i).unwrap_or(r.content.len())])
-        } else {
-            r.content.clone()
-        };
-        output.push_str(&format!("[{}] [{time}] {role}：{content}\n", i + 1));
+    sections.join("\n")
+}
+
+fn tool_memory_write(args: &serde_json::Value, memory: &MemoryIndex) -> String {
+    let path = args["path"].as_str().unwrap_or("").trim();
+    let content = args["content"].as_str().unwrap_or("");
+    let append = args["append"].as_bool().unwrap_or(true);
+
+    if path.is_empty() {
+        return "请提供记忆文件路径。".to_string();
     }
-    output
+
+    match memory.write_memory_file(path, content, append) {
+        Ok(msg) => msg,
+        Err(e) => e,
+    }
+}
+
+fn tool_memory_get(args: &serde_json::Value, memory: &MemoryIndex) -> String {
+    let path = args["path"].as_str().unwrap_or("").trim();
+    let from = args["from"].as_u64().unwrap_or(1) as usize;
+    let lines = args["lines"].as_u64().unwrap_or(50) as usize;
+
+    if path.is_empty() {
+        match memory.list_memory_markdown_files() {
+            Ok(files) if files.is_empty() => "暂无记忆文件。".to_string(),
+            Ok(files) => format!("记忆文件列表：\n{}", files.join("\n")),
+            Err(e) => e,
+        }
+    } else {
+        match memory.get_memory_file(path, from, lines) {
+            Ok(content) => content,
+            Err(e) => e,
+        }
+    }
 }
 
 fn tool_web_search(args: &serde_json::Value, config: &SearchConfig) -> String {
@@ -186,10 +297,7 @@ fn tool_web_search(args: &serde_json::Value, config: &SearchConfig) -> String {
 
 fn duckduckgo_search(query: &str) -> String {
     // Use DuckDuckGo HTML lite for simplicity
-    let url = format!(
-        "https://html.duckduckgo.com/html/?q={}",
-        urlencoded(query)
-    );
+    let url = format!("https://html.duckduckgo.com/html/?q={}", urlencoded(query));
 
     let client = reqwest::blocking::Client::builder()
         .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
@@ -359,10 +467,18 @@ fn tool_file_write(args: &serde_json::Value) -> String {
     if path.is_empty() {
         return "请提供文件路径。".to_string();
     }
+    if is_memory_virtual_path(path) {
+        return "memory/ 目录下的文件请使用 memory_write 工具写入。".to_string();
+    }
     match crate::file_os::file_write(path, content) {
         Ok(msg) => msg,
         Err(e) => e,
     }
+}
+
+fn is_memory_virtual_path(path: &str) -> bool {
+    let normalized = path.trim().replace('\\', "/");
+    normalized == "memory" || normalized.starts_with("memory/")
 }
 
 fn urlencoded(s: &str) -> String {
@@ -387,10 +503,8 @@ fn urlencoded_decode(s: &str) -> String {
     let mut i = 0;
     while i < bytes.len() {
         if bytes[i] == b'%' && i + 2 < bytes.len() {
-            if let Ok(byte) = u8::from_str_radix(
-                &String::from_utf8_lossy(&bytes[i + 1..i + 3]),
-                16,
-            ) {
+            if let Ok(byte) = u8::from_str_radix(&String::from_utf8_lossy(&bytes[i + 1..i + 3]), 16)
+            {
                 result.push(byte);
                 i += 3;
                 continue;
@@ -426,4 +540,172 @@ fn strip_html_tags(s: &str) -> String {
         .replace("&quot;", "\"")
         .replace("&#x27;", "'")
         .replace("&nbsp;", " ")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::SearchConfig;
+    use crate::memory::{MemoryEntry, MemoryIndex};
+    use chrono::Utc;
+    use std::path::PathBuf;
+
+    struct TempMemoryRoot {
+        root: PathBuf,
+    }
+
+    impl TempMemoryRoot {
+        fn new() -> Self {
+            let root =
+                std::env::temp_dir().join(format!("limerence-tool-{}", uuid::Uuid::new_v4()));
+            std::fs::create_dir_all(&root).expect("create temp memory root");
+            Self { root }
+        }
+    }
+
+    impl Drop for TempMemoryRoot {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.root);
+        }
+    }
+
+    #[test]
+    fn all_tool_defs_contains_eight_tools() {
+        let defs = all_tool_defs();
+        let names: Vec<&str> = defs.iter().map(|d| d.name.as_str()).collect();
+
+        assert_eq!(defs.len(), 8);
+        assert!(names.contains(&"memory_search"));
+        assert!(names.contains(&"memory_write"));
+        assert!(names.contains(&"memory_get"));
+        assert!(names.contains(&"web_search"));
+        assert!(names.contains(&"note_write"));
+        assert!(names.contains(&"note_read"));
+        assert!(names.contains(&"file_read"));
+        assert!(names.contains(&"file_write"));
+    }
+
+    #[test]
+    fn file_write_rejects_memory_paths() {
+        let memory = MemoryIndex::new();
+        let search_config = SearchConfig::default();
+        let args = json!({
+            "path": "memory/PROFILE.md",
+            "content": "test content"
+        })
+        .to_string();
+
+        let result = execute_tool("file_write", &args, &memory, &search_config);
+        assert!(
+            result.contains("memory_write"),
+            "expected memory/ path rejection, got: {result}"
+        );
+    }
+
+    #[test]
+    fn memory_write_and_get_follow_memory_workflow() {
+        let temp = TempMemoryRoot::new();
+        let memory = MemoryIndex::with_memory_root(temp.root.clone());
+        let search_config = SearchConfig::default();
+
+        let write_a = execute_tool(
+            "memory_write",
+            &json!({
+                "path": "memory/PROFILE.md",
+                "content": "喜欢咖啡"
+            })
+            .to_string(),
+            &memory,
+            &search_config,
+        );
+        assert!(write_a.contains("记忆文件"));
+
+        let write_b = execute_tool(
+            "memory_write",
+            &json!({
+                "path": "memory/PROFILE.md",
+                "content": "喜欢散步"
+            })
+            .to_string(),
+            &memory,
+            &search_config,
+        );
+        assert!(write_b.contains("追加"));
+
+        let read = execute_tool(
+            "memory_get",
+            &json!({
+                "path": "memory/PROFILE.md",
+                "from": 1,
+                "lines": 20
+            })
+            .to_string(),
+            &memory,
+            &search_config,
+        );
+        assert!(read.contains("喜欢咖啡"));
+        assert!(read.contains("喜欢散步"));
+    }
+
+    #[test]
+    fn memory_search_includes_persistent_and_conversation_results() {
+        let temp = TempMemoryRoot::new();
+        let mut memory = MemoryIndex::with_memory_root(temp.root.clone());
+        let search_config = SearchConfig::default();
+
+        let _ = execute_tool(
+            "memory_write",
+            &json!({
+                "path": "memory/MEMORY.md",
+                "content": "用户正在学习 Rust"
+            })
+            .to_string(),
+            &memory,
+            &search_config,
+        );
+
+        memory.add(MemoryEntry {
+            session_id: "s1".to_string(),
+            timestamp: Utc::now(),
+            role: "user".to_string(),
+            content: "我最近在系统学习 Rust 并做项目".to_string(),
+        });
+
+        let result = execute_tool(
+            "memory_search",
+            &json!({
+                "query": "Rust",
+                "limit": 5
+            })
+            .to_string(),
+            &memory,
+            &search_config,
+        );
+
+        assert!(result.contains("── 持久记忆 ──"), "result: {result}");
+        assert!(result.contains("── 对话历史 ──"), "result: {result}");
+    }
+
+    #[test]
+    fn memory_get_without_path_lists_markdown_files_only() {
+        let temp = TempMemoryRoot::new();
+        let memory = MemoryIndex::with_memory_root(temp.root.clone());
+        let search_config = SearchConfig::default();
+
+        let _ = execute_tool(
+            "memory_write",
+            &json!({
+                "path": "memory/PROFILE.md",
+                "content": "x"
+            })
+            .to_string(),
+            &memory,
+            &search_config,
+        );
+        std::fs::write(temp.root.join("ignore.txt"), "x").expect("write non-markdown");
+
+        let list = execute_tool("memory_get", &json!({}).to_string(), &memory, &search_config);
+        assert!(list.contains("memory/PROFILE.md"));
+        assert!(!list.contains("ignore.txt"));
+    }
 }

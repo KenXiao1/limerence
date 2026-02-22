@@ -76,15 +76,18 @@ impl CharacterCard {
         // Append tool usage instructions
         parts.push(
             "你可以使用以下工具来增强对话体验：\n\
-             - memory_search：搜索与用户的历史对话记忆\n\
+             - memory_search：搜索历史对话和持久记忆文件\n\
+             - memory_write：写入持久记忆文件（memory/PROFILE.md、memory/MEMORY.md、memory/YYYY-MM-DD.md）\n\
+             - memory_get：读取记忆文件的指定行范围\n\
              - web_search：搜索互联网获取实时信息\n\
              - note_write：写入持久化笔记，记录用户的重要信息\n\
              - note_read：读取之前写的笔记\n\
              - file_read：读取工作区文件\n\
-             - file_write：在工作区创建或写入文件\n\
+             - file_write：在工作区创建或写入文件（memory/ 目录请使用 memory_write）\n\
              \n\
-             主动使用 memory_search 回忆用户之前提到的事情。\n\
-             用 note_write 记录用户的重要信息（偏好、经历、情绪状态等）。"
+             回忆之前的事情时：先用 memory_search 搜索，再用 memory_get 获取完整内容。\n\
+             发现用户的重要新信息时，优先用 memory_write 写入持久记忆。\n\
+             用 note_write 记录短期笔记（偏好、经历、情绪状态等）。"
                 .to_string(),
         );
 

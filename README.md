@@ -105,6 +105,12 @@ engine = "duckduckgo"  # 或 "searxng"
 # searxng_url = "http://localhost:8080"
 ```
 
+可选：设置环境变量 `LIMERENCE_HOME` 覆盖默认数据目录（用于隔离测试或多实例）：
+
+```bash
+export LIMERENCE_HOME="/path/to/custom/limerence-home"
+```
+
 切换到其他 provider 只需改 `base_url`：
 
 ```toml
@@ -134,14 +140,16 @@ Agent 有 8 个内置工具，会根据对话上下文自动调用：
 
 | 工具 | 用途 |
 |------|------|
-| `memory_search` | SQLite FTS5 + BM25 混合搜索记忆文件和历史对话，支持 CJK 分词 |
+| `memory_search` | BM25 双源搜索：持久记忆文件（`memory/*.md`）+ 历史对话 |
 | `memory_write` | 写入持久记忆文件（PROFILE.md / MEMORY.md / 每日日志） |
 | `memory_get` | 按行范围读取记忆文件内容 |
 | `web_search` | DuckDuckGo / SearXNG 网络搜索 |
 | `note_write` | 写持久笔记到 `~/.limerence/notes/` |
 | `note_read` | 读笔记或列出所有笔记 |
 | `file_read` | 读取沙箱工作区文件 |
-| `file_write` | 在沙箱工作区创建/写入文件 |
+| `file_write` | 在沙箱工作区创建/写入文件（`memory/` 目录请使用 `memory_write`） |
+
+TUI 每轮会自动注入 `memory/PROFILE.md` 和 `memory/MEMORY.md` 到系统提示词。
 
 ## 角色卡
 
@@ -169,7 +177,7 @@ cargo run --release -- -c path/to/character.json
     "mes_example": "对话示例",
     "extensions": {
       "limerence": {
-        "tools": ["memory_search", "web_search", "note_write", "note_read", "file_read", "file_write"]
+        "tools": ["memory_search", "memory_write", "memory_get", "web_search", "note_write", "note_read", "file_read", "file_write"]
       }
     }
   }
