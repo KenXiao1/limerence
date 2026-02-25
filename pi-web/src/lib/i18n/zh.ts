@@ -17,6 +17,24 @@ const zh: Record<string, string> = {
   "header.focus": "专注模式 (Ctrl+Shift+F)",
   "header.settings": "设置",
 
+  // ── 聊天界面 ──────────────────────────────────────────────
+  "chat.currentCharacter": "当前角色",
+  "chat.provider": "Provider",
+  "chat.providerDefault": "默认 Provider",
+  "chat.modelPlaceholder": "模型 ID（留空用默认）",
+  "chat.thinkingLevel": "思考深度",
+  "chat.thinking.off": "关闭",
+  "chat.thinking.low": "低",
+  "chat.thinking.medium": "中",
+  "chat.thinking.high": "高",
+  "chat.newChat": "新会话",
+  "chat.archive": "归档",
+  "chat.delete": "删除",
+  "chat.emptyTitle": "你好",
+  "chat.emptyDesc": "开始一段新对话。会话历史会按聊天线程持久化。",
+  "chat.generateFailed": "生成失败，请重试",
+  "chat.inputPlaceholder": "输入消息...",
+
   // ── Message actions ─────────────────────────────────────
   "msg.swipePrev": "上一个回复",
   "msg.swipeNext": "下一个回复",

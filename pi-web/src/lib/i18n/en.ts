@@ -17,6 +17,24 @@ const en: Record<string, string> = {
   "header.focus": "Focus mode (Ctrl+Shift+F)",
   "header.settings": "Settings",
 
+  // ── Chat shell ──────────────────────────────────────────
+  "chat.currentCharacter": "Character",
+  "chat.provider": "Provider",
+  "chat.providerDefault": "Default provider",
+  "chat.modelPlaceholder": "Model ID (leave empty for default)",
+  "chat.thinkingLevel": "Thinking level",
+  "chat.thinking.off": "Off",
+  "chat.thinking.low": "Low",
+  "chat.thinking.medium": "Medium",
+  "chat.thinking.high": "High",
+  "chat.newChat": "New chat",
+  "chat.archive": "Archive",
+  "chat.delete": "Delete",
+  "chat.emptyTitle": "Hello there",
+  "chat.emptyDesc": "Start a new conversation. Thread history is now persisted per chat.",
+  "chat.generateFailed": "Generation failed. Please retry.",
+  "chat.inputPlaceholder": "Type a message...",
+
   // ── Message actions ─────────────────────────────────────
   "msg.swipePrev": "Previous reply",
   "msg.swipeNext": "Next reply",

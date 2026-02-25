@@ -21,11 +21,13 @@ import {
   CopyIcon,
   FolderOpenIcon,
   HomeIcon,
+  MoonIcon,
   MoreHorizontalIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   RefreshCwIcon,
   Settings2Icon,
+  SunIcon,
   SquareIcon,
   TrashIcon,
   UserCircle2Icon,
@@ -41,15 +43,11 @@ import { loadCharacterFromFile } from "../controllers/character";
 import { resolveCharacterName, resolveUserName } from "../controllers/resolve-settings";
 import { calculateBudget, DEFAULT_BUDGET_CONFIG } from "../controllers/context-budget";
 import type { ThinkingLevel, ThreadOverrides } from "../controllers/thread-overrides";
+import { getLocale, onLocaleChange, setLocale, t } from "../lib/i18n";
+import { getPreferredTheme, toggleTheme, type Theme } from "../lib/theme";
+import { getLocaleAfterToggle, getThemeAriaKey } from "../controllers/chat-header-controls";
 import { parseSlashCommand } from "../controllers/slash-commands";
 import { applyTemplate, buildTemplateContext } from "../controllers/template-engine";
-
-const THINKING_LEVELS: { value: ThinkingLevel; label: string }[] = [
-  { value: "off", label: "关闭" },
-  { value: "low", label: "低" },
-  { value: "medium", label: "中" },
-  { value: "high", label: "高" },
-];
 
 export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
   const settings = useSettings();
@@ -60,6 +58,8 @@ export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const [providerOptions, setProviderOptions] = useState<string[]>(["limerence-proxy"]);
+  const [locale, setLocaleState] = useState(getLocale);
+  const [theme, setTheme] = useState<Theme>(getPreferredTheme);
 
   const handleCharImport = useCallback(
     async (file: File) => {
@@ -74,6 +74,12 @@ export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
   const currentThinking = overrides.thinkingLevel ?? "off";
   const currentModelId = overrides.modelId ?? "";
   const currentProviderId = overrides.providerId ?? "";
+  const thinkingLevels: { value: ThinkingLevel; label: string }[] = [
+    { value: "off", label: t("chat.thinking.off") },
+    { value: "low", label: t("chat.thinking.low") },
+    { value: "medium", label: t("chat.thinking.medium") },
+    { value: "high", label: t("chat.thinking.high") },
+  ];
 
   useEffect(() => {
     let cancelled = false;
@@ -96,6 +102,8 @@ export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
     });
   }, [loadOverrides, setOverrides, threadId]);
 
+  useEffect(() => onLocaleChange((next) => setLocaleState(next)), []);
+
   const persistOverrides = useCallback((next: ThreadOverrides) => {
     if (!threadId) {
       setOverrides(next);
@@ -115,6 +123,14 @@ export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
   const handleThinkingChange = useCallback((level: ThinkingLevel) => {
     persistOverrides({ ...overrides, thinkingLevel: level });
   }, [overrides, persistOverrides]);
+
+  const handleToggleLocale = useCallback(() => {
+    setLocale(getLocaleAfterToggle(locale));
+  }, [locale]);
+
+  const handleToggleTheme = useCallback(() => {
+    setTheme(toggleTheme());
+  }, []);
 
   return (
     <div className="limerence-chat-shell h-screen w-full bg-background text-foreground">
@@ -152,7 +168,7 @@ export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
                 )}
               </button>
               <div className="inline-flex items-center gap-1.5 rounded-lg border border-border/70 bg-secondary/55 px-2.5 py-1">
-                <span className="text-xs font-medium tracking-wide text-muted-foreground">当前角色</span>
+                <span className="text-xs font-medium tracking-wide text-muted-foreground">{t("chat.currentCharacter")}</span>
                 <span className="text-sm font-semibold text-foreground">{charName}</span>
               </div>
             </div>
@@ -163,9 +179,9 @@ export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
                 value={currentProviderId}
                 onChange={(e) => handleProviderChange(e.target.value)}
                 className="h-8 rounded-md border border-border bg-background px-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-                title="Provider"
+                title={t("chat.provider")}
               >
-                <option value="">默认 Provider</option>
+                <option value="">{t("chat.providerDefault")}</option>
                 {providerOptions.map((provider) => (
                   <option key={provider} value={provider}>
                     {provider}
@@ -177,7 +193,7 @@ export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
                 type="text"
                 value={currentModelId}
                 onChange={(e) => handleModelChange(e.target.value)}
-                placeholder="模型 ID（留空用默认）"
+                placeholder={t("chat.modelPlaceholder")}
                 className="h-8 w-36 rounded-md border border-border bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
               />
               {/* Thinking level selector */}
@@ -185,9 +201,9 @@ export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
                 value={currentThinking}
                 onChange={(e) => handleThinkingChange(e.target.value as ThinkingLevel)}
                 className="h-8 rounded-md border border-border bg-background px-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-                title="思考深度"
+                title={t("chat.thinkingLevel")}
               >
-                {THINKING_LEVELS.map((l) => (
+                {thinkingLevels.map((l) => (
                   <option key={l.value} value={l.value}>
                     {currentThinking !== "off" && l.value === currentThinking ? `🧠 ${l.label}` : l.label}
                   </option>
@@ -198,7 +214,7 @@ export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
                 type="button"
                 className={`inline-flex h-8 items-center justify-center rounded-md border border-border px-2 text-sm hover:bg-muted ${workspaceOpen ? "bg-muted" : ""}`}
                 onClick={() => setWorkspaceOpen((v) => !v)}
-                title="工作区"
+                title={t("header.workspace")}
               >
                 <FolderOpenIcon className="h-4 w-4" />
               </button>
@@ -215,6 +231,32 @@ export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
                 onClick={() => setSettingsOpen(true)}
               >
                 <Settings2Icon className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-8 items-center justify-center rounded-full border border-border px-2.5 text-xs font-medium hover:bg-muted"
+                onClick={handleToggleLocale}
+                aria-label={t("lang.tooltip")}
+                title={t("lang.tooltip")}
+              >
+                {t("lang.switch")}
+              </button>
+              <button
+                type="button"
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-border transition-colors ${
+                  theme === "dark"
+                    ? "text-zinc-300 hover:bg-zinc-800 hover:text-amber-300"
+                    : "text-zinc-500 hover:bg-zinc-100 hover:text-indigo-600"
+                }`}
+                onClick={handleToggleTheme}
+                aria-label={t(getThemeAriaKey(theme))}
+                title={t(getThemeAriaKey(theme))}
+              >
+                {theme === "dark" ? (
+                  <SunIcon className="h-4 w-4" />
+                ) : (
+                  <MoonIcon className="h-4 w-4" />
+                )}
               </button>
             </div>
           </header>
@@ -233,7 +275,7 @@ export function Chat({ onShowIntro }: { onShowIntro: () => void }) {
       <CharacterSelector
         open={charSelectorOpen}
         characters={settings.characterList}
-        defaultCharacterName={settings.character?.data?.name ?? "Default"}
+        defaultCharacterName={settings.character?.data?.name ?? t("char.defaultName")}
         importError=""
         onSelect={(entry) => {
           if (entry) settings.setCharacter(entry.card);
@@ -266,7 +308,7 @@ const ThreadList: FC = () => {
           type="button"
           className="inline-flex h-9 items-center justify-start rounded-md border border-border px-3 text-left text-sm hover:bg-muted"
         >
-          新会话
+          {t("header.new")}
         </button>
       </ThreadListPrimitive.New>
 
@@ -291,7 +333,7 @@ const ThreadListItem: FC = () => {
   return (
     <ThreadListItemPrimitive.Root className="group flex h-9 items-center gap-1 rounded-md px-1 transition-colors hover:bg-muted focus-within:bg-muted data-active:bg-muted">
       <ThreadListItemPrimitive.Trigger className="min-w-0 flex-1 truncate rounded px-2 py-1 text-left text-sm">
-        <ThreadListItemPrimitive.Title fallback="New Chat" />
+        <ThreadListItemPrimitive.Title fallback={t("chat.newChat")} />
       </ThreadListItemPrimitive.Trigger>
 
       <ThreadListItemMorePrimitive.Root>
@@ -308,13 +350,13 @@ const ThreadListItem: FC = () => {
           <ThreadListItemPrimitive.Archive asChild>
             <ThreadListItemMorePrimitive.Item className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted">
               <ArchiveIcon className="h-4 w-4" />
-              Archive
+              {t("chat.archive")}
             </ThreadListItemMorePrimitive.Item>
           </ThreadListItemPrimitive.Archive>
           <ThreadListItemPrimitive.Delete asChild>
             <ThreadListItemMorePrimitive.Item className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm text-red-500 hover:bg-red-500/10">
               <TrashIcon className="h-4 w-4" />
-              Delete
+              {t("chat.delete")}
             </ThreadListItemMorePrimitive.Item>
           </ThreadListItemPrimitive.Delete>
         </ThreadListItemMorePrimitive.Content>
@@ -335,9 +377,9 @@ const Thread: FC = () => {
       <ThreadPrimitive.Viewport className="relative flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pt-4">
         <AuiIf condition={(s) => s.thread.isEmpty}>
           <div className="mx-auto my-auto w-full max-w-3xl px-4">
-            <h1 className="font-semibold text-2xl">Hello there</h1>
+            <h1 className="font-semibold text-2xl">{t("chat.emptyTitle")}</h1>
             <p className="mt-2 text-muted-foreground text-sm">
-              Start a new conversation. Thread history is now persisted per chat.
+              {t("chat.emptyDesc")}
             </p>
           </div>
         </AuiIf>
@@ -397,7 +439,7 @@ const AssistantMessage: FC = () => {
         />
         <MessagePrimitive.Error>
           <div className="mt-2 rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-red-500 text-xs">
-            生成失败，请重试
+            {t("chat.generateFailed")}
           </div>
         </MessagePrimitive.Error>
       </div>
@@ -441,12 +483,12 @@ const EditComposer: FC = () => {
         <div className="mb-3 mr-3 flex items-center justify-end gap-2">
           <ComposerPrimitive.Cancel asChild>
             <button type="button" className="rounded border border-border px-3 py-1 text-xs hover:bg-muted">
-              Cancel
+              {t("msg.cancel")}
             </button>
           </ComposerPrimitive.Cancel>
           <ComposerPrimitive.Send asChild>
             <button type="button" className="rounded border border-border px-3 py-1 text-xs hover:bg-muted">
-              Update
+              {t("msg.saveEdit")}
             </button>
           </ComposerPrimitive.Send>
         </div>
@@ -491,7 +533,7 @@ const Composer: FC = () => {
       onSubmit={handleSubmit}
     >
       <ComposerPrimitive.Input
-        placeholder="输入消息..."
+        placeholder={t("chat.inputPlaceholder")}
         className="min-h-12 flex-1 resize-none bg-transparent px-3 py-2 text-sm outline-none"
       />
 
