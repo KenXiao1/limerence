@@ -222,6 +222,18 @@ const en: Record<string, string> = {
   "ws.confirmSwitch": "Current file has unsaved changes. Switch and discard?",
   "ws.fileNotFound": "File not found",
   "ws.enterValidPath": "Please enter a valid file path.",
+  "ws.managePolicy": "Permissions: only notes/*.md files can be edited or deleted.",
+  "ws.pathWriteBlocked": "Only notes/*.md files can be saved.",
+  "ws.readonlyByPolicy": "This file is read-only (outside notes/*.md).",
+  "ws.deleteDisabled": "This path cannot be deleted",
+  "ws.softDeleteToggle": "Soft delete (move to recycle bin)",
+  "ws.recycleTitle": "Recycle Bin",
+  "ws.recycleEmpty": "Recycle bin is empty",
+  "ws.restore": "Restore",
+  "ws.purge": "Purge",
+  "ws.confirmSoftDelete": "Move this file to recycle bin?",
+  "ws.confirmHardDelete": "Delete this file permanently? This cannot be undone.",
+  "ws.confirmPurgeRecycle": "Permanently delete this recycle-bin item?",
 
   // ── App / render ────────────────────────────────────────
   "app.loading": "Loading...",

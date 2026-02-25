@@ -9,6 +9,7 @@ import type { CharacterEntry } from "../controllers/character";
 import type { LorebookEntry } from "./storage";
 
 const SYNC_META_STORE = "limerence-sync-meta";
+const RECYCLE_PREFIX = "__recycle__/";
 
 // ── Helpers ─────────────────────────────────────────────────────
 
@@ -318,6 +319,7 @@ export async function syncFiles(
   if (!remoteFiles) return;
 
   for (const remote of remoteFiles) {
+    if (remote.path.startsWith(RECYCLE_PREFIX)) continue;
     const localTs = await getLocalUpdatedAt(backend, "sync_files", remote.path);
 
     if (remote.deleted) {
@@ -334,6 +336,7 @@ export async function syncFiles(
 
   const localKeys = await backend.keys(filesStore);
   for (const key of localKeys) {
+    if (key.startsWith(RECYCLE_PREFIX)) continue;
     const localTs = await getLocalUpdatedAt(backend, "sync_files", key);
     if (localTs) continue;
     const content = await backend.get<string>(filesStore, key);

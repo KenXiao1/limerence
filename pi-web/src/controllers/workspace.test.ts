@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   isMarkdownPath,
+  canWriteWorkspacePath,
+  canDeleteWorkspacePath,
   summarizeText,
   formatTime,
   createDiffPreview,
@@ -20,6 +22,28 @@ describe("isMarkdownPath", () => {
     expect(isMarkdownPath("file.txt")).toBe(false);
     expect(isMarkdownPath("file.ts")).toBe(false);
     expect(isMarkdownPath("")).toBe(false);
+  });
+});
+
+// ── Workspace permissions ───────────────────────────────────────
+
+describe("workspace permissions", () => {
+  it("allows writing markdown files under notes/", () => {
+    expect(canWriteWorkspacePath("notes/daily.md")).toBe(true);
+    expect(canWriteWorkspacePath("notes/project/plan.md")).toBe(true);
+  });
+
+  it("rejects writing files outside notes/", () => {
+    expect(canWriteWorkspacePath("memory/PROFILE.md")).toBe(false);
+    expect(canWriteWorkspacePath("daily.md")).toBe(false);
+    expect(canWriteWorkspacePath("notes/todo.txt")).toBe(false);
+  });
+
+  it("allows deleting markdown files under notes/ only", () => {
+    expect(canDeleteWorkspacePath("notes/daily.md")).toBe(true);
+    expect(canDeleteWorkspacePath("notes/project/plan.md")).toBe(true);
+    expect(canDeleteWorkspacePath("memory/PROFILE.md")).toBe(false);
+    expect(canDeleteWorkspacePath("daily.md")).toBe(false);
   });
 });
 

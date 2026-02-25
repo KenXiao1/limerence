@@ -222,6 +222,18 @@ const zh: Record<string, string> = {
   "ws.confirmSwitch": "当前文件有未保存改动，确认切换并丢弃改动吗？",
   "ws.fileNotFound": "文件不存在",
   "ws.enterValidPath": "请输入有效文件路径。",
+  "ws.managePolicy": "权限：仅允许编辑/删除 notes/*.md。",
+  "ws.pathWriteBlocked": "仅允许保存 notes/*.md 文件。",
+  "ws.readonlyByPolicy": "当前文件为只读（不在 notes/*.md 范围内）。",
+  "ws.deleteDisabled": "当前路径不可删除",
+  "ws.softDeleteToggle": "软删除（移动到回收站）",
+  "ws.recycleTitle": "回收站",
+  "ws.recycleEmpty": "回收站为空",
+  "ws.restore": "恢复",
+  "ws.purge": "永久删除",
+  "ws.confirmSoftDelete": "确认将该文件移动到回收站吗？",
+  "ws.confirmHardDelete": "确认永久删除该文件吗？该操作不可撤销。",
+  "ws.confirmPurgeRecycle": "确认从回收站永久删除该条目吗？",
 
   // ── App / render ────────────────────────────────────────
   "app.loading": "Loading...",

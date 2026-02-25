@@ -7,6 +7,7 @@ const NOTES_STORE = "limerence-notes";
 const FILES_STORE = "limerence-files";
 const CHARACTERS_STORE = "limerence-characters";
 const LOREBOOK_STORE = "limerence-lorebook";
+const RECYCLE_PREFIX = "__recycle__/";
 
 const MEMORY_KEY = "entries";
 const CHARACTERS_KEY = "list";
@@ -19,6 +20,19 @@ export type SyncHook = {
   onCharactersSave?: (characters: CharacterEntry[]) => void;
   onCharacterRemove?: (id: string) => void;
   onLorebookSave?: (entries: LorebookEntry[]) => void;
+};
+
+type WorkspaceRecycleRecord = {
+  originalPath: string;
+  content: string;
+  deletedAt: string;
+};
+
+export type WorkspaceRecycleEntry = {
+  key: string;
+  originalPath: string;
+  deletedAt: string;
+  contentLength: number;
 };
 
 export function getLimerenceStoreConfigs(): StoreConfig[] {
@@ -111,13 +125,109 @@ export class LimerenceStorage {
 
   async listWorkspaceFiles(): Promise<string[]> {
     const keys = await this.backend.keys(FILES_STORE);
-    return [...new Set(keys)].sort((a, b) => a.localeCompare(b));
+    return [...new Set(keys)]
+      .filter((k) => !LimerenceStorage.isRecyclePath(k))
+      .sort((a, b) => a.localeCompare(b));
   }
 
   async readWorkspaceFile(path: string): Promise<string | null> {
     const normalized = normalizePath(path);
     if (!normalized) return null;
     return this.backend.get<string>(FILES_STORE, normalized);
+  }
+
+  async deleteWorkspaceFile(path: string, options: { softDelete?: boolean } = {}): Promise<string> {
+    if (!path) return "请提供文件路径。";
+    const normalized = normalizePath(path);
+    if (!normalized) return "请提供文件路径。";
+    if (LimerenceStorage.isRecyclePath(normalized)) return "回收站文件不能通过该操作删除。";
+
+    const content = await this.backend.get<string>(FILES_STORE, normalized);
+    if (content === null) return `文件不存在：${path}`;
+
+    const softDelete = options.softDelete !== false;
+    if (softDelete) {
+      const deletedAt = new Date().toISOString();
+      const recycleKey = this.createRecycleKey(normalized, deletedAt);
+      const record: WorkspaceRecycleRecord = {
+        originalPath: normalized,
+        content,
+        deletedAt,
+      };
+      await this.backend.set(FILES_STORE, recycleKey, record);
+      await this.backend.delete(FILES_STORE, normalized);
+      return `已移动到回收站：${path}`;
+    }
+
+    await this.backend.delete(FILES_STORE, normalized);
+    return `已删除文件：${path}`;
+  }
+
+  async listWorkspaceRecycleEntries(): Promise<WorkspaceRecycleEntry[]> {
+    const keys = await this.backend.keys(FILES_STORE, RECYCLE_PREFIX);
+    const entries: WorkspaceRecycleEntry[] = [];
+
+    for (const key of keys) {
+      const record = await this.backend.get<WorkspaceRecycleRecord>(FILES_STORE, key);
+      if (
+        !record ||
+        typeof record.originalPath !== "string" ||
+        typeof record.content !== "string" ||
+        typeof record.deletedAt !== "string"
+      ) {
+        continue;
+      }
+      entries.push({
+        key,
+        originalPath: record.originalPath,
+        deletedAt: record.deletedAt,
+        contentLength: record.content.length,
+      });
+    }
+
+    return entries.sort((a, b) => b.deletedAt.localeCompare(a.deletedAt));
+  }
+
+  async restoreWorkspaceRecycleEntry(
+    recycleKey: string,
+    options: { overwrite?: boolean } = {},
+  ): Promise<string> {
+    if (!recycleKey || !LimerenceStorage.isRecyclePath(recycleKey)) {
+      return "回收站条目不存在。";
+    }
+
+    const record = await this.backend.get<WorkspaceRecycleRecord>(FILES_STORE, recycleKey);
+    if (
+      !record ||
+      typeof record.originalPath !== "string" ||
+      typeof record.content !== "string"
+    ) {
+      return "回收站条目不存在。";
+    }
+
+    const targetPath = normalizePath(record.originalPath);
+    if (!targetPath) return "回收站条目路径无效。";
+
+    const overwrite = options.overwrite === true;
+    if (!overwrite) {
+      const existing = await this.backend.get<string>(FILES_STORE, targetPath);
+      if (existing !== null) {
+        return `无法恢复，目标文件已存在：${targetPath}`;
+      }
+    }
+
+    await this.backend.set(FILES_STORE, targetPath, record.content);
+    this.syncHook.onFileWrite?.(targetPath, record.content);
+    await this.backend.delete(FILES_STORE, recycleKey);
+    return `已恢复文件：${targetPath}`;
+  }
+
+  async purgeWorkspaceRecycleEntry(recycleKey: string): Promise<string> {
+    if (!recycleKey || !LimerenceStorage.isRecyclePath(recycleKey)) {
+      return "回收站条目不存在。";
+    }
+    await this.backend.delete(FILES_STORE, recycleKey);
+    return "已从回收站永久删除。";
   }
 
   private async listNotes(): Promise<string> {
@@ -137,6 +247,7 @@ export class LimerenceStorage {
 
     const names = new Set<string>();
     for (const key of keys) {
+      if (LimerenceStorage.isRecyclePath(key)) continue;
       if (prefix && !key.startsWith(prefix)) continue;
       const rest = prefix ? key.slice(prefix.length) : key;
       if (!rest) continue;
@@ -207,6 +318,11 @@ export class LimerenceStorage {
     return n === "memory" || n.startsWith("memory/");
   }
 
+  static isRecyclePath(path: string): boolean {
+    const n = normalizePath(path);
+    return n.startsWith(RECYCLE_PREFIX);
+  }
+
   async listMemoryFiles(): Promise<string[]> {
     const keys = await this.backend.keys(FILES_STORE);
     return keys.filter((k) => k.startsWith("memory/")).sort();
@@ -226,6 +342,11 @@ export class LimerenceStorage {
 
   private noteKey(title: string): string {
     return `note:${sanitizeTitle(title)}`;
+  }
+
+  private createRecycleKey(originalPath: string, deletedAt: string): string {
+    const encodedPath = encodeURIComponent(originalPath);
+    return `${RECYCLE_PREFIX}${deletedAt}-${crypto.randomUUID()}-${encodedPath}`;
   }
 }
 

@@ -34,6 +34,29 @@ export function isMarkdownPath(path: string): boolean {
   return path.toLowerCase().endsWith(".md");
 }
 
+function normalizeWorkspacePath(path: string): string {
+  const parts = path.replace(/\\/g, "/").split("/");
+  const resolved: string[] = [];
+  for (const part of parts) {
+    if (part === "..") {
+      resolved.pop();
+    } else if (part && part !== ".") {
+      resolved.push(part);
+    }
+  }
+  return resolved.join("/");
+}
+
+export function canWriteWorkspacePath(path: string): boolean {
+  const normalized = normalizeWorkspacePath(path).toLowerCase();
+  if (!normalized.startsWith("notes/")) return false;
+  return normalized.endsWith(".md");
+}
+
+export function canDeleteWorkspacePath(_path: string): boolean {
+  return canWriteWorkspacePath(_path);
+}
+
 export function summarizeText(text: string, maxLength = 90): string {
   const compact = text.replace(/\s+/g, " ").trim();
   if (!compact) return "空内容";
