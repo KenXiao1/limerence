@@ -1,0 +1,2 @@
+[     145ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/favicon.ico:0
+[     196ms] [WARNING] [MemoryDB] FTS5 unavailable; using LIKE keyword fallback. @ http://localhost:5173/src/lib/memory-db.ts:284

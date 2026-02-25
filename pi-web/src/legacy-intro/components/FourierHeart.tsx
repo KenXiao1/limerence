@@ -84,10 +84,18 @@ const VARIANTS: OrbVariant[] = [
 export default function FourierHeart({ variant = 0, size = 200 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
+  const visibleRef = useRef(true);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    // Pause animation when canvas scrolls out of viewport
+    const observer = new IntersectionObserver(
+      ([entry]) => { visibleRef.current = entry.isIntersecting; },
+      { threshold: 0 },
+    );
+    observer.observe(canvas);
 
     const dpr = window.devicePixelRatio || 1;
     canvas.width = size * dpr;
@@ -103,6 +111,8 @@ export default function FourierHeart({ variant = 0, size = 200 }: Props) {
     let t = 0;
 
     const draw = () => {
+      animRef.current = requestAnimationFrame(draw);
+      if (!visibleRef.current) return;
       const isDark = document.documentElement.getAttribute("data-theme") !== "light";
       ctx.clearRect(0, 0, size, size);
 
@@ -183,11 +193,13 @@ export default function FourierHeart({ variant = 0, size = 200 }: Props) {
       ctx.fill();
 
       t += 0.02;
-      animRef.current = requestAnimationFrame(draw);
     };
 
     animRef.current = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(animRef.current);
+    return () => {
+      cancelAnimationFrame(animRef.current);
+      observer.disconnect();
+    };
   }, [variant, size]);
 
   return (
